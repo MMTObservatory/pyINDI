@@ -1,0 +1,56 @@
+
+
+<!ENTITY % propertyState "(Idle|Ok|Busy|Alert)" >
+<!ENTITY % switchState "(Off|On)" >
+<!ENTITY % switchRule "(OneOfMany|AtMostOne|AnyOfMany)" >
+<!ENTITY % propertyPerm "(ro|wo|rw)" >
+<!ENTITY % numberValue "(#PCDATA)" >
+<!ENTITY % numberFormat "(#PCDATA)" >
+<!ENTITY % labelValue "(#PCDATA)" >
+<!ENTITY % nameValue "(#PCDATA)" >
+<!ENTITY % textValue "(#PCDATA)" >
+<!ENTITY % timeValue "(#PCDATA)" >
+<!ENTITY % groupTag "(#PCDATA)" >
+<!ENTITY % BLOBlength "(#PCDATA)" >
+<!ENTITY % BLOBformat "(#PCDATA)" >
+<!ENTITY % BLOBenable "(Never|Also|Only)" >
+
+
+<!ELEMENT defNumberVector (defNumber+) >
+
+<!ATTLIST defNumberVector device ENTITY #REQUIRED
+name ENTITY #REQUIRED
+label ENTITY #IMPLIED
+group ENTITY #IMPLIED
+state ENTITY #REQUIRED
+perm ENTITY #REQUIRED
+timeout ENTITY #IMPLIED
+timestamp ENTITY #IMPLIED
+message ENTITY #IMPLIED
+>
+
+
+<!--comment-->
+<!ELEMENT defNumber (#PCDATA) >
+<!ATTLIST defNumber
+name ENTITY #REQUIRED
+label ENTITY #IMPLIED
+format ENTITY #REQUIRED
+min ENTITY #REQUIRED
+max ENTITY #REQUIRED
+step ENTITY #REQUIRED
+>
+
+<!ELEMENT setNumberVector (oneNumber+) >
+<!ATTLIST setNumberVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state  (Idle|Ok|Busy|Alert) #IMPLIED
+timeout CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+>
+
+<!ELEMENT oneNumber (#PCDATA) >
+<!ATTLIST oneNumber
+name CDATA #REQUIRED
+>
