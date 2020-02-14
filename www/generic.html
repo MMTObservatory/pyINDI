@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	 <meta charset="UTF-8">
+	<Title> TCSNG</Title>
+	
+	<link rel="stylesheet" href="indi.css">
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.min.css">
+	<script src="indi/indi.js"></script>
+
+	<script>
+	function main()
+	{
+		var host = location.host.split(":")[0];
+		var url="ws://"+host+":3000";
+		INDIwebsocket(url, 'body');
+	}	
+
+	function postProc(INDIvp, ele)
+	{
+		var devselector = "div.INDIdevice#"+nosp(INDIvp.device);
+		var grpselector = devselector+" span.INDIgroup#"+nosp(INDIvp.group);
+		var menuselector = devselector+" ul.devmenu li ul"
+
+		if( $(devselector).length == 0 )
+		{
+			$("<div/>", {id:nosp(INDIvp.device)}).addClass("INDIdevice").appendTo("#body");
+		}
+		if( $(grpselector).length == 0 )
+		{
+		/*
+			if( $(menuselector).length == 0 )
+			{
+				$("<ul/>", 
+				{
+				}).addClass("devmenu").append(
+				$("<li>")
+					.append($("<a/>").text( "Widget List" ))
+					.append( "<ul></ul>" ) )
+					.prependTo( devselector ).after($("<hr/>")).menu()
+			}
+			$("<li/>").append($("<a/>").css({"white-space":"nowrap"}).on("click", function(event){$(grpselector).toggle()}).text( INDIvp.group )).appendTo( menuselector );
+			$(menuselector).closest("ul.devmenu").menu("refresh");
+		*/
+
+			$("<span/>", {id:nosp(INDIvp.group)}).addClass("INDIgroup").appendTo(devselector)
+			$(grpselector).append("<h3>"+INDIvp.group+"</h3>").controlgroup();
+		}
+		
+		var oselector =  $("span[indidevice='"+INDIvp.device+"'][indiname='"+INDIvp.name+"'][indigroup='"+INDIvp.group+"']");
+
+		if ($(oselector).length==1)
+		{
+			var rtn = oselector;
+		}
+		else if($(grpselector).length == 1 )
+		{
+			var rtn = grpselector;
+		}
+		else
+		{
+			var rtn = "body"
+		}
+		return $("body")
+	}
+
+	$( function() 
+	{
+		$("#tabs").tabs()
+	} );
+	$( function() 
+	{
+		$("#tabs").resizable();
+	} );
+
+
+	</script>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css">
+	<style>
+	fieldset#CONNECTION
+	{
+		position:fixed;
+		bottom:20px;
+		left:20px;
+	}
+	label, legend, .INDIgroup h3
+	{
+		color:lightblue;
+		font-weight:bold;
+	}
+	span#Telemetry
+	{
+		position:fixed;
+		top:80px;
+		right:10px;
+		max-width:30%;
+
+	}
+
+	span#Telemetry fieldset > span.ITextspan
+	{
+		display:block;
+		
+
+	}
+	fieldset#stTELEM
+	{
+		display:inline-block;
+		max-width:400px;
+	}
+	fieldset#stTELEM > span.ITextspan > label
+	{
+		display:inline-block;
+		min-width:150px;
+		padding-bottom:10px;
+	}
+	fieldset#stTELEM > span.ITextspan  textarea
+	{
+		max-width:120px;
+		font-size:0.9em;
+	}
+	fieldset#ACTIONS
+	{
+		max-width:200px;
+	}
+	span#Goto_Functions > fieldset
+	{
+	}
+	span#Goto_Functions > fieldset > span
+	{
+	}
+	.ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button	
+	{
+		font-size:0.6em;
+	}
+	#Goto_Functions label, #Corrections label, #PEC label, #TLE label
+	{
+		font-size:0.6em;
+		font-weight:bold;
+		white-space:nowrap;
+	}
+	span#Telemetry #ACTIONS label
+	{
+		font-size:0.6em;
+	}
+	span.INumberspan
+	{
+		padding-right:10px;
+	}
+	#REQ___VARS
+	{
+		display:None;
+
+	}
+	.INDIgroup
+	{
+		margin-right:30px;
+	}
+
+	
+	fields#MSTATUS
+	{
+		height:auto;
+	}
+
+	fieldset#eqTELEM > span#div,  
+	fieldset#eqTELEM > span#desc, 
+	fieldset#eqTELEM > span#label,
+	fieldset#eqTELEM > span#nxt,
+	fieldset#eqTELEM > span#com,
+	fieldset#eqTELEM > span#cur,
+	fieldset#eqTELEM > span#off
+	{
+		display:None;
+	}
+
+	fieldset#eqTELEM label
+	{
+		display:inline-block;
+		min-width:100px;
+	}
+	span#cur textarea, span#nxt textarea, span#com textarea
+	{
+		overflow:hidden;
+	}
+
+	span#cur label, span#nxt label, span#com label
+	{
+		display:inline-block;
+		min-width:7em;
+	}
+	body
+	{
+		/*background:#121212;*/
+		background:gray;
+	}
+	div#SNOOPER
+	{
+		padding-bottom:10px;
+		
+	}
+	fieldset
+	{
+		display:inline;
+	}
+	div#SNOOPER h3, span#Telemetry h3
+	{
+		display:None;
+		
+	}
+	div#SNOOPER fieldset .INumber_ro
+	{
+		font-size:1.5em;
+	}
+	#tabs
+	{
+		height:600px;
+		width:65%;
+		overflow:scroll;
+		overflow-x:hidden;
+	}
+	</style>
+	</head>
+	<body onload="main()" >
+	<!--	<div id="SNOOPER" class="INDIdevice"></div>
+		<div id="tcont">
+
+		<div id="tabs" >
+			  <ul>
+				<li><a href="#TCS-NG-INDI">Telescope</a></li>
+				<li><a href="#DOME-NG-INDI">Dome</a></li>
+				<li><a href="#FOCUS-NG-INDI">FOCUS</a></li>
+			</ul>
+			<div id="TCS-NG-INDI" class="INDIdevice"></div>
+			<div id="DOME-NG-INDI" class="INDIdevice"></div>
+			<div id="FOCUS-NG-INDI" class="INDIdevice"></div>
+		</div>
+		</div>
+	-->
+	<textarea rows=3 cols=75 id="INDImsg"></textarea>
+	</body>
+</html>

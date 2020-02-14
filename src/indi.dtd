@@ -1,0 +1,211 @@
+
+
+<!ENTITY % propertyState "(Idle|Ok|Busy|Alert)" >
+<!ENTITY % switchState "(Off|On)" >
+<!ENTITY % switchRule "(OneOfMany|AtMostOne|AnyOfMany)" >
+<!ENTITY % propertyPerm "(ro|wo|rw)" >
+<!ENTITY % numberValue "(#PCDATA)" >
+<!ENTITY % numberFormat "(#PCDATA)" >
+<!ENTITY % labelValue "(#PCDATA)" >
+<!ENTITY % nameValue "(#PCDATA)" >
+<!ENTITY % textValue "(#PCDATA)" >
+<!ENTITY % timeValue "(#PCDATA)" >
+<!ENTITY % groupTag "(#PCDATA)" >
+<!ENTITY % BLOBlength "(#PCDATA)" >
+<!ENTITY % BLOBformat "(#PCDATA)" >
+<!ENTITY % BLOBenable "(Never|Also|Only)" >
+
+
+<!--Number definitions-->
+<!ELEMENT defNumberVector (defNumber+) >
+
+<!ATTLIST defNumberVector device ENTITY #REQUIRED
+name ENTITY #REQUIRED
+label ENTITY #IMPLIED
+group ENTITY #IMPLIED
+state ENTITY #REQUIRED
+perm ENTITY #REQUIRED
+timeout ENTITY #IMPLIED
+timestamp ENTITY #IMPLIED
+message ENTITY #IMPLIED
+>
+
+
+
+<!ELEMENT defNumber (#PCDATA) >
+<!ATTLIST defNumber
+name ENTITY #REQUIRED
+label ENTITY #IMPLIED
+format ENTITY #REQUIRED
+min ENTITY #REQUIRED
+max ENTITY #REQUIRED
+step ENTITY #REQUIRED
+>
+
+<!ELEMENT setNumberVector (oneNumber+) >
+<!ATTLIST setNumberVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state  (Idle|Ok|Busy|Alert) #REQUIRED
+timeout CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+>
+
+<!ELEMENT oneNumber (#PCDATA) >
+<!ATTLIST oneNumber
+name CDATA #REQUIRED
+>
+
+
+<!--Text Definitions--> 
+<!ELEMENT defTextVector (defText+) >
+<!ATTLIST defTextVector
+
+device  CDATA #REQUIRED 
+name    CDATA #REQUIRED
+label   CDATA #IMPLIED
+group   CDATA #IMPLIED
+state   (Idle|Ok|Busy|Alert) #REQUIRED
+perm   (ro|wo|rw)  #REQUIRED
+timeout   CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT defText (#PCDATA)>  
+<!ATTLIST defText
+name CDATA #REQUIRED
+label CDATA #IMPLIED
+>
+
+<!ELEMENT setTextVector (oneText+) >
+<!ATTLIST setTextVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state (Idle|Ok|Busy|Alert) #IMPLIED
+timeout CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT oneText (#PCDATA) >
+<!ATTLIST oneText
+name CDATA #REQUIRED
+>
+
+<!--Light Definitions-->
+<!ELEMENT defLightVector (defLight+) >
+<!ATTLIST defLightVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+label CDATA #IMPLIED
+group CDATA #IMPLIED
+state (Idle|Ok|Busy|Alert) #REQUIRED
+timestamp CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT defLight (#PCDATA) >
+<!ATTLIST defLight
+name CDATA #REQUIRED
+label CDATA #IMPLIED
+>
+
+<!ELEMENT setLightVector (oneLight+) >
+<!ATTLIST setLightVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state (Idle|Ok|Busy|Alert) #IMPLIED
+timestamp CDATA  #IMPLIED
+message CDATA  #IMPLIED
+>
+
+
+
+<!ELEMENT oneLight (Idle|Ok|Busy|Alert) >
+<!ATTLIST oneLight
+name CDATA #REQUIRED
+> 
+
+<!--Switch Definitions-->
+<!ELEMENT defSwitchVector (defSwitch+) >
+<!ATTLIST defSwitchVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+label CDATA #IMPLIED
+group CDATA #IMPLIED
+state (Idle|Ok|Busy|Alert) #REQUIRED
+perm   (ro|wo|rw)  #REQUIRED
+rule  (OneOfMany|AtMostOne|AnyOfMany) #REQUIRED
+timestamp CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT defSwitch (#PCDATA) >
+<!ATTLIST defSwitch
+name CDATA #REQUIRED
+label CDATA #REQUIRED
+>
+
+<!ELEMENT setSwitchVector (oneSwitch+) >
+<!ATTLIST setSwitchVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+timeout CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT oneSwitch (Off|On) >
+<!ATTLIST oneSwitch
+name CDATA #REQUIRED
+>
+
+
+
+<!--BLOB Definitions -->
+<!ELEMENT defBLOBVector (defBLOB+) >
+<!ATTLIST defBLOBVector
+device CDATA  #REQUIRED
+name   CDATA  #REQUIRED
+label  CDATA  #REQUIRED
+group  CDATA  #IMPLIED
+state (Idle|Ok|Busy|Alert) #REQUIRED
+perm  (ro|wo|rw)  #REQUIRED
+timeout  CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+message CDATA  #IMPLIED
+>
+
+<!ELEMENT defBLOB EMPTY >
+<!ATTLIST defBLOB
+name CDATA #REQUIRED
+label CDATA #REQUIRED
+>
+
+<!ELEMENT setBLOBVector (oneBLOB+) >
+<!ATTLIST setBLOBVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+state (Idle|Ok|Busy|Alert)  #REQUIRED
+timeout CDATA #IMPLIED
+timestamp CDATA #IMPLIED
+message CDATA #IMPLIED
+>
+
+<!ELEMENT newBLOBVector (oneBLOB+) >
+<!ATTLIST newBLOBVector
+device CDATA #REQUIRED
+name CDATA #REQUIRED
+timestamp CDATA #IMPLIED
+>
+
+
+<!ELEMENT oneBLOB (#PCDATA) >
+<!ATTLIST oneBLOB
+name CDATA #REQUIRED
+size CDATA #REQUIRED
+enclen CDATA #REQUIRED
+format CDATA #REQUIRED
+>

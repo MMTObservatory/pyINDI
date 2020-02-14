@@ -19,3 +19,5 @@ RUN apt-get -y install \
 
 
 RUN pip install lxml
+RUN pip install opencv-python
+RUN pip install pillow
