@@ -21,12 +21,23 @@ logging.basicConfig(format="%(asctime)-15s %(message)s",filename=f'/src/{timestr
 # We should remove this import after testing
 import cv2
 import numpy as np
+from PIL import Image
+import io
 
 def print(msg):
 	if type(msg) == bytes:
 		msg = msg.decode()
-	sys.stdout.write(msg)
-	sys.stdout.flush()
+	size = len(msg)
+	chunksize = 10
+	tt=0
+	for tt in range(size//chunksize):
+
+		sys.stdout.write(msg[tt*chunksize:(tt+1)*chunksize])
+		sys.stdout.write('\n')
+		sys.stdout.flush()
+		
+	sys.stdout.write(msg[tt*chunksize:])
+sys.stdout.flush()
 
 """
 The Base classes for the pyINDI module. Definitions where adapted from the INDI white paper:
@@ -151,7 +162,7 @@ class IVectorProperty:
 	"""
 	INDI Vector asbstractions
 	"""
-	dtd = etree.DTD(open("/src/number.dtd"))
+	dtd = etree.DTD(open("/src/indi.dtd"))
 	def __init__(self, device:str, name:str, state:IPState, label:str=None, group:str=None):
 
 		self.device = device
@@ -236,15 +247,12 @@ class IVectorProperty:
 		if msg is not None:
 			ele.set("message", msg)
 
-		if isinstance(self, IBLOBVector):
-			for child in ele:
-
-				logging.debug( str(child.attrib) )
+		
 		return ele
 
 
 class IProperty:
-	dtd = etree.DTD(open("/src/number.dtd"))
+	dtd = etree.DTD(open("/src/indi.dtd"))
 	def __init__(self, name:str, label:str=None):
 		if label is None:
 			label = name
@@ -650,8 +658,13 @@ class do_the_indi:
 	def IDSetSwitch(self, s:ISwitchVector, msg=None):
 		print(etree.tostring(s.Set(msg), pretty_print=True))
 
-	def IDSet(self, VectorProperty, msg=None):
-		print(etree.tostring(VectorProperty.Set(msg), pretty_print=True))
+	def IDSet(self, vector:IVectorProperty, msg=None):
+		if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
+			raise("Must use IDSetBLOB to send BLOB to client.")
+		print(etree.tostring(vector.Set(msg), pretty_print=True))
+
+	def IDSetBLOB(self, blob):
+		print(etree.tostring(blob.Set(), pretty_print=True))
 
 
 	def IDDef(self, prop, msg=None):
@@ -667,6 +680,7 @@ class do_the_indi:
 
 class tester( do_the_indi ):
 	once = True
+	more = True
 
 	def ISNewNumber( self, dev, name, values, names ):
 		if name == "test":
@@ -689,7 +703,7 @@ class tester( do_the_indi ):
 	def testtimer( self ):
 		if not hasattr(self, "counter"):
 			self.counter = 0
-			self.IDSet(self.IUFind( name="blobvec", device="mydev" ))
+			
 		else:
 			self.counter +=1
 			self.counter %=4
@@ -707,13 +721,32 @@ class tester( do_the_indi ):
 		lightvec = self.IUFind( name="lightvec", device="mydev" )
 		lightvec.state = numvec.state
 		lightvec.lp[0].state = numvec.state
-
+		blob = self.IUFind( name="blobvec", device="mydev" ).bp[0]
 		switchvec = self.IUFind( name="svec", device="mydev" )
 		switchvec.state = numvec.state
-
-
-		self.IDSet(self.IUFind( name="blobvec", device="mydev" ))
-		self.IDSetText( textvec )
+		if self.more:
+			
+			cap = cv2.VideoCapture( "http://webcam.mmto.arizona.edu/mjpg/video.mjpg" )
+			ret, frame = cap.read()
+			im = Image.fromarray(frame)
+			bytedata = io.BytesIO()
+			im.save(bytedata, format="png")
+			bytedata.seek(0)
+			raw = bytedata.read()
+			
+			
+			#open("/src/data.b64", 'w').write(base64.b64encode(raw).decode())
+			blob.data = base64.b64encode(raw).decode()
+			blob.size = len(raw)
+			#blob.data = base64.b64encode(b'foobar').decode()
+			#blob.size = len(b'foobar')
+			
+			self.more = False
+			logging.debug("Setting the blob")
+			self.IDSetBLOB(self.IUFind( name="blobvec", device="mydev" ))
+		logging.debug(f"size of data is {len(blob.data)}")
+		#self.IDSetBLOB(self.IUFind( name="blobvec", device="mydev" ))
+		#self.IDSetText( textvec )
 		#self.IDSetNumber( numvec )
 		#self.IDSetLight( lightvec )
 		#self.IDSetSwitch( switchvec )
@@ -742,14 +775,15 @@ class tester( do_the_indi ):
 		iblob = IBLOB("b1", "png", "Test Blob")
 
 		ibv = IBLOBVector([iblob], "mydev", "blobvec", IPState.OK, IPerm.RO, "The BLOB Vector")
-		iblob.data = 'Zm9vYmFy'
+		iblob.data = base64.b64encode(b"foobar").decode()
+		
 
-		#iblob.data += bytes([0])
+		
 
-		iblob.size = len( iblob.data )
+		iblob.size = len(b"foobar")
 		#iblob.data = iblob.data.decode()
 		iblob.enclen = ((iblob.size + 2) // 3) * 4;
-
+		
 		self.IDDef( inv, None )
 		self.IDDef( itv, None )
 		self.IDDef( ilv, None )

@@ -191,6 +191,12 @@ function INDIwebsocket(url, container, devicelist)
 				console.log("We have a blob")
 			break;
 
+			case "blob":
+				//newData = true;
+				ele = updateBLOB( data );
+				console.log("Updating blob")
+			break;
+
 			case "msg":
 				var msgselector = "textarea#INDImsg";
 				//console.log("Message", data.msg);
@@ -199,7 +205,7 @@ function INDIwebsocket(url, container, devicelist)
 
 			break;
 			default:
-				console.log("IDK", data.metainfo);
+				console.log("IDK", data);
 		}
 
 
@@ -759,13 +765,29 @@ function newBLOB( INDIvp, other )
             .attr("device", INDIvp.device)
             .attr("group", INDIvp.group)
             //.attr("text", INDIvp)
-            .append("<legend>"+INDIvp.label+"</legend>");
+            .append("<legend>"+INDIvp.label+"</legend>")
+        $.each(INDIvp["bp"], function(bp) 
+            {
+            	console.log(this)
+            	vphtmldef.append($("<span class='INDIbp blob' id='"+this.name+"'/>"))
+            })
             
         console.log("HERE FIRST")
         return vphtmldef
     }
     console.log("HERE")
     return vpselector
+
+}
+
+function updateBLOB( blob )
+{
+    var blobselector = "span.INDIbp#"+blob.name;
+    console.log(blob);
+    if( $(blobselector).lenght !=0 )
+    {
+    	$(blobselector).text(blob.blob);
+    }
 
 }
 

@@ -33,7 +33,7 @@ services:
                 image: "srswinde/indiserver"
                 ports:
                         - "7624:7624"
-                command: "/usr/bin/indiserver -v -r 0 /src/main.py"
+                command: "/usr/bin/indiserver -r 0 /src/main.py"
                 volumes:
                         - "//C/Users/srswi/git-clones/pyINDI/src:/src"
 
