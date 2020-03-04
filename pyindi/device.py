@@ -7,7 +7,7 @@ import sys
 import logging
 import datetime
 from enum import Enum
-from typing import Union
+from typing import Union, Callable
 import os
 # import base64
 
@@ -30,7 +30,8 @@ timestr = now.strftime("%H%M%S-%a")
 
 if Path("/src").exists():
     """
-    TODO: The logging path should be a configureable or an environment variable.
+    TODO: The logging path should be a
+    configureable or an environment variable.
     """
     logging.basicConfig(format="%(asctime)-15s %(message)s",
                         filename=f'/src/{timestr}.log',
@@ -42,11 +43,12 @@ else:
 
 
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
-    
+
     """
-    Collect the stdio as async streams. This is a shameless 
+    Collect the stdio as async streams. This is a shameless
     ctrl-c ctrl-v of this stackoverflow:
-    https://stackoverflow.com/questions/52089869/how-to-create-asyncio-stream-reader-writer-for-stdin-stdout
+    https://stackoverflow.com/questions/52089869/how-to-\
+            create-asyncio-stream-reader-writer-for-stdin-stdout
     """
     if loop is None:
         loop = asyncio.get_event_loop()
@@ -73,8 +75,6 @@ def print(msg: Union[str, bytes]):
     sys.stdout.write(msg)
     sys.stdout.flush()
     return
-
-
 
 
 
@@ -572,6 +572,8 @@ class IBLOB(IProperty):
         self.data = None
 
 
+
+
 class device(ABC):
     """
     Handle the stdin/stdout xml.
@@ -594,18 +596,44 @@ class device(ABC):
     self.mainloop.run_in_executor to run tasks 
     in a process pool. 
     
+    
     """
 
-    def __init__(self, loop=None, config=None):
+
+    def __init__(self, loop=None, config=None, name=None):
+
+        """
+        Arguments:
+        loop: the asyncio event loop
+        config: the configureable info from ConfigParser
+        name: Name of the device defaulting to name of the class
+        """
 
         if loop is None:
             self.mainloop = asyncio.get_event_loop()
         else:
             self.mainloop = loop
 
+        if name is not None:
+            self._devname = self.__class__.__name__
+        else:
+            self._devname = name
+
         self.props = []
         self.config = config
         self.timer_queue = asyncio.Queue()
+
+        self.reader, self.writer = \
+                self.mainloop.run_until_complete(stdio(loop=self.mainloop))
+
+
+    def name(self):
+        return self._devname
+
+
+    def __repr__(self):
+        return f"<{self.name()}>"
+
 
     def start(self):
         """
@@ -615,8 +643,6 @@ class device(ABC):
         and you never have to know that this is asyncio. 
         """
 
-        self.reader, self.writer = \
-                self.mainloop.run_until_complete(stdio(loop=self.mainloop))
         self.mainloop.run_until_complete( self.run() )
 
 
@@ -687,13 +713,13 @@ class device(ABC):
                     logging.debug(etree.tostring(xml))
                     raise
 
-    def IEAddTimer(self, millisecs: int, funct_or_coroutine, *args):
+    def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
         """
         create a callback to be executed after a delay.
 
         9 times out of 10 this will be appended to the bottom 
         of the callback so that this is called in a loop. 
-        I hope make this funcitonality happen with a simple 
+        I hope make this functonality happen with a simple 
         decorator over the callback function. 
         """
         self.mainloop.call_soon_threadsafe(
@@ -730,6 +756,22 @@ class device(ABC):
         raise NotImplementedError(
                                   f"Subclass of {self.__name__} must \
                                   implement ISGetProperties")
+
+    def IDMessage(self, msg: str, 
+            timestamp: Union[str, datetime.datetime, None]=None):
+
+        if type(timestamp) == datetime.datetime:
+            timestamp = timestamp.isoformat()
+
+        elif timestamp is None:
+            timestamp = datetime.datetime.now().isoformat()
+
+        xml = f'<message message="{msg}" '
+        xml+= f'timestamp="{timestamp}" '
+        xml+= f'device="{self.name()}"> '
+        xml+= f'</message>'
+
+        self.writer.write(xml.encode())
 
     def IDSetNumber(self, n: INumberVector, msg=None):
         self.IDSet(n)

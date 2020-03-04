@@ -43,24 +43,29 @@ class mount( INDIDevice.device ):
         pass
 
 
-    def testtimer( self ):
-
+    def repeat( self ):
         
-        r = redis.Redis(host="redis.mmto.arizona.edu")
-        mkeys = r.keys( "mount_mini*" )
-        values = {key.decode():json.loads(r.get(key).decode())['value'] for key in mkeys}
-        nums = self.IUFind("mount", "mount_nums")
+        try:
+        
+            r = redis.Redis(host="redis.mmto.arizona.edu")
+            mkeys = r.keys( "mount_mini*" )
+            values = {key.decode():json.loads(r.get(key).decode())['value'] for key in mkeys}
+            nums = self.IUFind("mount", "mount_nums")
 
-        #O(N*N) where N is number of keys :(
-        for key, value in values.items():
-            for num in nums.np:
-                if num.name == key:
-                    num.value = value
-            
+            #O(N*N) where N is number of keys :(
+            for key, value in values.items():
+                for num in nums.np:
+                    if num.name == key:
+                        num.value = value
+                
 
 
-        self.IDSet(nums)
-        self.IEAddTimer( 1000.0, self.testtimer )
+            self.IDSet(nums)
+
+        except Exception as err:
+            pass
+
+        self.IEAddTimer( 1000.0, self.repeat )
 
     
 
@@ -91,7 +96,8 @@ class mount( INDIDevice.device ):
 
 
         if self.once:
-            self.IEAddTimer(1000, self.testtimer )
+            self.IEAddTimer(1000, self.repeat )
+
 
     async def get_mount_meta(self):
         
