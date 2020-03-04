@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+	<head>
+	
+	<link rel="stylesheet" href="/static/indi/indi.css">
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.min.css">
+	<script src="/static/indi/indi.js"></script>
+	<script src="/static/indi/utility.js"></script>
+	<script src="/static/indi/maps-indi.js"></script>
+
+	<script>
+		doLess = true;
+		function main()
+		{
+
+			start = new Date()
+			imgs = []
+			setPropertyCallback("{{ device_name }}.*", function(map) 
+			{
+				console.log(map)
+				switch( map.metainfo )
+				{
+					case "nvp":
+						ele = newNumber(map);
+					break;
+					case "svp":
+						ele = newSwitch(map);
+					break;	
+					case "tvp":
+						ele = newText(map);
+					break;
+					case "lvp":
+						ele = newLight(map);
+					break;
+				}
+				if( typeof ele != 'string')
+				{	
+					ele.appendTo($("body"))
+				}			
+				
+				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
+					var prop="background-color";
+				else
+					var prop="color";
+		
+				$(ele).css( prop, indistate2css( map.state ) )
+
+			});
+
+
+			setPropertyCallback("mydev.blobvec", function(map) 
+				{
+					var b64 = btoa(map.b1);
+					("img").attr("src", "data:image/png;base64,"+map.b1);
+					
+				})
+		}
+	
+	</script>
+	<style>
+		.INumberspan
+		{
+			display:inline-block;
+			width:250px;
+
+		}
+	</style>
+	</head>
+	<body onload=main() style="background:gray;">
+	<img></img>
+	</body>
+
+</html>
+

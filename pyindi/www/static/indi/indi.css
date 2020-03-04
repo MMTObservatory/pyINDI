@@ -1,0 +1,77 @@
+
+:root {
+	--indistate-idle: transparent;
+	--indistate-ok: rgb(0,128,0);
+	--indistate-busy: yellow;
+	--indistate-alert: red;
+}
+
+.IText_ro
+{
+	/*resize:none;*/
+	display:table;
+	background:transparent;
+	border:none;
+	max-height: 25px;
+	overflow:visible;
+	height:auto;
+	font-weight:bold;
+	font-size:16px;
+	
+}
+.IText_wo
+{
+	color:black;
+	/*resize:none;*/
+}
+
+.IText_ro, .INumber_ro
+{
+	margin-left:5px;
+	margin-right:5px;
+}
+
+fieldset
+{
+	display:inline-block;
+}
+
+fieldset.INDIsvp
+{
+	--indistate-idle: transparent;
+}
+
+
+textarea#INDImsg
+{
+	position:fixed;
+	bottom:10px;
+	right:10px;
+	margin:auto;
+	box-shadow: 5px 5px;
+}
+
+.INDIgroup
+{
+	display:block;
+}
+
+.ILightspan
+{
+	display:table;
+	border:1px solid black;
+	margin: 15px;
+	border-radius:5px;
+}
+
+.ILightlabel
+{
+	color:black;
+	padding:5px;
+	border-radius:5px;
+}
+legend
+{
+	background-color:inherit;
+	border:inherit;
+}
