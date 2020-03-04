@@ -6,12 +6,23 @@ from tornado.queues import Queue
 from collections import namedtuple
 import json
 from pathlib import Path
+import logging
 
 class WebHandler(tornado.web.RequestHandler):
+    """
+    Render a simple webpage. 
+    The page uses setPropertyCallback
+    to render the device given in the url eg:
+    If the url string is /dev/(.*) and the 
+    url entered into the browser is /dev/mount
+    the webpage will send a setPropertyCallback('mount.*')
+    and build all the non-BLOB properties into jquery-ui
+    widgets. 
+    """
 
+    static_path = Path(__file__).parent/"www/index.html"
     def get(self, device):
-        
-        self.render("www/index.html", device_name=device)
+        self.render(str(self.static_path), device_name=device)
 
 
 
@@ -35,6 +46,8 @@ class INDIClient:
         self.host = host
 
     async def parse_incoming_xml(self):
+        # TODO: This needs to be tolerant of an indi
+        # server crash. 
         self.reader, self.writer = await asyncio.open_connection(
                         self.host, self.port)
         self.running = 1
@@ -61,13 +74,16 @@ class INDIClient:
         cls.clients.add(client)
 
 
-
     @classmethod
     def remove_client(cls):
         cls.clients.remove(client)
 
 
 class INDIWebsocket(tornado.websocket.WebSocketHandler):
+    """
+    This class handles the websocket traffic and 
+    registers new clients with the INDIClient class
+    """
     client = INDIClient
     
     def open(self):
@@ -83,25 +99,25 @@ class INDIWebsocket(tornado.websocket.WebSocketHandler):
 
 class INDIWebApp():
 
+    # The files in this path will alway be available
+    # http://<HOST>/static/
     static_path = Path(__file__).parent/"www/static"
 
-    def __init__(self, loop=None, webport=8888, indihost="localhost", indiport=7624):
+    def __init__(self, loop=None, webport=8888, indihost="localhost",
+            indiport=7624):
         """
         Arguments:
         loop: The tornado IOLoop can not be an asyncio event loop.
-        webport: The port of the webserver. .
+        webport: The port of the webserver. 
         indihost: the name or IP address of the computer hosting the indi
         server.
-        indiport: THe port the indi server is running on. 
+        indiport: The port the indi server is running on. 
         """
 
-        self.app = tornado.web.Application([
-                    (r"/dev/(.*)", WebHandler),
-                    (r"/indi-websocket", INDIWebsocket)
-                        ],
-                        static_path=self.static_path)
-
-        self.app.listen(webport)
+        self._handlers = None
+        self.port = webport
+        
+        
 
         if loop is None:
             loop = tornado.ioloop.IOLoop.current()
@@ -110,12 +126,49 @@ class INDIWebApp():
 
         self.client = INDIClient(port=indiport, host=indihost)
 
-        # Tornado.IOLoop has not equivalent to call_soon
-        # To make this compatible
         self.mainloop.add_callback(self.client.parse_incoming_xml)
         self.mainloop.add_callback(self.client.web2indiserver)
 
+
+    def add_page(self, url_path: str, path_to_html: str):
+        """
+        Add a webpage to be rendered by tornado.
+        Get data only. 
+        """
+        html = Path(path_to_html)
+        if self._handlers is None:
+            self._handlers = []
+
+        class handler(tornado.web.RequestHandler):
+
+            def get(self):
+                name = self.get_argument("device_name")
+                self.render( str(html), device_name=name)
+
+        self._handlers.append((url_path, handler))
+
+        
+    def add_handler(self, handler: tuple):
+        """Expose tornado.web.Application add_handlers method"""
+        if self._handlers is None:
+            self._handlers = []
+        self._handlers.append(handler)
+
+
+
     def start(self):
+        if self._handlers is None:
+            # Add the default page
+            self._handlers = [(r"/dev/(.*)", WebHandler)]
+
+        # Add the websocket handler
+        self._handlers.append((r"/indi-websocket", INDIWebsocket))
+        self.app = tornado.web.Application(
+                self._handlers,
+                static_path=self.static_path)
+
+        self.app.listen(self.port)
+
         self.mainloop.start()
 
 
