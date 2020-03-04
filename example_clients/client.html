@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+	<head>
+	
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/vader/jquery-ui.min.css">
+
+
+	<!--These libraries are built with pyINDI
+	and are available at /static/ using
+	pyINDI's client libarary.-->
+	
+	<link rel="stylesheet" href="/static/indi/indi.css">
+	<script src="/static/indi/indi.js"></script>
+	<script src="/static/indi/utility.js"></script>
+	<script src="/static/indi/maps-indi.js"></script>
+
+	<script>
+
+		//This is a hack to change the behavior of maps-indi.js
+		doLess = true;
+		function main()
+		{
+
+			start = new Date()
+			imgs = []
+			setPropertyCallback("{{ device_name }}.*", function(map) 
+			{
+				/*
+				This function will be called whenever an INDI property
+				with the device {{ device_name }} is recieved. 
+					*/
+				
+				switch( map.metainfo )
+				{
+					case "nvp":
+						ele = newNumber(map);
+					break;
+					case "svp":
+						ele = newSwitch(map);
+					break;	
+					case "tvp":
+						ele = newText(map);
+					break;
+					case "lvp":
+						ele = newLight(map);
+					break;
+				}
+				if( typeof ele != 'string')
+				{	
+
+					vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
+					if(vpele.length > 0)
+						ele.appendTo(vpele)
+					else
+						ele.appendTo($("body"))
+
+				}			
+				
+				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
+					var prop="background-color";
+				else
+					var prop="color";
+		
+				$(ele).find("legend").css( prop, indistate2css( map.state ) )
+
+
+			});
+
+
+			/*BLOB's have to be dealt with individually*/
+			setPropertyCallback("mydev.blobvec", function(map) 
+			{
+					var b64 = btoa(map.b1);
+					$("img").attr("src", "data:image/png;base64,"+map.b1);
+					
+			})
+		}
+	
+	</script>
+	<style>
+		.INumberspan
+		{
+			display:inline-block;
+			width:250px;
+
+		}
+		span#num
+		{
+			display:inline;
+			float:left;
+		}
+		fieldset.INDIvp
+		{
+			display:block;
+		}
+	</style>
+	</head>
+	<body onload=main() style="background:gray;">
+
+	<span style="display:inline-block; border:1px solid black">
+		<H3>This is rendered from a BLOB</H3>
+		<img id="blobvec"></img>
+	</span>
+		<span id="num" indiname="test" indidevice="mydev" class="INDIvp"></span>
+	</body>
+
+</html>
+
