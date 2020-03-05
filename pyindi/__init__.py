@@ -10,7 +10,7 @@ from . import device
 from .client import INDIWebApp
 
 __all__ = []
-from .example_mod import *   # noqa
+#from .example_mod import *   # noqa
 # Then you can be explicit to control what ends up in the namespace,
 __all__ += ['do_primes']   # noqa
 # or you can keep everything from the subpackage with the following instead
