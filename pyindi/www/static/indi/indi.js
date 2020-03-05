@@ -534,7 +534,6 @@ function newSwitch( INDIvp, appendTo )
 	var nosp_dev = INDIvp.device.replace( " ", "_" );
 	var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
 	
-
 	var retn = $(vpselector);
 	switch(INDIvp.rule)
 	{
@@ -610,15 +609,20 @@ function newSwitch( INDIvp, appendTo )
 	else
 	{
 		
-		$.each(INDIvp.sp, function(ii, sp)
+		$.each(INDIvp.values, function(ii, sp)
 		{
-			var label = sp.label.replace(" ", "_");
+			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ name;
-			var state = sp.state
-			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', sp.state);
-			if(label.slice(0,3) == "123")
-				console.log(label)
+
+			if(sp.value === "On")
+			{
+				state = true;
+			}
+			else
+				state = false;
+
+			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', state);
 			//console.log($("body fieldset.INDIsvp#"+nosp_vpname+"[device='"+INDIvp.device+"']"))
 		});
 		

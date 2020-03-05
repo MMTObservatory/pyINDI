@@ -348,10 +348,8 @@ function flattenIndiLess(xml) {
 
 
 
-
-
-		childObjs = []
-		var jj=0;
+	childObjs = []
+	var jj=0;
     for (var c = 0; c < xml.childNodes.length; c++) 
 		{
 			var child = xml.childNodes[c];
@@ -412,6 +410,7 @@ function flattenIndiLess(xml) {
  */
 var partial_doc = '';                                   // accumulate xml in pieces
 var start_xml_re = /<.e[twf]\S*Vector/;                 // accept <set <new <def <get
+var msg_xml_re = /<message\s+.*\/>.*/;
 function updateProperties(xml_text) {
     // append next chunk
     if (xml_text == undefined)
@@ -420,7 +419,8 @@ function updateProperties(xml_text) {
     partial_doc += xml_text; 
 
     // process any/all complete INDI messages in partial_doc
-    while (true) {
+    while (true) 
+		{
 
         // find first opening tag, done if none
         var start_match = start_xml_re.exec(partial_doc);
@@ -438,36 +438,73 @@ function updateProperties(xml_text) {
 
         // extract property xml and remove from partial_doc
         var xml_doc = partial_doc.substring(start_match.index, end_after_idx);
+				
+
+				/*this function doesn't check for <message/> elements
+				 * This match will bring it in line with the INDI spec
+				 * */
+				try
+				{
+					msg_match = msg_xml_re.exec(partial_doc)
+					if (msg_match)
+					{
+						//TODO: We should check for device here.
+						if(typeof showMessage != 'undefined')
+						{
+							let ele = $.parseXML(msg_match[0]).childNodes[0];
+							let msg = ele.attributes["message"].textContent;
+							let timestamp = ele.attributes["timestamp"].textContent;
+
+							showMessage(msg, timestamp)
+						}
+						//TODO remove xml element from partial_doc
+					}
+				}
+				catch(e)
+				{
+					console.log("Trouble parsing message", e)
+				}
+					
         partial_doc = partial_doc.substring(end_after_idx);
+				
 
         // parse and spring callback if anyone interested
-        try {
-            // console.log(xml_doc);
-	    // xml_doc = xml_doc.replace(/[^A-Za-z0-9_<>/ ='":-.\n]/g, '');
-            $(gTypestr, $.parseXML(xml_doc)).each(function() {
-                // console.log("parse ok. length = " + xml_doc.length);
-                // handy device and name
-                var dev = $(this).attr('device');
-                var nam = $(this).attr('name');
+        try 
+				{
+					// console.log(xml_doc);
+			    // xml_doc = xml_doc.replace(/[^A-Za-z0-9_<>/ ='":-.\n]/g, '');
+					$(gTypestr, $.parseXML(xml_doc)).each(function() {
+						// console.log("parse ok. length = " + xml_doc.length);
+						// handy device and name
+						var dev = $(this).attr('device');
+						var nam = $(this).attr('name');
 
-                // call callbacks interested in this property
-                // console.log (dev + "." + nam);
-                var cb = setPropertyCallbacks[dev+'.'+nam] || setPropertyCallbacks[dev+'.*'];
-                if (cb) {
-										if( typeof doLess == "undefined")
-											var map = flattenIndi(this);
-										else
-	                    var map = flattenIndiLess(this);
-                    cb(map);
-                    if (map["message"] && typeof showMapMessage != 'undefined')
-                        showMapMessage (map);
-                }
-            });
-        }
-        catch(e) {
-            console.log ('Parse fail', e);
-						throw e
-            // console.log ('Parse fail:\n' + xml_doc);
+						// call callbacks interested in this property
+						// console.log (dev + "." + nam);
+
+
+						var cb = setPropertyCallbacks[dev+'.'+nam] || setPropertyCallbacks[dev+'.*'];
+						if (cb) 
+						{
+							//hack for pyindi style map
+							if( typeof doLess == "undefined")
+								var map = flattenIndi(this);
+							else
+								var map = flattenIndiLess(this);
+							cb(map);
+
+							if (map["message"] && typeof showMapMessage != 'undefined')
+							{
+								showMapMessage (map);
+							}
+						}
+          });
+				}
+        catch(e) 
+				{
+					console.log ('Parse fail', e);
+					throw e
+					// console.log ('Parse fail:\n' + xml_doc);
         }
     }
 }

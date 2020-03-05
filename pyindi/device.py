@@ -614,7 +614,7 @@ class device(ABC):
         else:
             self.mainloop = loop
 
-        if name is not None:
+        if name is None:
             self._devname = self.__class__.__name__
         else:
             self._devname = name
@@ -769,7 +769,7 @@ class device(ABC):
         xml = f'<message message="{msg}" '
         xml+= f'timestamp="{timestamp}" '
         xml+= f'device="{self.name()}"> '
-        xml+= f'</message>'
+        xml+= f'\n\n</message>'
 
         self.writer.write(xml.encode())
 

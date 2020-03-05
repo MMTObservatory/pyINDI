@@ -142,7 +142,13 @@ class INDIWebApp():
         class handler(tornado.web.RequestHandler):
 
             def get(self):
-                name = self.get_argument("device_name")
+
+                name = self.get_argument("device_name", None)
+                if name is None:
+                    self.write(f"URL must contain device_name as http get data. For\
+                            example: <br><br><br> http://{self.request.host}/dev?device_name=mydev\
+                            ")
+                    return 
                 self.render( str(html), device_name=name)
 
         self._handlers.append((url_path, handler))

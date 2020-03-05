@@ -59,6 +59,7 @@ class tester( INDIDevice.device ):
 
         switchvec = self.IUFind( name="svec", device="mydev" )
         switchvec.state = numvec.state
+        switchvec.sp[0].s = True
         blob = self.IUFind( name="blobvec", device="mydev" ).bp[0]
 
         try:

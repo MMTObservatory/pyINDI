@@ -12,6 +12,7 @@ from pyindi import INDIWebApp
 
 app = INDIWebApp( webport=8888, indiport=7600 )
 app.add_page(r"/dev", Path.cwd()/"client.html")
+
 app.start()
 
 

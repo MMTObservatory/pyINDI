@@ -5,7 +5,7 @@
 	
 	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/vader/jquery-ui.min.css">
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css">
 
 
 	<!--These libraries are built with pyINDI
@@ -78,6 +78,14 @@
 					
 			})
 		}
+	function showMapMessage(map)
+	{
+		console.log("Message:", map.message);
+	}
+	function showMessage(msg, timestamp)
+	{
+		console.log("Message", msg, timestamp)
+	}
 	
 	</script>
 	<style>
@@ -98,7 +106,7 @@
 		}
 	</style>
 	</head>
-	<body onload=main() style="background:gray;">
+	<body onload=main() style="background:white;">
 
 	<span style="display:inline-block; border:1px solid black">
 		<H3>This is rendered from a BLOB</H3>
