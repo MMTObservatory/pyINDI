@@ -3,12 +3,12 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-      if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[docker skip]')"
-      steps:
-      - uses: actions/checkout@master
-      - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@master
-        with:
-          name: mmtobservatory/pyINDI
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[docker skip]')"
+    steps:
+    - uses: actions/checkout@master
+    - name: Publish to Registry
+      uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: mmtobservatory/pyINDI
+        username: ${{ secrets.DOCKER_USER }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
