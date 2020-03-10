@@ -7,8 +7,8 @@ jobs:
                 steps:
                 - uses: actions/checkout@master
                 - name: Publish to Registry
-                uses: elgohr/Publish-Docker-Github-Action@master
-                with:
-                        name: mmtobservatory/pyINDI
-                        username: ${{ secrets.DOCKER_USER }}
-                        password: ${{ secrets.DOCKER_PASSWORD }}
+                        uses: elgohr/Publish-Docker-Github-Action@master
+                        with:
+                                name: mmtobservatory/pyINDI
+                                username: ${{ secrets.DOCKER_USER }}
+                                password: ${{ secrets.DOCKER_PASSWORD }}
