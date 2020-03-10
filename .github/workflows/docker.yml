@@ -11,4 +11,4 @@ jobs:
                 with:
                         name: mmtobservatory/pyINDI
                         username: ${{ secrets.DOCKER_USER }}
-                        password: ${{ secrets.DOCKER_TOKEN }}
+                        password: ${{ secrets.DOCKER_PASSWORD }}
