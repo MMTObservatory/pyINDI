@@ -9,7 +9,7 @@ import datetime
 from enum import Enum
 from typing import Union, Callable
 import os
-# import base64
+import base64
 
 from abc import ABC
 from pathlib import Path
@@ -273,6 +273,12 @@ class IVectorProperty(ABC):
 
         return ele
 
+    def __str__(self):
+        return f"<I{self.tagcontext} name={self.name}, device={self.device}>"
+
+    def __repr__(self):
+        return self.__str__()
+
     def Set(self, msg=None):
         """
         This will put together the setXXX xml element
@@ -299,6 +305,30 @@ class IVectorProperty(ABC):
 
         return ele
 
+    @property
+    def elements(self):
+        if isinstance(self, INumberVector):
+            return self.np
+        elif isinstance(self, ITextVector):
+            return self.tp
+        elif isinstance(self, ILightVector):
+            return self.lp
+        elif isinstance(self, ISwitchVector):
+            return self.sp
+        elif isinstance(self, IBLOBVector):
+            return self.bp
+
+    def __getitem__(self, name: str):
+        """
+        retrieve the IProperty 
+        """
+        for ele in self.elements:
+            if ele.name == name:
+                return ele
+
+        raise KeyError(f"{name} not in {self.__str__()}")
+
+    
 
 class IProperty:
     dtd = etree.DTD(
@@ -312,6 +342,12 @@ class IProperty:
         self.label = label
         self.name = name
 
+    def __str__(self):
+        return f"<I{self.tagcontext} name={self.name} {self.value}>"
+
+    def __repr__(self):
+        return self.__str__()
+    
     def Def(self):
         tagname = "def"+self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
@@ -329,7 +365,7 @@ class IProperty:
 
         # Blob definitions have empty data.
         if not isinstance(self, IBLOB):
-            ele.text = str(getattr(self, self.valuename))
+            ele.text = str(self.value)
 
         return ele
 
@@ -348,9 +384,51 @@ class IProperty:
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
 
-        ele.text = str(getattr(self, self.valuename))
+        ele.text = str(self.value)
 
         return ele
+
+    @property
+    def value(self):
+        if isinstance(self, INumber):
+            return self._value
+        elif isinstance(self, IText):
+            return self.text
+        elif isinstance(self, ILight):
+            return self._state
+        elif isinstance(self, ISwitch):
+            return self._state
+        elif isinstance(self, IBLOB):
+            return self.data
+
+        raise TypeError(f"""value method must be called with INumber,
+        IText, ILight, ISwitch or IBLOB not {type(self)}
+        {isinstance(self, INumber)}
+        """)
+
+    @value.setter
+    def value(self, val):
+        
+        #TODO: We could do some type checking.
+        if isinstance(self, INumber):
+            self._value = self._value
+        elif isinstance(self, IText):
+            self.text = val
+        elif isinstance(self, ILight):
+            self.state = val
+        elif isinstance(self, ISwitch):
+            self.state = val
+        elif isinstance(self, IBlob):
+            self.data = val
+        else:
+            raise TypeError(f"""
+        value method must be called with INumber, IText,
+        ILight, ISwitch or IBLOB not {type(self)} {self}
+        {isinstance(self, INumber)} {self.tagcontext}
+        {type(self) == INumber}
+        {self.tagcontext == "Switch"}
+        {self.__class__ == ISwitch}
+        """)
 
 
 class INumberVector(IVectorProperty):
@@ -401,8 +479,18 @@ class INumber(IProperty):
         self.min = min
         self.max = max
         self.step = step
-        self.value = value
+        self._value = value
 
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, val):
+        try:
+            self._value = float(val)
+        except Exception as err:
+            raise ValueError(f"""INumber value must be a number not {val}""")
 
 class ITextVector(IVectorProperty):
 
@@ -446,6 +534,17 @@ class IText(IProperty):
         self.text = text
 
 
+    @property
+    def value(self):
+        return self.text
+
+    @value.setter
+    def value(self, val):
+        try:
+            self.text = str(val)
+        except Exception as err:
+            raise ValueError(f"""IText value must be str not {val}""")
+
 class ILightVector(IVectorProperty):
 
     tagcontext = "LightVector"
@@ -484,8 +583,21 @@ class ILight(IProperty):
 
         super().__init__(name, label)
 
-        self.state = state
+        self._state = state
+    
+    @property
+    def value(self):
+        return self._state
 
+    @value.setter
+    def value(self, val):
+
+        for state in list(IPState):
+            if state == val:
+                self._state = val
+
+
+        raise ValueError(f"""ILight value must be in {list(IPState)}""")
 
 class ISwitchVector(IVectorProperty):
 
@@ -528,8 +640,22 @@ class ISwitch(IProperty):
 
         super().__init__(name, label)
 
-        self.state = state
+        self._state = state
 
+
+    @property
+    def value(self):
+        return self._state
+
+
+    @value.setter
+    def value(self, val):
+
+        for state in list(ISState):
+            if state == val:
+                self._state = val
+
+        raise ValueError(f"""ISwitch value must be in {list(ISState)}""")
 
 class IBLOBVector(IVectorProperty):
 
@@ -572,6 +698,19 @@ class IBLOB(IProperty):
         self.data = None
 
 
+    @property
+    def value(self):
+        return base64.b64encode(self.data).decode()
+
+
+    @value.setter
+    def value(self, val):
+        if type(val) != bytes:
+            raise ValueError(f"""IBLOB value must by bytes type""")
+
+        self.size = len(val)
+        self.data = val
+
 
 
 class device(ABC):
@@ -598,7 +737,7 @@ class device(ABC):
     
     
     """
-
+    
 
     def __init__(self, loop=None, config=None, name=None):
 
@@ -626,8 +765,21 @@ class device(ABC):
         self.reader, self.writer = \
                 self.mainloop.run_until_complete(stdio(loop=self.mainloop))
 
+        self.outq = asyncio.Queue()
+
+    def __getitem__(self, name: str):
+        """
+        Retrieve IVectorProperty that has been
+        registered with the device.Set method.
+        """
+    
+        return self.IUFind(name)
 
     def name(self):
+        return self._devname
+
+    @property
+    def device(self):
         return self._devname
 
 
@@ -642,9 +794,18 @@ class device(ABC):
         instantiate the subclass and call this method in the same thread
         and you never have to know that this is asyncio. 
         """
+        self.running = True
+        self.mainloop.run_until_complete( asyncio.gather(
+                self.run(),
+                self.toindiserver()
+                ))
 
-        self.mainloop.run_until_complete( self.run() )
+    async def toindiserver(self):
 
+        while self.running:
+            output = await self.outq.get()
+            self.writer.write(output)
+            await self.writer.drain()
 
     async def run(self):
         """
@@ -656,7 +817,7 @@ class device(ABC):
         """
 
         inp = ""
-        while 1:
+        while self.running:
 
             inp += (await self.reader.readline()).decode()
             try:
@@ -667,7 +828,7 @@ class device(ABC):
             except etree.XMLSyntaxError as error:
                 # This is not the best way to check
                 # for completed xml. 
-                logging.debug(f"{error} {inp}")
+                logging.debug(f"Could not parse xml {error} {inp}")
                 continue
 
             logging.debug(etree.tostring(xml, pretty_print=True))
@@ -713,6 +874,8 @@ class device(ABC):
                     logging.debug(etree.tostring(xml))
                     raise
 
+
+
     def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
         """
         create a callback to be executed after a delay.
@@ -734,12 +897,15 @@ class device(ABC):
                                   "Device driver must \
                                   overload ISNewNumber method.")
 
-    def IUFind(self, device, name, group=None):
+    def IUFind(self, name, device=None, group=None):
         """
         Modeled after the IUFindXXX set of equations
         [see here](http://www.indilib.org/api/group__\
                 dutilFunctions.html#gac8609374933e4aaea5a16cbafcc51ce2)
         """
+        if device is None:
+            device = self._devname
+
         for p in self.props:
             if p.name == name and p.device == device:
                 if group is not None:
@@ -770,12 +936,11 @@ class device(ABC):
         xml+= f'timestamp="{timestamp}" '
         xml+= f'device="{self.name()}"> '
         xml+= f'\n\n</message>'
-
-        self.writer.write(xml.encode())
+        self.outq.put_nowait(xml.encode())
+        # self.writer.write(xml.encode())
 
     def IDSetNumber(self, n: INumberVector, msg=None):
         self.IDSet(n)
-        
 
     def IDSetText(self, t: ITextVector, msg=None):
         self.IDSet(t)
@@ -789,15 +954,19 @@ class device(ABC):
     def IDSet(self, vector: IVectorProperty, msg=None):
         if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
             raise("Must use IDSetBLOB to send BLOB to client.")
-        self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
+        self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
+        #self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
 
     def IDSetBLOB(self, blob):
-        self.writer.write(etree.tostring(blob.Set()))
+        self.outq.put_nowait(etree.tostring(blob.Set()))
+        #self.writer.write(etree.tostring(blob.Set()))
 
     def IDDef(self, prop, msg=None):
 
         # register the property internally
         self.props.append(prop)
         # Send it to the indiserver
-        self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
-        #self.mainloop.call_soon(self.writer.drain())
+        self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
+
+        # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
+

@@ -19,11 +19,13 @@ class tester( INDIDevice.device ):
     more = False
 
     def ISNewNumber( self, dev, name, values, names ):
-        if name == "test":
-            nv = self.IUFind(name="test", device="mydev")
-            nv.np[0].value = values[0]
-            nv.np[1].value = values[1]
-            self.IDSetNumber( nv )
+            nv = self.IUFind(name="test")
+
+            # Blindly update the values from client. 
+            for nm, value in zip(names, values):
+                nv[nm].value = value
+                logging.debug(f"setting number {nv[nm].value} to {value}")
+            self.IDSetNumber(nv)
 
     def ISNewText(self, dev, name, texts, names ):
         tv = self.IUFind(name="textvec", device="mydev")
@@ -72,8 +74,7 @@ class tester( INDIDevice.device ):
             raw = bytedata.read()
             
             
-            blob.data = base64.b64encode(raw).decode()
-            blob.size = len(raw)
+            blob.value = raw
             self.IDSetBLOB(self.IUFind(name="blobvec", device="mydev"))
         except Exception as err:
             logging.debug(f"Could not send blob: {err}")
@@ -83,7 +84,7 @@ class tester( INDIDevice.device ):
         self.IDSetLight( lightvec )
         self.IDSetSwitch( switchvec )
 
-        self.IDMessage("This is a message")
+        #self.IDMessage("This is a message")
 
         self.IEAddTimer( 1000.0, self.testtimer )
 

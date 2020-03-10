@@ -105,7 +105,7 @@ class mount( INDIDevice.device ):
             "is_numeric", "activetext", "inactivetext", "units", "pointrange"
             )
 
-        conn = await
+        conn = await \
         aiomysql.connect(host=self.config["DEFAULT"]['mysql_host'],
                 port=self.config["DEFAULT"]["mysql_port"],
                                       user=self.config["DEFAULT"]['mysql_user'],
