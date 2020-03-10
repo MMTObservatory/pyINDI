@@ -48,22 +48,69 @@ class INDIClient:
     async def parse_incoming_xml(self):
         # TODO: This needs to be tolerant of an indi
         # server crash. 
-        self.reader, self.writer = await asyncio.open_connection(
-                        self.host, self.port)
         self.running = 1
-        self.writer.write(b"<getProperties version='1.7'/>")
         while self.running:
-            data = await self.reader.read(5000)
-            for client in self.get_clients():
-                client.write_message(data)
+            try:
+                if self.reader.at_eof():
+                    raise Exception("INDI server closed")
 
+                data = await asyncio.wait_for(self.reader.read(5000), 5)
+                for client in self.get_clients():
+                    client.write_message(data)
+            except Exception as err:
+                self.running = 0
+                logging.debug(f"Could not read from INDI server {err}")
+
+        logging.debug(f"Closing connection")
         self.writer.close()
+        self.cancel()
+        logging.debug(f"Cancelled tasks")
+        logging.debug(f"{self.task}")
 
+
+    async def connect(self):
+        while 1:
+            
+            task = None
+            try: 
+                self.reader, self.writer = await asyncio.open_connection(
+                        self.host, self.port)
+                logging.debug("Connected")
+                self.running = True
+
+                self.task = asyncio.gather(self.parse_incoming_xml(),
+                        self.web2indiserver(), return_exceptions=True)
+                await self.task
+                logging.debug("Finished!")
+                
+            except ConnectionRefusedError:
+                self.running = False
+                logging.debug("Can not connect to INDI server\n")
+
+            except asyncio.TimeoutError:
+                logging.debug("Lost connection to INDI server\n")
+
+            finally:
+                if task is not None:
+                    task.cancel()
+
+            await asyncio.sleep(2.0)
+
+
+    def cancel(self):
+        self.task.cancel()
 
     async def web2indiserver(self):
-        while 1:# We should figure out a condition to quit
+        while self.running:# We should figure out a condition to quit
             fromweb = await self.web2indiQ.get() 
-            self.writer.write(fromweb.encode())
+            try:
+                self.writer.write(fromweb.encode())
+                await self.writer.drain()
+            except Exception as err:
+                self.running = 0
+                logging.debug(f"Could not write to INDI server {err}")
+        self.cancel()
+
 
     @classmethod
     def get_clients(cls):
@@ -126,8 +173,7 @@ class INDIWebApp():
 
         self.client = INDIClient(port=indiport, host=indihost)
 
-        self.mainloop.add_callback(self.client.parse_incoming_xml)
-        self.mainloop.add_callback(self.client.web2indiserver)
+        self.mainloop.add_callback(self.client.connect)
 
 
     def add_page(self, url_path: str, path_to_html: str):

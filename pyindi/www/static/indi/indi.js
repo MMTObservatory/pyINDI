@@ -64,182 +64,6 @@ function nosp(str)
 }
 
 
-/************************************
-
-* collect
-* 
-* Description:
-*		sends a request for data 10 times a 
-*		second. 
-*
-*
-*************************************/
-function collect()
-{
-	try
-	{
-		INDIws.send(JSON.stringify({'task':'getProperties'}));
-	}
-	catch(err)
-	{
-		console.log("The error is ", err);
-	}
-	setTimeout( collect, 100);
-}
-
-
-
-/*****************************************
-
-* INDIwebsocket
-* Args:
-*		url=>the url of the websocket server
-*   container=> the jQuery style selector
-*		of the div to contain the devices. 
-*
-* Description:
-*		This function opens the websocket to 
-*		INDI client and manages all of the 
-*		communication. ALL new devices, messages,
-*		and values, etc come through here and 
-*		are handled bu the various handling 
-*		functions.
-*
-*
-******************************************/
-function INDIwebsocket(url, container, devicelist)
-{
-	if(url == undefined)
-	{
-		url = "ws://indiserver:3000"
-	}
-	
-	if (devicelist == undefined)
-	{
-		devicelist = [];
-	}
-
-
-	container = (container == "undefined")? "body" : container
-	devicelist = (devicelist == "undefined")? [] : devicelist
-	INDIws = new WebSocket( url );
-	INDIws.devices_container = container
-	INDIws.devicelist = devicelist;
-	INDIws.onerror = function(event)
-	{
-		$("#wsDialog").dialog("open").find('b').text(url);
-	}
-	INDIws.onmessage = function( event )
-	{
-		console.log(event.data)
-		return;
-		try
-		{
-			var data = JSON.parse( event.data );
-			
-		}
-		catch(err)
-		{
-			console.log(event.data, err);
-			return;
-		}
-		var ele = '';
-		var newData = false;
-		container = this.devices_container;
-
-		var baddevice = true;
-		if(this.devicelist.length > 0)
-		{//if devicelist isn't an empty array check it against incoming VP's
-			
-			for(dev in this.devicelist)
-			{
-				if( data.device == this.devicelist[dev] )
-				{
-					baddevice=false;
-					break;
-				}
-			}
-		}
-		else
-		{//... if it is an empty array allow all VP's.
-			baddevice=false;
-		}
-
-		if (baddevice)
-		{
-			return;
-		}
-		switch (data.metainfo)
-		{
-			case "newDevice":
-				AddDevice(data.name, container, tabdevice);
-			break;
-			case "nvp":
-				ele = newNumber( data );
-				newData = true;
-			break;
-			case "svp":
-				newData = true;
-				ele = newSwitch( data );
-			break;
-			case "tvp":
-				newData = true;
-				ele = newText( data );
-			break;
-			case "lvp":
-				newData = true;
-				ele = newLight( data );
-			break;
-			case "msg":
-				var msgselector = "textarea#INDImsg";
-				//console.log("Message", data.msg);
-				var msgarea = $(msgselector);
-				msgarea.text( data.msg+'\n'+msgarea.text() );
-
-			break;
-			default:
-				console.log("IDK", data.metainfo);
-		}
-
-
-		if(newData)
-		{
-			if(data.metainfo == "svp" || data.metainfo == "tvp" || data.metainfo == "nvp")
-				var prop="background-color";
-			else
-				var prop="color";
-	
-			$(ele).css( prop, indistate2css( data.state ) )
-			var container = postProc( data, ele ) 
-			if( typeof(ele) != 'string' )
-			{
-				ele.appendTo( container )
-			}
-		}
-		
-	};
-	INDIws.onerror = function(event)
-	{
-		//alert("There was an error!", event)
-	}
-	INDIws.onclose = function(event)
-	{
-		//alert("The connection has closed! If possible restart the webserver. This interface will reload when you hit ok.");
-		//
-		//location.reload()
-		console.log(event, "websocket closed");
-	}
-
-	INDIws.onopen = function(event) 
-	{
-		collect();
-		
-	};
-}	
-
-
-
-
 /************************************************************
 * AddDevice
 * args 
@@ -463,7 +287,7 @@ function newNumber(INDIvp, appendTo)
 					
 					if(event.which == 13)	
 					{
-						let val = $(event.target).attr("value")
+						let val = $(event.target).val()
 						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
 					}
 				})
@@ -565,7 +389,6 @@ function newSwitch( INDIvp, appendTo )
 			(
 				$('<span/>',
 				{	
-					'INDIlabel'	:sp.label,
 					'INDIname'	:sp.name,
 					'class'			:"ISwitchspan",
 					'id'				:name,
@@ -582,12 +405,20 @@ function newSwitch( INDIvp, appendTo )
 				{
 					'type'		:type,
 					'id'			:spid,
-					'name'		:spname,
+					'name'		:name,
+					'device'	:nosp_dev,
+					'vector'	:INDIvp.name,
 					'class'		:'ISwitchinput',
 				}
 				)
 				.prop( "checked", sp.state )
-				//.on( 'change', sendNewSwitch )
+				.on( 'change', function(event) {
+					let name = $(event.target).attr("name");
+					let value =$(event.target).attr("checked") ? "On" : "Off";
+					console.log(INDIvp.device+'.'+INDIvp.name, name, value);
+					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
+					
+				} )
 			));
 			
 		});
