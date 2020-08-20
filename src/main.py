@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.8
 
 
 from lxml import etree
@@ -14,9 +14,14 @@ import base64
 
 import logging
 import functools
+from pathlib import Path
+
 now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
-logging.basicConfig(format="%(asctime)-15s %(message)s",filename=f'/src/{timestr}.log',level=logging.DEBUG)
+if Path("/src").exists():
+    logging.basicConfig(format="%(asctime)-15s %(message)s",filename=f'/src/{timestr}.log',level=logging.DEBUG)
+else:
+    logging.basicConfig(format="%(asctime)-15s %(message)s",filename=f'{timestr}.log',level=logging.DEBUG)
 
 # We should remove this import after testing
 import cv2

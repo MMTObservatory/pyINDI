@@ -1,11 +1,11 @@
-INDIPERM_RO = 0;
-INDIPERM_WO = 1;
-INDIPERM_RW = 2;
+INDIPERM_RO = "ro";
+INDIPERM_WO = "wo";
+INDIPERM_RW = "rw";
 
-INDISTATE_IDLE = 0;
-INDISTATE_OK = 1;
-INDISTATE_BUSY = 2;
-INDISTATE_ALERT = 3;
+INDISTATE_IDLE = "Idle";
+INDISTATE_OK = "Ok";
+INDISTATE_BUSY = "Busy";
+INDISTATE_ALERT = "Alert";
 
 INDISWRULE_1OFMANY = 0;
 INDISWRULE_ATMOST1 = 1;
@@ -43,7 +43,10 @@ function formatNumber(numStr, fstr)
 	switch(fstr[fstr.length-1])
 	{
 		case 'f':
-			outStr = num.toFixed(decimal);
+			if(isNaN(decimal))
+				outStr = numStr
+			else
+				outStr = num.toFixed(decimal);
 			
 		break;
 		case 'i':
@@ -59,192 +62,6 @@ function nosp(str)
 {
 	return str.replace(/ /g, '_').replace('.', '__');
 }
-
-
-/************************************
-
-* collect
-* 
-* Description:
-*		sends a request for data 10 times a 
-*		second. 
-*
-*
-*************************************/
-function collect()
-{
-	try
-	{
-		INDIws.send(JSON.stringify({'task':'getProperties'}));
-	}
-	catch(err)
-	{
-		console.log("The error is ", err);
-	}
-	setTimeout( collect, 100);
-}
-
-
-
-/*****************************************
-
-* INDIwebsocket
-* Args:
-*		url=>the url of the websocket server
-*   container=> the jQuery style selector
-*		of the div to contain the devices. 
-*
-* Description:
-*		This function opens the websocket to 
-*		INDI client and manages all of the 
-*		communication. ALL new devices, messages,
-*		and values, etc come through here and 
-*		are handled bu the various handling 
-*		functions.
-*
-*
-******************************************/
-function INDIwebsocket(url, container, devicelist)
-{
-	if(url == undefined)
-	{
-		url = "ws://indiserver:3000"
-	}
-	
-	if (devicelist == undefined)
-	{
-		devicelist = [];
-	}
-
-
-	container = (container == "undefined")? "body" : container
-	devicelist = (devicelist == "undefined")? [] : devicelist
-	INDIws = new WebSocket( url );
-	INDIws.devices_container = container
-	INDIws.devicelist = devicelist;
-	INDIws.onerror = function(event)
-	{
-		$("#wsDialog").dialog("open").find('b').text(url);
-	}
-	INDIws.onmessage = function( event )
-	{
-		try
-		{
-			var data = JSON.parse( event.data );
-			
-		}
-		catch(err)
-		{
-			console.log(event.data, err);
-			return;
-		}
-		var ele = '';
-		var newData = false;
-		container = this.devices_container;
-
-		var baddevice = true;
-		if(this.devicelist.length > 0)
-		{//if devicelist isn't an empty array check it against incoming VP's
-			
-			for(dev in this.devicelist)
-			{
-				if( data.device == this.devicelist[dev] )
-				{
-					baddevice=false;
-					break;
-				}
-			}
-		}
-		else
-		{//... if it is an empty array allow all VP's.
-			baddevice=false;
-		}
-
-		if (baddevice)
-		{
-			return;
-		}
-		switch (data.metainfo)
-		{
-			case "newDevice":
-				AddDevice(data.name, container, tabdevice);
-			break;
-			case "nvp":
-				ele = newNumber( data );
-				newData = true;
-			break;
-			case "svp":
-				newData = true;
-				ele = newSwitch( data );
-			break;
-			case "tvp":
-				newData = true;
-				ele = newText( data );
-			break;
-			case "lvp":
-				newData = true;
-				ele = newLight( data );
-			break;
-			case "bvp":
-				newData = true;
-				ele = newBLOB( data );
-				console.log("We have a blob")
-			break;
-
-			case "blob":
-				//newData = true;
-				ele = updateBLOB( data );
-				console.log("Updating blob")
-			break;
-
-			case "msg":
-				var msgselector = "textarea#INDImsg";
-				//console.log("Message", data.msg);
-				var msgarea = $(msgselector);
-				msgarea.text( data.msg+'\n'+msgarea.text() );
-
-			break;
-			default:
-				console.log("IDK", data);
-		}
-
-
-		if(newData)
-		{
-			if(data.metainfo == "svp" || data.metainfo == "tvp" || data.metainfo == "nvp")
-				var prop="background-color";
-			else
-				var prop="color";
-	
-			$(ele).css( prop, indistate2css( data.state ) )
-			var container = postProc( data, ele ) 
-			if( typeof(ele) != 'string' )
-			{
-				ele.appendTo( container )
-			}
-		}
-		
-	};
-	INDIws.onerror = function(event)
-	{
-		//alert("There was an error!", event)
-	}
-	INDIws.onclose = function(event)
-	{
-		//alert("The connection has closed! If possible restart the webserver. This interface will reload when you hit ok.");
-		//
-		//location.reload()
-		console.log(event, "websocket closed");
-	}
-
-	INDIws.onopen = function(event) 
-	{
-		collect();
-		
-	};
-}	
-
-
 
 
 /************************************************************
@@ -321,8 +138,8 @@ function newText( INDIvp, appendTo )
 			.attr("group", INDIvp.group)
 			.append("<legend>"+INDIvp.label+"</legend>");
 		
-		$.each(INDIvp.tp, function(ii, tp)
-		{		
+		$.each(INDIvp.values, function(ii, tp)
+		{	
 			var label = tp.label.replace(" ", "_");
 			var name = tp.name.replace(' ', '_');
 			var tpid = nosp_dev+"__"+name;
@@ -346,8 +163,11 @@ function newText( INDIvp, appendTo )
 				.keypress(function(event)
 				{
 					if(event.which == 13)	
-					{
-						sendNewText(event)
+					{		
+						let val = $(event.target).prop("value")
+						console.log(event.target)
+						setindi("Text", INDIvp.device+'.'+INDIvp.name, tp.name, val );
+
 						return false;
 					}
 				})
@@ -376,12 +196,12 @@ function newText( INDIvp, appendTo )
 	}
 	//console.log( $(vpselector) )
 	
-	$.each(INDIvp.tp, function(ii, tp)
+	$.each(INDIvp.values, function(ii, tp)
 	{
-		var label = tp.label.replace(" ", "_")
+		
 		var name = nosp(tp.name);
 		var tpid = nosp_dev+name;
-		$(vpselector).find("span[INDIname='"+name+"'] textarea.IText_ro").text(tp.text)
+		$(vpselector).find("span[INDIname='"+name+"'] textarea.IText_ro").text(tp.value)
 	});
 
 	return vpselector
@@ -423,8 +243,9 @@ function newNumber(INDIvp, appendTo)
 			.append("<legend>"+INDIvp.label+"</legend>");
 		
 			
-		$.each(INDIvp.np, function(ii, np)
-		{		
+		$.each(INDIvp.values, function(ii, np)
+		{	
+
 			var label = np.label.replace(" ", "_");
 			var name = np.name.replace(' ', '_');
 			var npid = nosp_dev+"__"+name;
@@ -435,6 +256,7 @@ function newNumber(INDIvp, appendTo)
 				'class': 'INumberspan',
 				'INDIlabel':np.label,
 				'INDIname':np.name,
+				'INDIformat':np.format
 			}
 			).append($('<label/>',
 			{
@@ -465,9 +287,11 @@ function newNumber(INDIvp, appendTo)
 					
 					if(event.which == 13)	
 					{
-						sendNewNumber(event)
+						let val = $(event.target).val()
+						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
 					}
 				})
+				console.log(INDIvp.perm == INDIPERM_RW);
 				switch(INDIvp.perm)
 				{
 					case INDIPERM_RO:
@@ -493,13 +317,13 @@ function newNumber(INDIvp, appendTo)
 		return vphtmldef
 	}
 	
-	
-	$.each( INDIvp.np, function(ii, np)
+	$.each( INDIvp.values, function(ii, np)
 	{
-		var label = np.label.replace(" ", "_")
+		
+		var format = $(vpselector).find("span.INumberspan[INDIname='"+np.name+"']").attr("indiformat")
 		var name = np.name.replace(' ', '_');
 		var npid = nosp_dev+name;
-		newvalue= formatNumber(np.value, np.format)
+		newvalue= formatNumber(np.value, format)
 		//$(vpselector).find("span.INumberspan[INDIname='"+np.name+"']  span.INumber_ro").text(Math.round(np.value*10000)/10000)
 		$(vpselector).find("span.INumberspan[INDIname='"+np.name+"']  span.INumber_ro").text(newvalue)
 
@@ -534,7 +358,6 @@ function newSwitch( INDIvp, appendTo )
 	var nosp_dev = INDIvp.device.replace( " ", "_" );
 	var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
 	
-
 	var retn = $(vpselector);
 	switch(INDIvp.rule)
 	{
@@ -545,6 +368,8 @@ function newSwitch( INDIvp, appendTo )
 		case INDISWRULE_NOFMANY:
 			type = 'checkbox';
 		break;
+		default:
+			type = 'radio'
 	}
 	
 	if( $(vpselector).length == 0 )
@@ -556,7 +381,7 @@ function newSwitch( INDIvp, appendTo )
 			.attr("group", INDIvp.group)
 			.append("<legend>"+INDIvp.label+"</legend>");
 		
-		$.each(INDIvp.sp, function(ii, sp)
+		$.each(INDIvp.values, function(ii, sp)
 		{		
 			var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
@@ -566,7 +391,6 @@ function newSwitch( INDIvp, appendTo )
 			(
 				$('<span/>',
 				{	
-					'INDIlabel'	:sp.label,
 					'INDIname'	:sp.name,
 					'class'			:"ISwitchspan",
 					'id'				:name,
@@ -583,11 +407,20 @@ function newSwitch( INDIvp, appendTo )
 				{
 					'type'		:type,
 					'id'			:spid,
-					'name'		:spname,
+					'name'		:name,
+					'device'	:nosp_dev,
+					'vector'	:INDIvp.name,
 					'class'		:'ISwitchinput',
 				}
-				).on( 'change', sendNewSwitch )
+				)
 				.prop( "checked", sp.state )
+				.on( 'change', function(event) {
+					let name = $(event.target).attr("name");
+					let value =$(event.target).attr("checked") ? "On" : "Off";
+					console.log(INDIvp.device+'.'+INDIvp.name, name, value);
+					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
+					
+				} )
 			));
 			
 		});
@@ -609,15 +442,20 @@ function newSwitch( INDIvp, appendTo )
 	else
 	{
 		
-		$.each(INDIvp.sp, function(ii, sp)
+		$.each(INDIvp.values, function(ii, sp)
 		{
-			var label = sp.label.replace(" ", "_");
+			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ name;
-			var state = sp.state
-			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', sp.state);
-			if(label.slice(0,3) == "123")
-				console.log(label)
+
+			if(sp.value === "On")
+			{
+				state = true;
+			}
+			else
+				state = false;
+
+			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', state);
 			//console.log($("body fieldset.INDIsvp#"+nosp_vpname+"[device='"+INDIvp.device+"']"))
 		});
 		
@@ -663,20 +501,20 @@ function newLight( INDIvp, appendTo )
             .attr("group", INDIvp.group)
             .append("<legend>"+INDIvp.label+"</legend>");
 
-        $.each(INDIvp.lp, function(ii, lp)
+        $.each(INDIvp.values, function(ii, lp)
         {       
             var label = lp.label.replace(" ", "_");
             var name = lp.name.replace(' ', '_');
             var lpid = nosp_dev+"__"+name;
             var lpname = nosp_dev+'__'+nosp_vpname;
             var scolor = "transparent";
-            switch(lp.s)
+            switch(lp.value)
             {
                 case INDISTATE_IDLE:
                     lightclass = "var( --indistate-idle )";
                 break;
                 case INDISTATE_OK:
-                    lightclass = "var( --indistate-ok )";
+                    lightclass = "var( --indistate-ok )'";
                 break;
                 case INDISTATE_BUSY:
                     lightclass = "var( --indistate-busy )";
@@ -720,19 +558,18 @@ function newLight( INDIvp, appendTo )
 
     else
     {
-        $.each(INDIvp.lp, function(ii, lp)
+        $.each(INDIvp.values, function(ii, lp)
         {
-            var label = lp.label.replace(" ", "_");
             var name = lp.name.replace(' ', '_');
             var lpid = nosp_dev +"__"+ name;
             var state = lp.state
-			switch(lp.s)
+	    switch(lp.value)
             {
                 case INDISTATE_IDLE:
                     lightclass = "var( --indistate-idle )";
                 break;
                 case INDISTATE_OK:
-                    lightclass = "var( --indistate-ok )";
+                    lightclass = "var( --indistate-ok )'";
                 break;
                 case INDISTATE_BUSY:
                     lightclass = "var( --indistate-busy )";
@@ -740,56 +577,17 @@ function newLight( INDIvp, appendTo )
                 case INDISTATE_ALERT:
                     lightclass = "var( --indistate-alert )";
                 break;
+								default:
+									lightclass = "var( --indistate-alert )";
+
             }
             $(vpselector).find('label#'+lpid+'.ILightlabel').css("background-color", lightclass);
 
-            //console.log($("body fieldset.INDIsvp#"+nosp_vpname+"[device='"+INDIvp.device+"']"))
         });
     }
     $(vpselector).find("input[type='"+type+"']").checkboxradio("refresh");
     return vpselector;
 }  
-
-
-function newBLOB( INDIvp, other )
-{
-    var nosp_vpname = INDIvp.name.replace( " ", "_" );
-    var nosp_dev = INDIvp.device.replace( " ", "_" );
-    var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
-    var retn = $( vpselector );
-    thevp = INDIvp;
-    if( $(vpselector).length == 0 )
-    {
-    	var vphtmldef = $( "<fieldset class='INDIvp INDIbvp'/>" )
-    	    .prop("id", nosp_vpname)
-            .attr("device", INDIvp.device)
-            .attr("group", INDIvp.group)
-            //.attr("text", INDIvp)
-            .append("<legend>"+INDIvp.label+"</legend>")
-        $.each(INDIvp["bp"], function(bp) 
-            {
-            	console.log(this)
-            	vphtmldef.append($("<span class='INDIbp blob' id='"+this.name+"'/>"))
-            })
-            
-        console.log("HERE FIRST")
-        return vphtmldef
-    }
-    console.log("HERE")
-    return vpselector
-
-}
-
-function updateBLOB( blob )
-{
-    var blobselector = "span.INDIbp#"+blob.name;
-    console.log(blob);
-    if( $(blobselector).lenght !=0 )
-    {
-    	$(blobselector).text(blob.blob);
-    }
-
-}
 
 /*******************************************************************************
 * sendNewSwitch
