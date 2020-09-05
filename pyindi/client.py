@@ -146,7 +146,11 @@ class INDIWebsocket(tornado.websocket.WebSocketHandler):
 
 
 class INDIWebApp():
-
+    """
+        This class takes the indiclient
+        and builds it into a tornado webapp
+        
+    """
     # The files in this path will alway be available
     # http://<HOST>/static/
     static_path = Path(__file__).parent/"www/static"
@@ -191,12 +195,38 @@ class INDIWebApp():
             def get(self):
 
                 name = self.get_argument("device_name", None)
+
+                # This bit makes a requirement that the 
+                # webpage include a device_name argument
+                # perhaps this is a bit draconian. 
                 if name is None:
                     self.write(f"URL must contain device_name as http get data. For\
                             example: <br><br><br> http://{self.request.host}/dev?device_name=mydev\
                             ")
-                    return 
-                self.render( str(html), device_name=name)
+
+                # Convenience vars for the template
+                indihead = r"""
+                    <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+                    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+                    <!--These libraries are built with pyINDI
+                    and are available at /static/ using
+                    pyINDI's client libarary.-->
+                
+                    <link rel="stylesheet" href="/static/indi/indi.css">
+                    <script src="/static/indi/indi.js"></script>
+                    <script src="/static/indi/utility.js"></script>
+                    <script src="/static/indi/maps-indi.js"></script>
+
+                    """
+                        
+                indisocket = f"http://{self.request.host}/indi-websocket"
+
+                return self.render( 
+                    str(html), 
+                    device_name=name, 
+                    indihead=indihead, 
+                    indisocket=indisocket)
 
         self._handlers.append((url_path, handler))
 

@@ -31,6 +31,9 @@ config.read(str(configpath))
 
 
 class mount( INDIDevice.device ):
+    """mount device class
+    
+    """
     once = True
 
     def ISNewNumber( self, dev, name, values, names ):
@@ -71,6 +74,14 @@ class mount( INDIDevice.device ):
 
 
     def ISGetProperties( self, device:str=None ):
+        """ISGetProperties
+        args:
+            device->name of the device
+
+            THis funtion is called when the 
+            client or indiserver sends the
+            `<getProperties>` tag.
+        """
 
         r = redis.Redis(host="redis.mmto.arizona.edu")
         mkeys = r.keys( "mount_mini*" )
