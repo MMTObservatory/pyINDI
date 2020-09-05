@@ -28,17 +28,16 @@ In order to access indi via the webclient you will need to include a few things 
 	    <script src="/static/indi/maps-indi.js"></script>
 ```        
 you can also include this by adding 
-        ```
-        {% autoescape None %}
-        {{ indihead }}
-        ```
+```
+{% autoescape None %}
+{{ indihead }}
+```
 inside the head tag of you html.
 
-The above scripts give scripts give you access to the 
-functions:
-    - setPropertyCallback
-    - setINDI
-    - showMapMessage
+The above scripts give you access to the functions:
+- setPropertyCallback
+- setINDI
+- showMapMessage
     
 
  This is most of what you need to interact with the INDI driver.
