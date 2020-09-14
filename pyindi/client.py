@@ -8,6 +8,50 @@ import json
 from pathlib import Path
 import logging
 
+from xml.sax import ContentHandler
+from xml.sax.expatreader import ExpatParser
+
+from io import StringIO, BytesIO
+
+from base64 import b64decode
+
+"""
+    This module contains classes and methods to build an INDI
+    client webapp. The data flow in this program is a bit 
+    confusing. This is made worse because of the somewhat 
+    ambiguous terms of server and client. Hopefully this flowchart
+    will help:
+    
+
+        Overall INDI server/client to webpage scheme
+        --------------------------------------------
+       
+              _____________________________________________________________________       
+              | client.py                                                         |
+              | ---------                     ___________                         |
+              |                 _____get()____|web2indiQ|____put()____________    |
+              |                 |             -----------                    |    |
+              |                 |                                            |    |
+____________  |           ______V_____                      httpclients      |    |
+|          | <|--writer---|          |                     _______________   |    |
+|indiserver|  |  TCP/IP   |INDIClient|                     |---->client_1|   |    |  
+|          | -|--reader-->|          |---indiclient2web()->|---->client_2|   |    | __________
+------------  |           ------------               |     |---->...     |<-websoc->|webpages|
+              |                 ^                    |     |---->client_n|        | ----------
+              |                 |                    |     ---------------        |
+              |                 |                    V                            |
+              |         _____________            __________________               |
+              |         |BlobHandler|<--feed()---|ServerSideClient|               |
+              |         -------------            ------------------               |
+              ---------------------------------------------------------------------    
+
+
+   
+
+"""
+
+
+
 class WebHandler(tornado.web.RequestHandler):
     """
     Render a simple webpage. 
@@ -21,13 +65,20 @@ class WebHandler(tornado.web.RequestHandler):
     """
 
     static_path = Path(__file__).parent/"www/index.html"
+    
     def get(self, device):
         self.render(str(self.static_path), device_name=device)
 
 
 
 class INDIClient:
+    """This sends/recvs INDI data to/from the indiserver 
+    tcp/ip socket. """
+
     _instance = None
+    blob = None
+    blobmeta = None
+
     def __new__(cls, *args, **kwargs):
         """
         Make it a singleton
@@ -38,51 +89,56 @@ class INDIClient:
 
 
     web2indiQ = Queue()
-    clients = set()
+    httpclients = set()
     once = True
+
     def __init__(self, host="localhost", port=7624):
-        self.clients = set()
         self.port = port
         self.host = host
+        self.httpclients.add(ServerSideClient())
 
-    async def parse_incoming_xml(self):
-        # TODO: This needs to be tolerant of an indi
-        # server crash. 
+    async def indiclient2web(self):
+
+        """Read data from self.reader and use write_message
+        to write that data to each client."""
+
         self.running = 1
         while self.running:
             try:
                 if self.reader.at_eof():
                     raise Exception("INDI server closed")
 
-                #data = await asyncio.wait_for(self.reader.read(5000), 5)
-                data = await self.reader.read(5000)
-                for client in self.get_clients():
+                # Read data from indiserver
+                data = await self.reader.read(1000)
+                for client in self.get_httpclients():
                     client.write_message(data)
             except Exception as err:
                 self.running = 0
-                logging.debug(f"Could not read from INDI server {err}")
+                logging.warning(f"Could not read from INDI server {err}")
 
-        logging.debug(f"Closing connection")
         self.writer.close()
-        self.cancel()
-        logging.debug(f"Cancelled tasks")
-        logging.debug(f"{self.task}")
+        await self.writer.wait_closed()
+        logging.warning(f"Finishing indiclient2web task")
+        
 
 
     async def connect(self):
+        """Attempt to connect to the indiserver in a loop.
+        """
         while 1:
             
             task = None
             try: 
                 self.reader, self.writer = await asyncio.open_connection(
                         self.host, self.port)
-                logging.debug("Connected")
+                logging.debug(f"Connected to indiserver {self.host}:{self.port}")
                 self.running = True
 
-                self.task = asyncio.gather(self.parse_incoming_xml(),
+                self.task = asyncio.gather(self.indiclient2web(),
                         self.web2indiserver(), return_exceptions=True)
                 await self.task
-                logging.debug("Finished!")
+                logging.debug("INDI client tasks finished. indiserver crash?")
+                logging.debug("Attempting to connect again")
                 
             except ConnectionRefusedError:
                 self.running = False
@@ -98,51 +154,153 @@ class INDIClient:
             await asyncio.sleep(2.0)
 
 
-    def cancel(self):
-        self.task.cancel()
 
     async def web2indiserver(self):
-        while self.running:# We should figure out a condition to quit
-            fromweb = await self.web2indiQ.get() 
+        """Collect INDI data from the httpclient via the web2indiQ.
+        """
+
+        while self.running:
+            try:
+                fromweb = await asyncio.wait_for( self.web2indiQ.get(), 5 )
+            except asyncio.TimeoutError as error:
+
+                # This allows us to check the self.running state
+                # if there is no data in the web2indiQ
+                continue
             try:
                 self.writer.write(fromweb.encode())
                 await self.writer.drain()
             except Exception as err:
                 self.running = 0
                 logging.debug(f"Could not write to INDI server {err}")
-        self.cancel()
+
+        logging.debug("Finishing web2indiserver task")
 
 
     @classmethod
-    def get_clients(cls):
-        return cls.clients
+    def put_blob(cls, blob):
+        self.blob = blob
+        
 
     @classmethod
-    def add_client(cls, client):
-        cls.clients.add(client)
+    def get_blob(cls):
+        return self.blob
+
+    @classmethod
+    def get_httpclients(cls):
+        return cls.httpclients
+
+    @classmethod
+    def add_httpclient(cls, client):
+        cls.httpclients.add(client)
 
 
     @classmethod
-    def remove_client(cls):
-        cls.clients.remove(client)
+    def remove_client(cls, client):
+        cls.httpclients.remove(client)
+
+
+
+class BlobHandler(ContentHandler):
+
+    blobnames = set()
+    reading = False
+    indiclient = INDIClient
+
+    def startElement(self, tag, attr):
+
+        if tag == "defBLOBVector":
+            self.blobnames.add(attr["name"])
+
+        if tag == "oneBLOB":
+            
+            logging.debug(f"we have a blob! {tag} {dict(attr)}")
+            
+            self.reading = True
+            self.current_blob = StringIO()
+            self.attr = dict(attr)
+            self.len = 0
+
+
+    def characters(self, content):
+        """Read handle character data from the
+        xml feed. For the BLOB's this data is 
+        base64 encoded. We write this to an 
+        in memory file for later processing."""
+        if self.reading:
+
+            self.current_blob.write(content.strip())
+
+            if len(self.current_blob) > int(self.attr["enclen"]):
+                raise RuntimeError("Too much BLOB data!")
+                
+
+    
+    def endElement(self, tag):
+        """
+            Called when the end tag is reached
+            This is where we finish processing
+            the BLOB.
+        """
+        
+        if "blob" in tag.lower():
+            logging.debug(f"end tag {tag}")
+
+        if tag == "oneBLOB":
+            logging.debug(f"BLOB finished ")
+            self.reading = False
+            self.current_blob.seek(0)
+            
+            # Convert to raw binary. 
+            bindata = BytesIO(b64decode(self.current_blob.read()))
+            self.indiclient.put_blob(bindata)
+            
+            
+            
+            
+
+
+class ServerSideClient:
+
+    """Sometimes it is necessary to understand the 
+    incoming INDI information on the serverside as 
+    opposed to sending the raw information to the
+    httpclient. 
+    
+    
+    Here we would like to extract BLOB data so that
+    it can be saved to disk. To do this we feed the
+    xml to the ExpatParser which uses BlobHandler to
+    pull out the base64 data and convert it to binary.
+    """
+
+    def __init__(self):
+        self.parser = ExpatParser()
+        self.parser.setContentHandler( BlobHandler() )
+
+        # we need to fake a root element
+        self.parser.feed("<root>")
+
+    def write_message(self, data):
+        self.parser.feed(data)
 
 
 class INDIWebsocket(tornado.websocket.WebSocketHandler):
     """
     This class handles the websocket traffic and 
-    registers new clients with the INDIClient class
+    registers new http clients with the INDIClient class
     """
     client = INDIClient
     
     def open(self):
-        self.client.add_client(self)
+        self.client.add_httpclient(self)
 
 
     def on_message(self, message):
         self.client.web2indiQ.put(message)
 
     def on_close(self):
-        self.client.clients.remove(self)
+        self.client.httpclients.remove(self)
 
 
 class INDIWebApp():
@@ -230,6 +388,8 @@ class INDIWebApp():
 
         self._handlers.append((url_path, handler))
 
+
+    
         
     def add_handler(self, handler: tuple):
         """Expose tornado.web.Application add_handlers method"""
