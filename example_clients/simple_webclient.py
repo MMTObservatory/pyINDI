@@ -57,12 +57,11 @@ def main(indiport, webport, pages):
     
 
     for page in pages:
-        logging.debug
         app = INDIWebApp( webport=webport, indiport=indiport )
         app.add_page(f"/{page}", Path.cwd()/f"{page}")
-        click.echo(app._handlers)
+        click.echo(f"Webport is {webport}")
         #app.add_page(r"/vatt-guidebox", Path.cwd()/"vatt-guidebox.html")
-        app.start(debug=True)
+    app.start(debug=True)
 
 
 main()
