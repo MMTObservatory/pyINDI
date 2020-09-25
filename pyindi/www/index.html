@@ -3,24 +3,41 @@
 <html lang="en" >
 	<head>
 	
-	<link rel="stylesheet" href="/static/indi/indi.css">
+	<link rel="stylesheet" href="/indi/static/indi.css">
 	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-	<link rel="stylesheet" href="jquery-ui-1.12.1.custom/jquery-ui.min.css">
-	<script src="/static/indi/indi.js"></script>
-	<script src="/static/indi/utility.js"></script>
-	<script src="/static/indi/maps-indi.js"></script>
+	<script src="/indi/static/indi.js"></script>
+	<script src="/indi/static/utility.js"></script>
+	<script src="/indi/static/maps-indi.js"></script>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<!--
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
+-->
 
 	<script>
 		doLess = true;
-		function main()
+		function new_device()
 		{
 
+			var devname = $("input#devname").val()
+			
 			start = new Date()
 			imgs = []
-			setPropertyCallback("{{ device_name }}.*", function(map) 
-			{
-				console.log(map)
+			let grouplist = new Set();
+            let inittabs = true;
+
+			setPropertyCallback(devname+".*", function(map) 
+			{ 
+                if(map.group)
+                {
+                    if( grouplist.size < grouplist.add(map.group).size )
+                    {
+                        newGroup(map.group, inittabs)
+                        inittabs = false;
+                    }
+                }
+
 				switch( map.metainfo )
 				{
 					case "nvp":
@@ -36,9 +53,15 @@
 						ele = newLight(map);
 					break;
 				}
+
 				if( typeof ele != 'string')
-				{	
-					ele.appendTo($("body"))
+				{		
+	    			vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
+					if(vpele.length > 0)
+						ele.appendTo(vpele)
+					else
+						ele.appendTo($("div#"+nosp(map.group)+".INDIgroup"))
+
 				}			
 				
 				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
@@ -51,14 +74,31 @@
 			});
 
 
-			setPropertyCallback("mydev.blobvec", function(map) 
-				{
-					var b64 = btoa(map.b1);
-					("img").attr("src", "data:image/png;base64,"+map.b1);
-					
-				})
 		}
-	
+	    
+
+        function newGroup(grp, init)
+        {
+        /*
+            Name: newGroup
+            Description: Add a group to the tabs in the application
+            args:
+                grp-> name of the new group
+                init-> boolean to tell us to initialize the tabs
+        */
+
+            console.log("new group", grp);
+            $("div#tabs > ul").append(
+                "<li><a href='#"+nosp(grp)+"'>"+grp+"</a></li>"
+            );
+            $("div#tabs").append("<div id='"+nosp(grp)+"' class='INDIgroup'></div>");
+            if(init)
+                $("div#tabs").tabs();
+            else
+                $("div#tabs").tabs("refresh");
+                  
+        }
+
 	</script>
 	<style>
 		.INumberspan
@@ -67,10 +107,30 @@
 			width:250px;
 
 		}
+        .INDIvp{
+            display:block;
+        }
+
+        fieldset.INDIvp
+        {
+            margin-bottom:20px;
+        }
 	</style>
 	</head>
-	<body onload=main() style="background:gray;">
-	<img></img>
+	<body style="background:white;">
+
+	<nav class="navbar navbar-sm">
+	  <form class="form-inline" action="#" onsubmit="new_device()">
+		<input class="form-control mr-sm-2" type="text" placeholder="device name" aria-label="New Device" id="devname">
+		<button class="btn btn-outline-success my-2 my-sm-0"  >Add Device</button>
+	  </form>
+	</nav>
+
+    <div id="tabs" >
+        <ul>
+        </ul>
+    </div>
+
 	</body>
 
 </html>

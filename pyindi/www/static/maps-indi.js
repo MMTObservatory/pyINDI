@@ -23,7 +23,7 @@ var gTypestr = "";                      // all INDI types we accept
 var websocket;                          // the persistent web socket connection
 var gCanReadWrite = 0;                  // whether this page is allowed to set new INDI property values
 const ROport = 8081;                    // setindi() is muted when our page is on this port
-const wspage = "/indi-websocket";       // must match URL for wstunnel in lighttpd.conf
+const wspage = "/indi/websocket";       // must match URL for wstunnel in lighttpd.conf
 $(function() {
 
     // initialize the list of types that updateProperties will handle.
