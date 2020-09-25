@@ -92,10 +92,11 @@ class INDIClient:
     httpclients = set()
     once = True
 
-    def __init__(self, host="localhost", port=7624):
+    def start(self, host="localhost", port=7624):
         self.port = port
         self.host = host
         self.httpclients.add(ServerSideClient())
+        self.lastblob = None
 
     async def indiclient2web(self):
 
@@ -177,15 +178,20 @@ class INDIClient:
         logging.debug("Finishing web2indiserver task")
 
 
-    @classmethod
-    def put_blob(cls, blob):
-        self.blob = blob
+    
+    def put_blob(self, blob, **meta):
+        self.lastblob = {}
+        self.lastblob.update(meta)
+        self.lastblob['data'] = blob.read()
         
+        
+    
+    def get_blob(self):
+        return self.lastblob
 
-    @classmethod
-    def get_blob(cls):
-        return self.blob
-
+    # These methods are how we keep up with 
+    # The clients. I don't think they need 
+    # to be class methods. 
     @classmethod
     def get_httpclients(cls):
         return cls.httpclients
@@ -205,7 +211,11 @@ class BlobHandler(ContentHandler):
 
     blobnames = set()
     reading = False
-    indiclient = INDIClient
+
+    def __init__(self):
+        self.indiclient = INDIClient()
+
+        super().__init__()
 
     def startElement(self, tag, attr):
 
@@ -213,13 +223,16 @@ class BlobHandler(ContentHandler):
             self.blobnames.add(attr["name"])
 
         if tag == "oneBLOB":
-            
-            logging.debug(f"we have a blob! {tag} {dict(attr)}")
-            
-            self.reading = True
-            self.current_blob = StringIO()
-            self.attr = dict(attr)
-            self.len = 0
+            try:
+                logging.debug(f"we have a blob! {tag} {dict(attr)}")
+                
+                self.reading = True
+                self.current_blob = StringIO()
+                self.attr = dict(attr)
+                self.len = 0
+
+            except Exception as error:
+                logging.warning("Error with start of BLOB element {error}")
 
 
     def characters(self, content):
@@ -231,8 +244,8 @@ class BlobHandler(ContentHandler):
 
             self.current_blob.write(content.strip())
 
-            if len(self.current_blob) > int(self.attr["enclen"]):
-                raise RuntimeError("Too much BLOB data!")
+            #if len(self.current_blob) > int(self.attr["enclen"]):
+                #raise RuntimeError("Too much BLOB data!")
                 
 
     
@@ -247,18 +260,23 @@ class BlobHandler(ContentHandler):
             logging.debug(f"end tag {tag}")
 
         if tag == "oneBLOB":
-            logging.debug(f"BLOB finished ")
-            self.reading = False
-            self.current_blob.seek(0)
-            
-            # Convert to raw binary. 
-            bindata = BytesIO(b64decode(self.current_blob.read()))
-            self.indiclient.put_blob(bindata)
-            
-            
-            
-            
+            try:
+                logging.debug(f"BLOB finished ")
+                self.reading = False
+                self.current_blob.seek(0)
+                
+                # Convert to raw binary. 
+                bindata = BytesIO(b64decode(self.current_blob.read()))
+                
+                self.indiclient.put_blob(bindata, **self.attr)
 
+            except Exception as error:
+                logging.warning(f"Error putting blob {error}")
+                
+            
+            
+            
+            
 
 class ServerSideClient:
 
