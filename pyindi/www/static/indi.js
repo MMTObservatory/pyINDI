@@ -166,7 +166,6 @@ function newText( INDIvp, appendTo )
 					if(event.which == 13)	
 					{		
 						let val = $(event.target).prop("value")
-						console.log(event.target)
 						setindi("Text", INDIvp.device+'.'+INDIvp.name, tp.name, val );
 
 						return false;
@@ -195,7 +194,6 @@ function newText( INDIvp, appendTo )
 		}
 		return vphtmldef
 	}
-	//console.log( $(vpselector) )
 	
 	$.each(INDIvp.values, function(ii, tp)
 	{
@@ -292,7 +290,6 @@ function newNumber(INDIvp, appendTo)
 						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
 					}
 				})
-				console.log(INDIvp.perm == INDIPERM_RW);
 				switch(INDIvp.perm)
 				{
 					case INDIPERM_RO:
@@ -414,7 +411,8 @@ function newSwitch( INDIvp, appendTo )
 					'vector'	:INDIvp.name,
 					'class'		:'ISwitchinput',
                     'value'     :name,
-                    'indiname'  :name
+                    'indiname'  :name,
+                    'checked'   : sp.value == "On" ? true:false
                     
 				}
 				)
@@ -457,11 +455,12 @@ function newSwitch( INDIvp, appendTo )
 	{
 		
 		$.each(INDIvp.values, function(ii, sp)
-		{
+		{   
+            if(INDIvp.name == "CONNECTION")
+                console.log(INDIvp)
 			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
-            console.log(spid)
 
 			if(sp.value === "On")
 			{
