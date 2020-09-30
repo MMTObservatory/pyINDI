@@ -6,8 +6,8 @@
 from ._astropy_init import *   # noqa
 # ----------------------------------------------------------------------------
 
-from . import device
-from .client import INDIWebApp
+#from . import device
+#from . import client
 
 __all__ = []
 #from .example_mod import *   # noqa

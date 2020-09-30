@@ -10,7 +10,10 @@ import io
 import redis
 import json
 import logging
-import aiomysql
+try:
+    import aiomysql
+except Exception as error:
+    pass
 from configparser import ConfigParser
 import os
 
