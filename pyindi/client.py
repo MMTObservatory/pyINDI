@@ -99,8 +99,9 @@ class INDIClient:
                 logging.debug(f"Connected to indiserver {self.host}:{self.port}")
                 self.running = True
 
-                self.task = asyncio.gather(self.read_from_indiserver(),
-                        self.write_to_indiserver() )
+                self.task = asyncio.gather(self.read_from_indiserver())
+                #self.task = asyncio.gather(self.read_from_indiserver(),
+                        #self.write_to_indiserver() )
                 await self.task
                 logging.debug("INDI client tasks finished. indiserver crash?")
                 logging.debug("Attempting to connect again")
@@ -124,7 +125,15 @@ class INDIClient:
         put the xml argument in the 
         to_indiQ. 
         """
-        await self.to_indiQ.put(xml)
+        try:
+            self.writer.write(xml.encode())
+            await self.writer.drain()
+            logging.debug(f"Added message to to_indiQ: {xml}")
+        except Exception as err:
+            logging.debug(f"Could not write to INDI server {err}")
+            self.running = 0
+            raise
+        #await self.to_indiQ.put(xml)
         
         
 
@@ -135,13 +144,15 @@ class INDIClient:
 
         while self.running:
             try:
-                to_indi = await asyncio.wait_for( self.to_indiQ.get(), 10 )
+                #to_indi = await asyncio.wait_for( self.to_indiQ.get(), 10 )
+                to_indi = await self.to_indiQ.get()
                 logging.debug(f"writing this to indi {to_indi}")
             except asyncio.TimeoutError as error:
                 # This allows us to check the self.running state
                 # if there is no data in the to_indiQ
                 continue
             try:
+                #logging.debug(f"writing this to indi {to_indi}")
                 self.writer.write(to_indi.encode())
                 await self.writer.drain()
             except Exception as err:

@@ -121,6 +121,7 @@ function wsSend (msg)
 
     if (websocket && websocket.readyState == websocket.OPEN) {
         // console.log("tx: " + msg);
+
         websocket.send(msg);
     } else
         setTimeout (function() {wsSend(msg);}, 30);
@@ -219,7 +220,7 @@ function setPropertyCallback(property, callback) {
     var devname = property.split(".");
     var device = devname[0];
     var name = devname[1];
-    var getprop = '<getProperties version="1" device="' + device + '"';
+    var getprop = '<getProperties version="1.7" device="' + device + '"';
     if (name != '*')
         getprop += ' name="' + name + '"';
     getprop += ' />\n';

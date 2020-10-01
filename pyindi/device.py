@@ -804,6 +804,7 @@ class device(ABC):
 
         while self.running:
             output = await self.outq.get()
+            
             self.writer.write(output)
             await self.writer.drain()
 
