@@ -7,9 +7,9 @@ INDISTATE_OK = "Ok";
 INDISTATE_BUSY = "Busy";
 INDISTATE_ALERT = "Alert";
 
-INDISWRULE_1OFMANY = 0;
-INDISWRULE_ATMOST1 = 1;
-INDISWRULE_NOFMANY = 2;
+INDISWRULE_1OFMANY = "OneOfMany";
+INDISWRULE_ATMOST1 = "AtMostOne";
+INDISWRULE_NOFMANY = "AnyofMany";
 
 
 CONFIG ={
@@ -18,6 +18,7 @@ CONFIG ={
 	
 
 }
+
 
 /*********************
 * formatNumber
@@ -165,7 +166,6 @@ function newText( INDIvp, appendTo )
 					if(event.which == 13)	
 					{		
 						let val = $(event.target).prop("value")
-						console.log(event.target)
 						setindi("Text", INDIvp.device+'.'+INDIvp.name, tp.name, val );
 
 						return false;
@@ -194,7 +194,6 @@ function newText( INDIvp, appendTo )
 		}
 		return vphtmldef
 	}
-	//console.log( $(vpselector) )
 	
 	$.each(INDIvp.values, function(ii, tp)
 	{
@@ -291,7 +290,6 @@ function newNumber(INDIvp, appendTo)
 						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
 					}
 				})
-				console.log(INDIvp.perm == INDIPERM_RW);
 				switch(INDIvp.perm)
 				{
 					case INDIPERM_RO:
@@ -368,6 +366,9 @@ function newSwitch( INDIvp, appendTo )
 		case INDISWRULE_NOFMANY:
 			type = 'checkbox';
 		break;
+		default:
+            console.log("Error unkown SVP rule"+INDIvp.rule);
+			type = 'radio'
 	}
 	
 	if( $(vpselector).length == 0 )
@@ -383,7 +384,7 @@ function newSwitch( INDIvp, appendTo )
 		{		
 			var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
-			var spid = nosp_dev+"__"+name;
+			var spid = nosp_dev+"__"+nosp_vpname+"__"+name;
 			var spname = nosp_dev+'__'+nosp_vpname
 			vphtmldef.append
 			(
@@ -405,18 +406,31 @@ function newSwitch( INDIvp, appendTo )
 				{
 					'type'		:type,
 					'id'			:spid,
-					'name'		:name,
+					'name'		:nosp_vpname,
 					'device'	:nosp_dev,
 					'vector'	:INDIvp.name,
 					'class'		:'ISwitchinput',
+                    'value'     :name,
+                    'indiname'  :name,
+                    'checked'   : sp.value == "On" ? true:false
+                    
 				}
 				)
 				.prop( "checked", sp.state )
 				.on( 'change', function(event) {
-					let name = $(event.target).attr("name");
-					let value =$(event.target).attr("checked") ? "On" : "Off";
+					let name = $(event.target).val();
+                    
+					let value =$(event.target).attr("checked") ? "Off" : "On";
+                    console.log(event.target)
 					console.log(INDIvp.device+'.'+INDIvp.name, name, value);
 					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
+
+                   $(event.target).parent().parent().find("span.ISwitchspan > input[indiname='"+name+"']").each(
+                    function() 
+                    {
+                        console.log($(this).attr("name"), this.checked)
+                    })
+
 					
 				} )
 			));
@@ -441,10 +455,12 @@ function newSwitch( INDIvp, appendTo )
 	{
 		
 		$.each(INDIvp.values, function(ii, sp)
-		{
+		{   
+            if(INDIvp.name == "CONNECTION")
+                console.log(INDIvp)
 			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
-			var spid = nosp_dev +"__"+ name;
+			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
 
 			if(sp.value === "On")
 			{
@@ -626,7 +642,9 @@ function sendNewSwitch(event)
 			
 		})
 	})
-	INDIws.send(JSON.stringify(out));
+	//INDIws.send(JSON.stringify(out));
+    console.log("Sending "+out.newSwitch.sp["name"]+" to "+ out.newSwitch.sp["state"])
+    setindi("Switch", out.device+'.'+out.name, out.newSwitch.sp["name"], out.newSwitch.sp["state"])
 	
 	
 }

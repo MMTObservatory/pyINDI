@@ -10,7 +10,10 @@ import io
 import redis
 import json
 import logging
-import aiomysql
+try:
+    import aiomysql
+except Exception as error:
+    pass
 from configparser import ConfigParser
 import os
 
@@ -31,6 +34,9 @@ config.read(str(configpath))
 
 
 class mount( INDIDevice.device ):
+    """mount device class
+    
+    """
     once = True
 
     def ISNewNumber( self, dev, name, values, names ):
@@ -48,22 +54,32 @@ class mount( INDIDevice.device ):
         try:
         
             r = redis.Redis(host="redis.mmto.arizona.edu")
-            mkeys = r.keys( "mount_mini*" )
+            mkeys = r.keys("mount_mini*")
             values = {key.decode():json.loads(r.get(key).decode())['value'] for key in mkeys}
-            nums = self.IUFind("mount", "mount_nums")
+            nums = self.IUFind(device="mount", name="mount_nums")
 
             #O(N*N) where N is number of keys :(
+
             for key, value in values.items():
                 for num in nums.np:
                     if num.name == key:
                         num.value = value
                 
 
-
+            
             self.IDSet(nums)
+    
+            radec = self.IUFind(device="mount", name="EQUATORIAL_EOD_COORD")
+            radec.np[0].value = float(values['mount_mini_comra_tod'])
+            radec.np[1].value = float(values['mount_mini_comdec_tod'])
+
+            self.IDSet(radec)
+            #self.IDMessage("Doing RADEC")
+
 
         except Exception as err:
-            pass
+            self.IDMessage(f"There was an error in repeat {err}")
+            #self.IDMessage(f"There was an error in repeat {values}")
 
         self.IEAddTimer( 1000.0, self.repeat )
 
@@ -71,6 +87,14 @@ class mount( INDIDevice.device ):
 
 
     def ISGetProperties( self, device:str=None ):
+        """ISGetProperties
+        args:
+            device->name of the device
+
+            THis funtion is called when the 
+            client or indiserver sends the
+            `<getProperties>` tag.
+        """
 
         r = redis.Redis(host="redis.mmto.arizona.edu")
         mkeys = r.keys( "mount_mini*" )
@@ -92,7 +116,24 @@ class mount( INDIDevice.device ):
                 "mount_nums", INDIDevice.IPState.OK, INDIDevice.IPerm.RO,
                 label="Mount Numbers"
                 )
+        
+                
+
         self.IDDef(ivec)
+
+        ra = INDIDevice.INumber('RA', '%9.6m', 0, 24, 0.001, 0.0, "RA")
+        dec = INDIDevice.INumber('DEC', '%9.6m', -90, 90, 0.001, 0.0, "Dec")
+        radec = INDIDevice.INumberVector(
+            
+            [ra, dec], 
+            self.device,
+            "EQUATORIAL_EOD_COORD",
+            INDIDevice.IPState.IDLE, 
+            INDIDevice.IPerm.RO, 
+            label="RaDec")
+
+        self.IDDef(radec)
+        
 
 
         if self.once:

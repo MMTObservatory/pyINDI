@@ -6,9 +6,14 @@
 from ._astropy_init import *   # noqa
 # ----------------------------------------------------------------------------
 
+<<<<<<< HEAD
 #:w
 # from . import device
 #from .client import INDIWebApp
+=======
+#from . import device
+#from . import client
+>>>>>>> 6e0b8b92296636f92fd3f0ae4f27c53cfd8cdb65
 
 __all__ = []
 #from .example_mod import *   # noqa

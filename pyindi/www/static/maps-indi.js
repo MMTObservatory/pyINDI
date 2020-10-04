@@ -23,7 +23,7 @@ var gTypestr = "";                      // all INDI types we accept
 var websocket;                          // the persistent web socket connection
 var gCanReadWrite = 0;                  // whether this page is allowed to set new INDI property values
 const ROport = 8081;                    // setindi() is muted when our page is on this port
-const wspage = "/indi-websocket";       // must match URL for wstunnel in lighttpd.conf
+const wspage = "/indi/websocket";       // must match URL for wstunnel in lighttpd.conf
 $(function() {
 
     // initialize the list of types that updateProperties will handle.
@@ -121,6 +121,7 @@ function wsSend (msg)
 
     if (websocket && websocket.readyState == websocket.OPEN) {
         // console.log("tx: " + msg);
+
         websocket.send(msg);
     } else
         setTimeout (function() {wsSend(msg);}, 30);
@@ -219,7 +220,7 @@ function setPropertyCallback(property, callback) {
     var devname = property.split(".");
     var device = devname[0];
     var name = devname[1];
-    var getprop = '<getProperties version="1" device="' + device + '"';
+    var getprop = '<getProperties version="1.7" device="' + device + '"';
     if (name != '*')
         getprop += ' name="' + name + '"';
     getprop += ' />\n';

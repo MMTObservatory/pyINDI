@@ -1,4 +1,3 @@
-import tornado.web, tornado.ioloop, tornado.websocket
 import time
 import asyncio
 from lxml import etree
@@ -8,80 +7,104 @@ import json
 from pathlib import Path
 import logging
 
-class WebHandler(tornado.web.RequestHandler):
-    """
-    Render a simple webpage. 
-    The page uses setPropertyCallback
-    to render the device given in the url eg:
-    If the url string is /dev/(.*) and the 
-    url entered into the browser is /dev/mount
-    the webpage will send a setPropertyCallback('mount.*')
-    and build all the non-BLOB properties into jquery-ui
-    widgets. 
-    """
-
-    static_path = Path(__file__).parent/"www/index.html"
-    def get(self, device):
-        self.render(str(self.static_path), device_name=device)
 
 
+"""
+    INDIClient runs two tasks that are infinite loops and run 
+    in parallel with the asyncio.gather function. These
+    tasks, read_from_indiserver and write_to_indiserver, are 
+    explained in the class diagram below. 
+
+        Overall INDI server/client scheme
+        --------------------------------------------
+       
+              ___________________________________________________________       
+              | INDIClient                                              |   
+              | ----------                                              |
+ ____________ |                                                         |
+ |          | |             ________________________             _______________________
+ |          |---->reader--->|read_from_indiserver()|------------>|xml_from_indiserver()|
+ |indiserver| |             ------------------------             -----------------------
+ |          | |                                                         |
+ |          | |             _______________________              _______|_______________
+ |          |<-----writer---|write_to_indiserver()|<--to_indiQ<--|xml_to_indiserver()  |
+ ------------ |             -----------------------              -----------------------
+              |                                                         |
+              -----------------------------------------------------------
+
+    To build an INDIClient application sublcass INDIClient and override
+    the xml_from_indiserver to retrieve data from the indiserver and
+    use the xml_to_indiserver method to send data to the indiserver. An
+    example of this is in webclient.py in this package.  
+
+    TODO:
+        it would be nice to remove tornado dependencies in this module. 
+
+"""
 
 class INDIClient:
-    _instance = None
-    def __new__(cls, *args, **kwargs):
-        """
-        Make it a singleton
-        """
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
+    """This class sends/recvs INDI data to/from the indiserver 
+    tcp/ip socket. See the above diagram for help understanding
+    its data flow.  """
+
+    to_indiQ = Queue()
 
 
-    web2indiQ = Queue()
-    clients = set()
-    once = True
-    def __init__(self, host="localhost", port=7624):
-        self.clients = set()
+    def start(self, host="localhost", port=7624, read_width=30000):
         self.port = port
         self.host = host
+        self.read_width=read_width
+        self.lastblob = None
 
-    async def parse_incoming_xml(self):
-        # TODO: This needs to be tolerant of an indi
-        # server crash. 
-        self.running = 1
+
+    async def xml_from_indiserver(self, data):
+
+        raise NotImplemented("This method should be implemented by the subclass")
+
+
+    async def read_from_indiserver(self):
+
+        """Read data from self.reader and then call
+        xml_from_indiserver with this data as an arg."""
+
         while self.running:
             try:
                 if self.reader.at_eof():
                     raise Exception("INDI server closed")
 
-                data = await asyncio.wait_for(self.reader.read(5000), 5)
-                for client in self.get_clients():
-                    client.write_message(data)
+                # Read data from indiserver
+                data = await self.reader.read(self.read_width)
+                await self.xml_from_indiserver(data)
+
+
             except Exception as err:
                 self.running = 0
-                logging.debug(f"Could not read from INDI server {err}")
+                logging.warning(f"Could not read from INDI server {err}")
+                raise
 
-        logging.debug(f"Closing connection")
         self.writer.close()
-        self.cancel()
-        logging.debug(f"Cancelled tasks")
-        logging.debug(f"{self.task}")
-
+        await self.writer.wait_closed()
+        logging.warning(f"Finishing read_from_indiserver task")
+        
 
     async def connect(self):
+        """Attempt to connect to the indiserver in a loop.
+        """
         while 1:
             
             task = None
             try: 
                 self.reader, self.writer = await asyncio.open_connection(
                         self.host, self.port)
-                logging.debug("Connected")
+                logging.debug(f"Connected to indiserver {self.host}:{self.port}")
                 self.running = True
 
-                self.task = asyncio.gather(self.parse_incoming_xml(),
-                        self.web2indiserver(), return_exceptions=True)
+                self.task = asyncio.gather(self.read_from_indiserver())
+                #self.task = asyncio.gather(self.read_from_indiserver(),
+                        #self.write_to_indiserver() )
                 await self.task
-                logging.debug("Finished!")
+                logging.debug("INDI client tasks finished. indiserver crash?")
+                logging.debug("Attempting to connect again")
                 
             except ConnectionRefusedError:
                 self.running = False
@@ -96,133 +119,108 @@ class INDIClient:
 
             await asyncio.sleep(2.0)
 
+    
+    async def xml_to_indiserver(self, xml):
+        """
+        put the xml argument in the 
+        to_indiQ. 
+        """
+        try:
+            self.writer.write(xml.encode())
+            await self.writer.drain()
+            logging.debug(f"Added message to to_indiQ: {xml}")
+        except Exception as err:
+            logging.debug(f"Could not write to INDI server {err}")
+            self.running = 0
+            raise
+        #await self.to_indiQ.put(xml)
+        
+        
 
-    def cancel(self):
-        self.task.cancel()
+    async def write_to_indiserver(self):
+        """Collect INDI data from the from the to_indiQ.
+        and send it on its way to the indiserver. 
+        """
 
-    async def web2indiserver(self):
-        while self.running:# We should figure out a condition to quit
-            fromweb = await self.web2indiQ.get() 
+        while self.running:
             try:
-                self.writer.write(fromweb.encode())
+                #to_indi = await asyncio.wait_for( self.to_indiQ.get(), 10 )
+                to_indi = await self.to_indiQ.get()
+                logging.debug(f"writing this to indi {to_indi}")
+            except asyncio.TimeoutError as error:
+                # This allows us to check the self.running state
+                # if there is no data in the to_indiQ
+                continue
+            try:
+                #logging.debug(f"writing this to indi {to_indi}")
+                self.writer.write(to_indi.encode())
                 await self.writer.drain()
             except Exception as err:
                 self.running = 0
                 logging.debug(f"Could not write to INDI server {err}")
-        self.cancel()
+
+        logging.debug("Finishing write_to_indiserver task")
 
 
-    @classmethod
-    def get_clients(cls):
-        return cls.clients
-
-    @classmethod
-    def add_client(cls, client):
-        cls.clients.add(client)
-
-
-    @classmethod
-    def remove_client(cls):
-        cls.clients.remove(client)
-
-
-class INDIWebsocket(tornado.websocket.WebSocketHandler):
-    """
-    This class handles the websocket traffic and 
-    registers new clients with the INDIClient class
-    """
-    client = INDIClient
     
-    def open(self):
-        self.client.add_client(self)
+class INDIClientSingleton(INDIClient):
+    """
+    INDIClient as a singleton. This works well
+    if you only want one client and you want 
+    to be able to easily access that client
+    by simple instantiation. 
+    """
 
+    _instance = None
 
-    def on_message(self, message):
-        self.client.web2indiQ.put(message)
-
-    def on_close(self):
-        self.client.clients.remove(self)
-
-
-class INDIWebApp():
-
-    # The files in this path will alway be available
-    # http://<HOST>/static/
-    static_path = Path(__file__).parent/"www/static"
-
-    def __init__(self, loop=None, webport=8888, indihost="localhost",
-            indiport=7624):
+    def __new__(cls, *args, **kwargs):
         """
-        Arguments:
-        loop: The tornado IOLoop can not be an asyncio event loop.
-        webport: The port of the webserver. 
-        indihost: the name or IP address of the computer hosting the indi
-        server.
-        indiport: The port the indi server is running on. 
+        Make it a singleton
         """
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
-        self._handlers = None
-        self.port = webport
+
+
+class INDIClientContainer:
+
+    def __new__(cls, *args, **kwargs):
+        """
+        Make it a singleton
+        """
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._clients = []
+
+        return cls._instance
+            
+
+    def create_client(self, *args, **kwargs):
         
+        if "client_class" in kwargs:
+            if issubclass(kwargs["client_class"], INDIClient):
+                client_class = kwargs["client_class"]
+                del kwargs["client_class"]
+            else:
+                raise TypeError(f"client_class must be subclass of INDIClient.")
+        else:
+            client_class = INDIClient
+
+        client = client_class()
+        client.start(*args, **kwargs)
         
+        self._clients.append(client)
 
-        if loop is None:
-            loop = tornado.ioloop.IOLoop.current()
+        return client
 
-        self.mainloop = loop
+    def new_client(self, client=INDIClient):
 
-        self.client = INDIClient(port=indiport, host=indihost)
+        self._clients.append(client)
+     
+   
+    def __getitem__(self, key):
 
-        self.mainloop.add_callback(self.client.connect)
-
-
-    def add_page(self, url_path: str, path_to_html: str):
-        """
-        Add a webpage to be rendered by tornado.
-        Get data only. 
-        """
-        html = Path(path_to_html)
-        if self._handlers is None:
-            self._handlers = []
-
-        class handler(tornado.web.RequestHandler):
-
-            def get(self):
-
-                name = self.get_argument("device_name", None)
-                if name is None:
-                    self.write(f"URL must contain device_name as http get data. For\
-                            example: <br><br><br> http://{self.request.host}/dev?device_name=mydev\
-                            ")
-                    return 
-                self.render( str(html), device_name=name)
-
-        self._handlers.append((url_path, handler))
-
+        return self._clients[key]
         
-    def add_handler(self, handler: tuple):
-        """Expose tornado.web.Application add_handlers method"""
-        if self._handlers is None:
-            self._handlers = []
-        self._handlers.append(handler)
-
-
-
-    def start(self):
-        if self._handlers is None:
-            # Add the default page
-            self._handlers = [(r"/dev/(.*)", WebHandler)]
-
-        # Add the websocket handler
-        self._handlers.append((r"/indi-websocket", INDIWebsocket))
-        self.app = tornado.web.Application(
-                self._handlers,
-                static_path=self.static_path)
-
-        self.app.listen(self.port)
-
-        self.mainloop.start()
-
-
-
 
