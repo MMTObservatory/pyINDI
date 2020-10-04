@@ -23,7 +23,6 @@ class SkeletonDevice(device):
 
     @device.repeat(1000)
     def do_repeate(self):
-        print(self.device)
         conn = self.__getitem__("CONNECTION")
         if conn["CONNECT"].value == 'Off':
             return
