@@ -13,6 +13,8 @@ import base64
 
 from abc import ABC
 from pathlib import Path
+import functools
+import traceback
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -23,7 +25,6 @@ For now we will only by supporting version 1.7
 Naming convention are based on the indilib c++ version:
 http://www.indilib.org/api/index.html
 """
-
 
 now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
@@ -43,28 +44,35 @@ else:
 
 
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
-
     """
     Collect the stdio as async streams. This is a shameless
     ctrl-c ctrl-v of this stackoverflow:
     https://stackoverflow.com/questions/52089869/how-to-\
             create-asyncio-stream-reader-writer-for-stdin-stdout
     """
+
     if loop is None:
         loop = asyncio.get_event_loop()
-    reader = asyncio.StreamReader(limit=limit, loop=loop)
-    await loop.connect_read_pipe(
-                    lambda: asyncio.StreamReaderProtocol(reader, loop=loop),
-                    sys.stdin)
-    writer_transport, writer_protocol = await loop.connect_write_pipe(
-                    lambda: asyncio.streams.FlowControlMixin(loop=loop),
-                            os.fdopen(sys.stdout.fileno(), 'wb'))
-    writer = asyncio.streams.StreamWriter(
-                        writer_transport, writer_protocol, None, loop)
+
+    if sys.platform == 'win32':
+        # Windows does not support async stdio operations
+        reader = WinIO(loop)
+        writer = WinIO(loop)
+    else:
+        reader = asyncio.StreamReader(limit=limit, loop=loop)
+        await loop.connect_read_pipe(
+            lambda: asyncio.StreamReaderProtocol(reader, loop=loop),
+            sys.stdin)
+
+        writer_transport, writer_protocol = await loop.connect_write_pipe(
+            lambda: asyncio.streams.FlowControlMixin(loop=loop),
+            os.fdopen(sys.stdout.fileno(), 'wb'))
+        writer = asyncio.streams.StreamWriter(
+            writer_transport, writer_protocol, None, loop)
     return reader, writer
 
 
-def print(msg: Union[str, bytes]):
+def printa(msg: Union[str, bytes]):
     """
     This was the old way of writing to stdout
     We use the stdio fxn now. 
@@ -77,6 +85,30 @@ def print(msg: Union[str, bytes]):
     return
 
 
+class WinIO:
+    """Windows does not support asynchronous stdio
+       operations. Instead, this object handles
+       those operations in a separate thread."""
+
+    def __init__(self, loop):
+        self.loop = loop
+
+    async def readline(self):
+        msg = await self.loop.run_in_executor(None, sys.stdin.readline)
+        return msg.encode()
+
+    async def read(self, nbytes):
+        msg = await self.loop.run_in_executor(
+            None,
+            functools.partial(sys.stdin.read, nbytes))
+        return msg.encode()
+
+    def write(self, msg):
+        print(msg)
+
+    async def drain(self):
+        # This does nothing
+        await asyncio.sleep(0)
 
 
 class INDIEnumMember(int):
@@ -100,8 +132,10 @@ class INDIEnumMember(int):
         return obj
 
     def __eq__(self, other):
+
         if isinstance(other, str):
             return self.string == other
+
         elif isinstance(other, Enum):
             return self.value == other.value
         return False
@@ -205,11 +239,12 @@ class IVectorProperty(ABC):
     
     """
     dtd = etree.DTD(
-            (Path(__file__).parent/"data/indi.dtd").open())
+        (Path(__file__).parent / "data/indi.dtd").open())
 
     def __init__(self,
                  device: str, name: str, state: IPState,
                  label: str = None, group: str = None):
+
 
         self.device = device
         self.name = name
@@ -253,18 +288,21 @@ class IVectorProperty(ABC):
         for any vector property. It uses the dtd files
         to map the xml attributes members of this class.
         """
-        tagname = "def"+self.tagcontext
+
+        tagname = "def" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
         if tagname not in dtd_elements:
             raise AttributeError(
-                                 "{tagname} not defined in \
+                "{tagname} not defined in \
                                  Document Type Definition")
 
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
+
         for attribute in ele_definition.iterattributes():
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
+
         for prop in self.iprops:
             ele.append(prop.Def())
 
@@ -283,13 +321,13 @@ class IVectorProperty(ABC):
         """
         This will put together the setXXX xml element
         for any vector property. It uses the dtd file(s)
-        to map aml attribute to members of this class.
+        to map xml attribute to members of this class.
         """
-        tagname = "set"+self.tagcontext
+        tagname = "set" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
         if tagname not in dtd_elements:
             raise AttributeError(
-                                 f"{tagname} not defined in \
+                f"{tagname} not defined in \
                                  Document Type Definition")
 
         ele_definition = dtd_elements[tagname]
@@ -328,13 +366,13 @@ class IVectorProperty(ABC):
 
         raise KeyError(f"{name} not in {self.__str__()}")
 
-    
 
 class IProperty:
     dtd = etree.DTD(
-            (Path(__file__).parent/"data/indi.dtd").open())
+        (Path(__file__).parent / "data/indi.dtd").open())
 
     def __init__(self, name: str, label: str = None):
+
 
         if label is None:
             label = name
@@ -347,14 +385,14 @@ class IProperty:
 
     def __repr__(self):
         return self.__str__()
-    
+
     def Def(self):
-        tagname = "def"+self.tagcontext
+        tagname = "def" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
 
         if tagname not in dtd_elements:
             raise AttributeError(
-                                 f"{tagname} not defined in \
+                f"{tagname} not defined in \
                                  Document Type Definition")
 
         ele_definition = dtd_elements[tagname]
@@ -370,12 +408,12 @@ class IProperty:
         return ele
 
     def Set(self):
-        tagname = "one"+self.tagcontext
+        tagname = "one" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
 
         if tagname not in dtd_elements:
             raise AttributeError(
-                                 f"{tagname} not defined in \
+                f"{tagname} not defined in \
                                  Document Type Definition")
 
         ele_definition = dtd_elements[tagname]
@@ -408,8 +446,8 @@ class IProperty:
 
     @value.setter
     def value(self, val):
-        
-        #TODO: We could do some type checking.
+
+        # TODO: We could do some type checking.
         if isinstance(self, INumber):
             self._value = self._value
         elif isinstance(self, IText):
@@ -432,7 +470,6 @@ class IProperty:
 
 
 class INumberVector(IVectorProperty):
-
     tagcontext = "NumberVector"
 
     def __init__(self,
@@ -460,7 +497,6 @@ class INumberVector(IVectorProperty):
 
 
 class INumber(IProperty):
-
     tagcontext = "Number"
     valuename = "value"
 
@@ -492,8 +528,8 @@ class INumber(IProperty):
         except Exception as err:
             raise ValueError(f"""INumber value must be a number not {val}""")
 
-class ITextVector(IVectorProperty):
 
+class ITextVector(IVectorProperty):
     tagcontext = "TextVector"
 
     def __init__(self,
@@ -521,7 +557,6 @@ class ITextVector(IVectorProperty):
 
 
 class IText(IProperty):
-
     tagcontext = "Text"
     valuename = "text"
 
@@ -532,7 +567,6 @@ class IText(IProperty):
 
         super().__init__(name, label)
         self.text = text
-
 
     @property
     def value(self):
@@ -545,8 +579,8 @@ class IText(IProperty):
         except Exception as err:
             raise ValueError(f"""IText value must be str not {val}""")
 
-class ILightVector(IVectorProperty):
 
+class ILightVector(IVectorProperty):
     tagcontext = "LightVector"
 
     def __init__(self,
@@ -572,7 +606,6 @@ class ILightVector(IVectorProperty):
 
 
 class ILight(IProperty):
-
     tagcontext = "Light"
     valuename = "state"
 
@@ -584,7 +617,7 @@ class ILight(IProperty):
         super().__init__(name, label)
 
         self._state = state
-    
+
     @property
     def value(self):
         return self._state
@@ -596,11 +629,11 @@ class ILight(IProperty):
             if state == val:
                 self._state = val
 
-
         raise ValueError(f"""ILight value must be in {list(IPState)}""")
 
-class ISwitchVector(IVectorProperty):
 
+
+class ISwitchVector(IVectorProperty):
     tagcontext = "SwitchVector"
 
     def __init__(self,
@@ -610,6 +643,7 @@ class ISwitchVector(IVectorProperty):
                  state: IPState,
                  rule: ISRule,
                  perm: IPerm,
+                 timeout: float = 0,
                  label: str = None,
                  group: str = None):
         """
@@ -629,7 +663,6 @@ class ISwitchVector(IVectorProperty):
 
 
 class ISwitch(IProperty):
-
     tagcontext = "Switch"
     valuename = "state"
 
@@ -642,11 +675,9 @@ class ISwitch(IProperty):
 
         self._state = state
 
-
     @property
     def value(self):
         return self._state
-
 
     @value.setter
     def value(self, val):
@@ -657,8 +688,11 @@ class ISwitch(IProperty):
 
         raise ValueError(f"""ISwitch value must be in {list(ISState)}""")
 
-class IBLOBVector(IVectorProperty):
+    @property
+    def state(self):
+        return self._state
 
+class IBLOBVector(IVectorProperty):
     tagcontext = "BLOBVector"
 
     def __init__(self,
@@ -685,23 +719,20 @@ class IBLOBVector(IVectorProperty):
 
 
 class IBLOB(IProperty):
-
     tagcontext = "BLOB"
     valuename = "data"
 
     def __init__(self,
                  name: str,
-                 format: str,
+                 format: str = None,
                  label: str = None):
         super().__init__(name, label)
         self.format = format
         self.data = None
 
-
     @property
     def value(self):
         return base64.b64encode(self.data).decode()
-
 
     @value.setter
     def value(self, val):
@@ -710,7 +741,6 @@ class IBLOB(IProperty):
 
         self.size = len(val)
         self.data = val
-
 
 
 class device(ABC):
@@ -737,7 +767,8 @@ class device(ABC):
     
     
     """
-    
+
+    _registrants = []
 
     def __init__(self, loop=None, config=None, name=None):
 
@@ -763,16 +794,28 @@ class device(ABC):
         self.timer_queue = asyncio.Queue()
 
         self.reader, self.writer = \
-                self.mainloop.run_until_complete(stdio(loop=self.mainloop))
+            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
 
         self.outq = asyncio.Queue()
+        self.handles = []
+
+        self._once = True
+
+        # Not sure why but the default exception handler
+        # halts the loops and never shows the traceback.
+        # So overwrite the default.
+        self.mainloop.set_exception_handler(self.exception)
+
+    def exception(self, loop, context):
+
+        raise context['exception']
 
     def __getitem__(self, name: str):
         """
         Retrieve IVectorProperty that has been
         registered with the device.Set method.
         """
-    
+
         return self.IUFind(name)
 
     def name(self):
@@ -782,10 +825,8 @@ class device(ABC):
     def device(self):
         return self._devname
 
-
     def __repr__(self):
         return f"<{self.name()}>"
-
 
     def start(self):
         """
@@ -795,15 +836,19 @@ class device(ABC):
         and you never have to know that this is asyncio. 
         """
         self.running = True
-        self.mainloop.run_until_complete( asyncio.gather(
-                self.run(),
-                self.toindiserver()
-                ))
+        future = asyncio.gather(
+            self.run(),
+            self.toindiserver(),
+            #self.idle()
+        )
+        #print(type(future))
+        self.mainloop.run_until_complete(future)
 
     async def toindiserver(self):
 
         while self.running:
             output = await self.outq.get()
+
             self.writer.write(output)
             await self.writer.drain()
 
@@ -833,30 +878,45 @@ class device(ABC):
 
             logging.debug(etree.tostring(xml, pretty_print=True))
             if xml.tag == "getProperties":
+
                 if "device" in xml.attrib:
                     self.ISGetProperties(xml.attrib['device'])
+
                 else:
                     self.ISGetProperties()
 
+                self.initProperties()
+
+                if self._once:
+                    # This is where the `repeat` decorated
+                    # functions are called the first time
+                    for reg in self._registrants:
+                        func = getattr(self, reg.__name__)
+                        func()
+                    self._once = False
+
+
             elif xml.tag == "newNumberVector":
+
                 try:
                     names = [ele.attrib["name"] for ele in xml]
                     values = [float(ele.text) for ele in xml]
                     self.ISNewNumber(
-                                     xml.attrib["device"],
-                                     xml.attrib["name"], values, names)
+                        xml.attrib["device"],
+                        xml.attrib["name"], values, names)
 
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
                     raise
+
             elif xml.tag == "newTextVector":
                 try:
                     names = [ele.attrib["name"] for ele in xml]
                     values = [str(ele.text) for ele in xml]
                     self.ISNewText(
-                                   xml.attrib["device"],
-                                   xml.attrib["name"], values, names)
+                        xml.attrib["device"],
+                        xml.attrib["name"], values, names)
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
@@ -867,34 +927,57 @@ class device(ABC):
                     names = [ele.attrib["name"] for ele in xml]
                     values = [ISState.fromstring(ele.text) for ele in xml]
                     self.ISNewSwitch(
-                                     xml.attrib["device"],
-                                     xml.attrib["name"], values, names)
+                        xml.attrib["device"],
+                        xml.attrib["name"], values, names)
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
                     raise
 
-
+    def initProperties(self):
+        """"""
+        pass
 
     def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
         """
         create a callback to be executed after a delay.
 
-        9 times out of 10 this will be appended to the bottom 
-        of the callback so that this is called in a loop. 
-        I hope make this functonality happen with a simple 
-        decorator over the callback function. 
+        If you want to call a method at a regular interval
+        use the device.repeat decorator.
         """
-        self.mainloop.call_soon_threadsafe(
+
+        hdl = self.mainloop.call_soon(
             self.mainloop.call_later,
-            millisecs/1000.0,
+            millisecs / 1000.0,
             funct_or_coroutine,
             *args)
 
+        self.handles.append(hdl)
+
+    async def _debug(self):
+        while 1:
+            await asyncio.sleep(1.0)
+
+    def buildSkeleton(self, skelfile):
+
+        with open(skelfile) as skfd:
+            xmlstr = skfd.read()
+            xml = etree.fromstring(xmlstr)
+
+        for ivec in xml.getchildren():
+            properties = []
+            for prop in ivec.getchildren():
+                att = prop.attrib
+                att.update({'value': prop.text.strip()})
+                properties.append(att)
+
+                properties.append(prop.attrib)
+
+            self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
 
     def ISNewNumber(dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
-                                  "Device driver must \
+            "Device driver must \
                                   overload ISNewNumber method.")
 
     def IUFind(self, name, device=None, group=None):
@@ -918,13 +1001,13 @@ class device(ABC):
         # property seems to be a pretty important issue.
         raise ValueError(f"Could not find {device}, {name} in {self.props}")
 
-    def ISGetProperties(self):
+    def ISGetProperties(self, device):
         raise NotImplementedError(
-                                  f"Subclass of {self.__name__} must \
+            f"Subclass of {self.__name__} must \
                                   implement ISGetProperties")
 
-    def IDMessage(self, msg: str, 
-            timestamp: Union[str, datetime.datetime, None]=None):
+    def IDMessage(self, msg: str,
+                  timestamp: Union[str, datetime.datetime, None] = None):
 
         if type(timestamp) == datetime.datetime:
             timestamp = timestamp.isoformat()
@@ -933,40 +1016,165 @@ class device(ABC):
             timestamp = datetime.datetime.now().isoformat()
 
         xml = f'<message message="{msg}" '
-        xml+= f'timestamp="{timestamp}" '
-        xml+= f'device="{self.name()}"> '
-        xml+= f'\n\n</message>'
+        xml += f'timestamp="{timestamp}" '
+        xml += f'device="{self.name()}"> '
+        xml += f'\n\n</message>'
         self.outq.put_nowait(xml.encode())
         # self.writer.write(xml.encode())
 
     def IDSetNumber(self, n: INumberVector, msg=None):
-        self.IDSet(n)
+        self.IDSet(n, msg)
 
     def IDSetText(self, t: ITextVector, msg=None):
-        self.IDSet(t)
+        self.IDSet(t, msg)
 
     def IDSetLight(self, l: ILightVector, msg=None):
-        self.IDSet(l)
+        self.IDSet(l, msg)
 
     def IDSetSwitch(self, s: ISwitchVector, msg=None):
-        self.IDSet(s)
+        self.IDSet(s, msg)
 
     def IDSet(self, vector: IVectorProperty, msg=None):
         if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
-            raise("Must use IDSetBLOB to send BLOB to client.")
+            raise ("Must use IDSetBLOB to send BLOB to client.")
         self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
-        #self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
+        # self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
 
     def IDSetBLOB(self, blob):
         self.outq.put_nowait(etree.tostring(blob.Set()))
-        #self.writer.write(etree.tostring(blob.Set()))
+        # self.writer.write(etree.tostring(blob.Set()))
 
     def IDDef(self, prop, msg=None):
 
         # register the property internally
+
+
+        if prop.device != self._devname:
+            raise ValueError(f"INDI prop {prop.name} device does not match this device.")
+
         self.props.append(prop)
         # Send it to the indiserver
         self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
 
         # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
 
+    @classmethod
+    def repeat(cls, millis: int):
+        """This monstrosity is a decorator
+        for methods that are to be called
+        after the first ISGetProperties is called
+        and then repeated every millis [ms]"""
+
+        def get_function(func: Callable):
+            """"Called during class definition.
+            Nested functions hereafter are called
+            when func is called.
+            """
+            # Register the function with
+            # the class so we know to call
+            # it when in ISGetProperties
+            # is called
+            cls.register(func)
+
+            def get_instance(instance: device):
+                """
+                Set the funct to be called with call_later
+                asyncio procedure.
+
+                Called after ISGetProperties is called
+                in device.run
+                """
+
+                @functools.wraps(func)
+                def call_with_error_handling():
+                    """Call the function but make sure
+                    we have error handling with the traceback"""
+                    try:
+                        func(instance)
+                    except Exception as error:
+                        sys.stderr.write(f"There was an exception the later decorated fxn {func}:")
+                        sys.stderr.write(f"{error}")
+                        sys.stderr.write("See traceback below.")
+                        traceback.print_exc(file=sys.stderr)
+
+                    # do it again in millis
+                    cl = instance.mainloop.call_later(millis / 1000.0, call_with_error_handling)
+                    instance.handles.append(cl)
+                    return cl
+
+                cl = instance.mainloop.call_later(millis / 1000.0, call_with_error_handling)
+                instance.handles.append(cl)
+                return cl
+
+            return get_instance
+
+        return get_function
+
+    @classmethod
+    def register(cls, registrant: Callable):
+        """Register the function """
+        cls._registrants.append(registrant)
+
+    @staticmethod
+    def vectorFactory(vector_type, attribs, properties):
+        """vectorFactory"""
+
+        if 'Number' in vector_type:
+            vec = INumberVector([], **attribs)
+
+            for prop in properties:
+                iprop = INumber(**prop)
+                vec.np.append(iprop)
+
+        elif 'Light' in vector_type:
+
+            vec = ILightVector([], **attribs)
+
+            for prop in properties:
+
+                if 'value' in prop:
+                    prop['state'] = prop['value']
+                    del prop['value']
+
+                iprop = ILight(**prop)
+                vec.lp.append(iprop)
+
+        elif 'Switch' in vector_type:
+
+            vec = ISwitchVector([], **attribs)
+
+            for prop in properties:
+                if 'value' in prop:
+                    prop['state'] = prop['value']
+                    del prop['value']
+
+                iprop = ISwitch(**prop)
+                vec.sp.append(iprop)
+
+        elif 'BLOB' in vector_type:
+            vec = IBLOBVector([], **attribs)
+
+            for prop in properties:
+                if 'value' in prop:
+                    del prop['value']
+
+                iprop = IBLOB(**prop)
+                vec.bp.append(iprop)
+
+        elif 'Text' in vector_type:
+            vec = ITextVector(**attribs)
+
+            for prop in properties:
+                if 'value' in prop:
+                    prop['text'] = prop['value']
+                    del prop['value']
+
+                iprop = IText(**prop)
+                vec.tp.append(iprop)
+
+        else:
+            message = f"vector_type argument must be a string containing \
+            Light, Number, Switch, Text or BLOB not {vector_type}"
+            raise ValueError(message)
+
+        return vec

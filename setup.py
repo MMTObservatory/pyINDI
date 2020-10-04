@@ -75,4 +75,4 @@ except Exception:
 """.lstrip()
 
 setup(use_scm_version={'write_to': os.path.join('pyindi', 'version.py'),
-                       'write_to_template': VERSION_TEMPLATE})
+                       'write_to_template': VERSION_TEMPLATE}, install_requires=['lxml'])
