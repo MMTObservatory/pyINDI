@@ -971,7 +971,7 @@ class device(ABC):
                 att.update({'value': prop.text.strip()})
                 properties.append(att)
 
-                properties.append(prop.attrib)
+                #properties.append(prop.attrib)
 
             self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
 
