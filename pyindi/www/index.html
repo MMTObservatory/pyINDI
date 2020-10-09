@@ -20,7 +20,6 @@
 		doLess = true;
 		function new_device()
 		{
-
 			var devname = $("input#devname").val()
 			
 			start = new Date()
@@ -102,7 +101,12 @@
 
     function showMapMessage(map)
     {
-        console.log(map)
+        console.log(map.message)
+    }
+
+    function showMessage(msg, timestamp)
+    {
+        console.log(msg, timestamp)
     }
 
 	</script>

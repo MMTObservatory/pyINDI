@@ -120,7 +120,7 @@ function wsSend (msg)
 {
 
     if (websocket && websocket.readyState == websocket.OPEN) {
-        // console.log("tx: " + msg);
+         //console.log("tx: " + msg);
 
         websocket.send(msg);
     } else
@@ -411,7 +411,6 @@ function flattenIndiLess(xml) {
  */
 var partial_doc = '';                                   // accumulate xml in pieces
 var start_xml_re = /<.e[twf]\S*Vector/;                 // accept <set <new <def <get
-var msg_xml_re = /<message\s+.*\/>.*/;
 function updateProperties(xml_text) {
     // append next chunk
     if (xml_text == undefined)
@@ -422,8 +421,9 @@ function updateProperties(xml_text) {
     // process any/all complete INDI messages in partial_doc
     while (true) 
 		{
-
+        
         // find first opening tag, done if none
+        partial_doc = scrapeMessages(partial_doc)
         var start_match = start_xml_re.exec(partial_doc);
         if (start_match == undefined || start_match.index < 0)
             break;
@@ -441,30 +441,6 @@ function updateProperties(xml_text) {
         var xml_doc = partial_doc.substring(start_match.index, end_after_idx);
 				
 
-				/*this function doesn't check for <message/> elements
-				 * This match will bring it in line with the INDI spec
-				 * */
-				try
-				{
-					msg_match = msg_xml_re.exec(partial_doc)
-					if (msg_match)
-					{
-						//TODO: We should check for device here.
-						if(typeof showMessage != 'undefined')
-						{
-							let ele = $.parseXML(msg_match[0]).childNodes[0];
-							let msg = ele.attributes["message"].textContent;
-							let timestamp = ele.attributes["timestamp"].textContent;
-
-							showMessage(msg, timestamp)
-						}
-						//TODO remove xml element from partial_doc
-					}
-				}
-				catch(e)
-				{
-					console.log("Trouble parsing message", e)
-				}
 					
         partial_doc = partial_doc.substring(end_after_idx);
 				
@@ -508,4 +484,32 @@ function updateProperties(xml_text) {
 					// console.log ('Parse fail:\n' + xml_doc);
         }
     }
+}
+
+var msg_xml_re = /<message\s+.*\/>.*/g;
+function scrapeMessages(part)
+{				
+    try
+    {
+        var cp_part = part
+        while((msg_match = msg_xml_re.exec(part)) !== null)
+        {
+            //TODO: We should check for device here.
+            if(typeof showMessage != 'undefined')
+            {
+                let ele = $.parseXML(msg_match[0]).childNodes[0];
+                let msg = ele.attributes["message"].textContent;
+                let timestamp = ele.attributes["timestamp"].textContent;
+                showMessage(msg, timestamp)
+            }
+            cp_part = cp_part.replace(msg_match[0], '')
+            //TODO remove xml element from partial_doc
+        }
+    }
+    catch(e)
+    {
+        console.log("Trouble parsing message", e)
+    }
+    return cp_part
+
 }
