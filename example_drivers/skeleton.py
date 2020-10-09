@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import sys
 from pathlib import Path
 import random
@@ -21,19 +22,32 @@ class SkeletonDevice(device):
         self.buildSkeleton("skeleton.xml")
 
 
+    def ISNewSwitch(self, device, name, names, values):
+        
+        SVP = self.IUFind(name)
+        self.IDMessage(f"{device}, {name=='CONNECTION'}, {names}, {values}")
+        if name == "CONNECTION":
+            try:
+                self.IUUpdate(device, name, names, values)
+            except Exception as error:
+                self.IDMessage(f"IUUpdate error: {error}")
+        
+            
+
     @device.repeat(1000)
     def do_repeate(self):
+        #self.IDSet(self.__getitem__("CONNECTION"), "NOW")
         conn = self.__getitem__("CONNECTION")
         if conn["CONNECT"].value == 'Off':
             return
 
-        states = ('Alert', 'Busy', 'Idle', 'Ok')
-        lights = self.IUFind('Light Property')
+        #states = ('Alert', 'Busy', 'Idle', 'Ok')
+        #lights = self.IUFind('Light Property')
 
-        for light in lights:
-            light.value = random.choice(states)
+        #for light in lights:
+            #light.value = random.choice(states)
 
-        self.IDSet(light)
+        #self.IDSet(light)
 
 
 sk = SkeletonDevice()

@@ -177,7 +177,7 @@ class INDIEnum(INDIEnumMember, Enum):
         return self.string
 
     def __repr__(self):
-        return f"<IPState: {self.string}>"
+        return f"<{self.__class__.__name__}: {self.string}>"
 
 
 class IPState(INDIEnum):
@@ -365,6 +365,20 @@ class IVectorProperty(ABC):
                 return ele
 
         raise KeyError(f"{name} not in {self.__str__()}")
+
+
+    def __setitem__(self, name, val):
+
+        for ele in self.elements:
+            if ele.name == name:
+                ele.value = val
+                return
+
+        raise KeyError(f"{name} not in {self.__str__()}")
+
+                    
+
+                
 
 
 class IProperty:
@@ -625,11 +639,10 @@ class ILight(IProperty):
     @value.setter
     def value(self, val):
 
-        for state in list(IPState):
-            if state == val:
-                self._state = val
-
-        raise ValueError(f"""ILight value must be in {list(IPState)}""")
+        if val in list(IPState):
+            self._state = val
+        else:
+            raise ValueError(f"""ILight value must be in {list(IPState)}""")
 
 
 
@@ -661,6 +674,31 @@ class ISwitchVector(IVectorProperty):
         self.rule = rule
         super().__init__(device, name, state, label, group)
 
+    
+
+    def __setitem__(self, name, value): 
+    
+        if value not in list(ISState):
+                raise ValueError("ISwitch value must be in 'On' or 'Off' not {value}")
+
+        # If its one of many we need to set the 
+        # other items.
+        if self.rule == "OneOfMany" and value == 'On':
+            exists = False
+            for sw in self.elements:
+
+                if sw.name == name:
+                    exists = True
+                    sw.value = 'On'
+                else:
+                    sw.value = 'Off'
+
+            if not exists:
+                raise KeyError(f"Switch {name} not in {self.name}.") 
+                    
+        else:
+            super().__setitem__(name, value)
+                
 
 class ISwitch(IProperty):
     tagcontext = "Switch"
@@ -672,7 +710,7 @@ class ISwitch(IProperty):
                  label: str = None):
 
         super().__init__(name, label)
-
+        print(f"{name} = {state}")
         self._state = state
 
     @property
@@ -682,11 +720,12 @@ class ISwitch(IProperty):
     @value.setter
     def value(self, val):
 
-        for state in list(ISState):
-            if state == val:
-                self._state = val
+        val = str(val)
 
-        raise ValueError(f"""ISwitch value must be in {list(ISState)}""")
+        if val in list(ISState):
+            self._state = val
+        else:
+           raise ValueError(f"""ISwitch value must be either 'Off' or 'On' not {val}""")
 
     @property
     def state(self):
@@ -900,7 +939,7 @@ class device(ABC):
 
                 try:
                     names = [ele.attrib["name"] for ele in xml]
-                    values = [float(ele.text) for ele in xml]
+                    values = [float(ele.text.strip()) for ele in xml]
                     self.ISNewNumber(
                         xml.attrib["device"],
                         xml.attrib["name"], values, names)
@@ -925,7 +964,8 @@ class device(ABC):
             elif xml.tag == "newSwitchVector":
                 try:
                     names = [ele.attrib["name"] for ele in xml]
-                    values = [ISState.fromstring(ele.text) for ele in xml]
+                    #values = [ISState.fromstring(ele.text) for ele in xml]
+                    values = [str(ele.text).strip() for ele in xml]
                     self.ISNewSwitch(
                         xml.attrib["device"],
                         xml.attrib["name"], values, names)
@@ -975,7 +1015,7 @@ class device(ABC):
 
             self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
 
-    def ISNewNumber(dev: str, name: str, values: list, names: list):
+    def ISNewNumber(self, dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
             "Device driver must \
                                   overload ISNewNumber method.")
@@ -1000,6 +1040,19 @@ class device(ABC):
         # We could let this return None but not finding a
         # property seems to be a pretty important issue.
         raise ValueError(f"Could not find {device}, {name} in {self.props}")
+
+    def IUUpdate(self, device, name, values, names):
+        vp = self.IUFind(name=name, device=device)
+            
+        for nm, val in zip(names, values):
+            vp[nm].value = val
+
+
+        self.IDMessage(vp["DISCONNECT"])
+        self.IDSet(vp)
+
+        return True
+        
 
     def ISGetProperties(self, device):
         raise NotImplementedError(
