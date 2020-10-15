@@ -103,7 +103,7 @@ class WinIO:
             functools.partial(sys.stdin.read, nbytes))
         return msg.encode()
 
-    def write(self, msg):
+    async def write(self, msg):
         print(msg)
 
     async def drain(self):
@@ -276,7 +276,7 @@ class IVectorProperty(ABC):
 
     @state.setter
     def state(self, val):
-        if val not in IPState:
+        if val not in list(IPState):
             raise ValueError("{val} is not one of {list(IPState)}")
         for st in IPState:
             if st == val:
@@ -358,14 +358,13 @@ class IVectorProperty(ABC):
 
     def __getitem__(self, name: str):
         """
-        retrieve the IProperty 
+        retrieve the IProperty
         """
         for ele in self.elements:
             if ele.name == name:
                 return ele
 
         raise KeyError(f"{name} not in {self.__str__()}")
-
 
     def __setitem__(self, name, val):
 
@@ -376,9 +375,9 @@ class IVectorProperty(ABC):
 
         raise KeyError(f"{name} not in {self.__str__()}")
 
-                    
-
-                
+    def __iter__(self):
+        for ele in self.elements:
+            yield ele
 
 
 class IProperty:
@@ -386,7 +385,6 @@ class IProperty:
         (Path(__file__).parent / "data/indi.dtd").open())
 
     def __init__(self, name: str, label: str = None):
-
 
         if label is None:
             label = name
@@ -645,7 +643,6 @@ class ILight(IProperty):
             raise ValueError(f"""ILight value must be in {list(IPState)}""")
 
 
-
 class ISwitchVector(IVectorProperty):
     tagcontext = "SwitchVector"
 
@@ -674,14 +671,13 @@ class ISwitchVector(IVectorProperty):
         self.rule = rule
         super().__init__(device, name, state, label, group)
 
-    
+    def __setitem__(self, name, value):
 
-    def __setitem__(self, name, value): 
-    
         if value not in list(ISState):
-                raise ValueError("ISwitch value must be in 'On' or 'Off' not {value}")
+            raise ValueError(
+                "ISwitch value must be in 'On' or 'Off' not {value}")
 
-        # If its one of many we need to set the 
+        # If its one of many we need to set the
         # other items.
         if self.rule == "OneOfMany" and value == 'On':
             exists = False
@@ -694,11 +690,11 @@ class ISwitchVector(IVectorProperty):
                     sw.value = 'Off'
 
             if not exists:
-                raise KeyError(f"Switch {name} not in {self.name}.") 
-                    
+                raise KeyError(f"Switch {name} not in {self.name}.")
+
         else:
             super().__setitem__(name, value)
-                
+
 
 class ISwitch(IProperty):
     tagcontext = "Switch"
@@ -725,11 +721,13 @@ class ISwitch(IProperty):
         if val in list(ISState):
             self._state = val
         else:
-           raise ValueError(f"""ISwitch value must be either 'Off' or 'On' not {val}""")
+            raise ValueError(
+                f"""ISwitch value must be either 'Off' or 'On' not {val}""")
 
     @property
     def state(self):
         return self._state
+
 
 class IBLOBVector(IVectorProperty):
     tagcontext = "BLOBVector"
@@ -1011,8 +1009,6 @@ class device(ABC):
                 att.update({'value': prop.text.strip()})
                 properties.append(att)
 
-                #properties.append(prop.attrib)
-
             self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
 
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
@@ -1041,18 +1037,18 @@ class device(ABC):
         # property seems to be a pretty important issue.
         raise ValueError(f"Could not find {device}, {name} in {self.props}")
 
-    def IUUpdate(self, device, name, values, names):
+    def IUUpdate(self, device, name, values, names, Set=False):
         vp = self.IUFind(name=name, device=device)
-            
+
         for nm, val in zip(names, values):
-            vp[nm].value = val
+            self.IDMessage(f"setting {nm} to {val}")
+            vp[nm] = val
 
+        if Set:
+            # LEt clients know
+            self.IDSet(vp)
 
-        self.IDMessage(vp["DISCONNECT"])
-        self.IDSet(vp)
-
-        return True
-        
+        return vp
 
     def ISGetProperties(self, device):
         raise NotImplementedError(
@@ -1071,7 +1067,7 @@ class device(ABC):
         xml = f'<message message="{msg}" '
         xml += f'timestamp="{timestamp}" '
         xml += f'device="{self.name()}"> '
-        xml += f'\n\n</message>'
+        xml += '\n\n</message>'
         self.outq.put_nowait(xml.encode())
         # self.writer.write(xml.encode())
 
@@ -1145,17 +1141,24 @@ class device(ABC):
                     try:
                         func(instance)
                     except Exception as error:
-                        sys.stderr.write(f"There was an exception the later decorated fxn {func}:")
+                        sys.stderr.write(
+                            f"There was an exception the \
+                            later decorated fxn {func}:")
                         sys.stderr.write(f"{error}")
                         sys.stderr.write("See traceback below.")
                         traceback.print_exc(file=sys.stderr)
 
                     # do it again in millis
-                    cl = instance.mainloop.call_later(millis / 1000.0, call_with_error_handling)
+                    cl = instance.mainloop.call_later(
+                        millis / 1000.0,
+                        call_with_error_handling)
                     instance.handles.append(cl)
                     return cl
 
-                cl = instance.mainloop.call_later(millis / 1000.0, call_with_error_handling)
+                cl = instance.mainloop.call_later(
+                    millis / 1000.0,
+                    call_with_error_handling)
+
                 instance.handles.append(cl)
                 return cl
 
@@ -1215,7 +1218,7 @@ class device(ABC):
                 vec.bp.append(iprop)
 
         elif 'Text' in vector_type:
-            vec = ITextVector(**attribs)
+            vec = ITextVector([], **attribs)
 
             for prop in properties:
                 if 'value' in prop:

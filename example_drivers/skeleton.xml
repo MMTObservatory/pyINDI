@@ -15,7 +15,7 @@ On
 3
     </defNumber>
 </defNumberVector>
-<defLightVector device="SkeletonDevice" name="Light Property" label="" group="Main Control" state="Idle" timeout="0">
+<defLightVector device="SkeletonDevice" name="Light Property" label="Light Vector" group="Main Control" state="Idle" timeout="0">
     <defLight name="Light 1">
         Idle
     </defLight>
@@ -50,6 +50,13 @@ Off
     </defSwitch>
 
 </defSwitchVector>
+
+<defTextVector device="SkeletonDevice" name="Text Property" label="Text Vector" group="Main Control" perm='rw' state="Idle" timeout="0">
+    <defText name="Text 1" label="Text 1">
+        Text
+    </defText>
+</defTextVector>
+
 <defBLOBVector device="SkeletonDevice" name="BLOB Test" group="Main Control" state="Idle" perm="rw" timeout="60">
     <defBLOB name="BLOB 1">
     </defBLOB>
