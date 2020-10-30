@@ -200,7 +200,7 @@ function newText( INDIvp, appendTo )
 		
 		var name = nosp(tp.name);
 		var tpid = nosp_dev+name;
-		$(vpselector).find("span[INDIname='"+name+"'] textarea.IText_ro").text(tp.value)
+		$(vpselector).find("span[INDIname='"+tp.name+"'] textarea.IText_ro").text(tp.value)
 	});
 
 	return vpselector
@@ -420,9 +420,8 @@ function newSwitch( INDIvp, appendTo )
 				.on( 'change', function(event) {
 					let name = $(event.target).val();
                     
-					let value =$(event.target).attr("checked") ? "On" : "Off";
-                    //console.log(event.target)
-					console.log(INDIvp.device+'.'+INDIvp.name, name, value);
+					let value =$(event.target).prop("checked") ? "On" : "Off";
+                    console.log($(event.target).prop("checked"))
 
 					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
 
@@ -455,13 +454,9 @@ function newSwitch( INDIvp, appendTo )
 			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
+            console.log("setting "+sp.name +"to " +sp.value)
+			state = sp.value === "On" ? true: false
 
-			if(sp.value === "On")
-			{
-				state = "On";
-			}
-			else
-				state = "Off";
 
 			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', state);
 			//console.log($("body fieldset.INDIsvp#"+nosp_vpname+"[device='"+INDIvp.device+"']"))
@@ -521,7 +516,7 @@ function newLight( INDIvp, appendTo )
                 case INDISTATE_IDLE:
                     lightclass = "var( --indistate-idle )";
                 break;
-                case INDISTATE_OK:
+                case INDISTATE_OK: 
                     lightclass = "var( --indistate-ok )'";
                 break;
                 case INDISTATE_BUSY:
@@ -577,7 +572,7 @@ function newLight( INDIvp, appendTo )
                     lightclass = "var( --indistate-idle )";
                 break;
                 case INDISTATE_OK:
-                    lightclass = "var( --indistate-ok )'";
+                    lightclass = "var( --indistate-ok )";
                 break;
                 case INDISTATE_BUSY:
                     lightclass = "var( --indistate-busy )";
@@ -585,8 +580,8 @@ function newLight( INDIvp, appendTo )
                 case INDISTATE_ALERT:
                     lightclass = "var( --indistate-alert )";
                 break;
-								default:
-									lightclass = "var( --indistate-alert )";
+                default:
+                    lightclass = "var( --indistate-alert )";
 
             }
             $(vpselector).find('label#'+lpid+'.ILightlabel').css("background-color", lightclass);
