@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+	<head>
+	
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+
+	<!--These libraries are built with pyINDI
+	and are available at /static/ using
+	pyINDI's client libarary.-->
+	
+	<link rel="stylesheet" href="/indi/static/indi.css">
+	<script src="/indi/static/indi.js"></script>
+	<script src="/indi/static/utility.js"></script>
+	<script src="/indi/static/maps-indi.js"></script>
+
+    {% autoescape None %}
+    {{ js9head }}
+	<script>
+
+		//This is a hack to change the behavior of maps-indi.js
+		doLess = true;
+		function main()
+		{
+
+			start = new Date();
+			imgs = [];
+			let grouplist = new Set();
+            let inittabs = true;
+			setPropertyCallback("Apogee CCD.*", function(map) 
+			{
+				/*
+				This function will be called whenever an INDI property
+				with the device {{ device_name }} is received. 
+					*/
+                if(map.group)
+                {
+                    if( grouplist.size < grouplist.add(map.group).size )
+                    {
+                        newGroup(map.group, inittabs)
+                        inittabs = false;
+                    }
+                }
+				switch( map.metainfo )
+				{
+					case "nvp":
+						ele = newNumber(map);
+					break;
+					case "svp":
+						ele = newSwitch(map);
+					break;	
+					case "tvp":
+						ele = newText(map);
+					break;
+					case "lvp":
+						ele = newLight(map);
+					break;
+				}
+
+				if( typeof ele != 'string')
+				{//Place the INDI vp in the document	
+                    
+					vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
+					if(vpele.length > 0)
+						ele.appendTo(vpele)
+					else
+						ele.appendTo($("div#"+nosp(map.group)+".INDIgroup"))
+
+				}			
+
+				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
+					var prop="background-color";
+				else
+					var prop="color";
+				console.log("setting "+prop+" to "+ indistate2css(map.state));
+		
+				$(ele).find("legend").css( prop, indistate2css( map.state ) )
+
+
+			});
+
+
+			/*BLOB's have to be dealt with individually*/
+			setPropertyCallback("Apogee CCD.CCD1", function(map) 
+			{
+                    /*
+					$("img").attr("src", "data:image/png;base64,"+map.b1);
+                    */
+                    
+                    if (map.CCD1)
+                    {
+                        console.log("Loading fits image")
+					    //var b64 = btoa(map.CCD1);
+                        JS9.Load('/indi/blob/lastblob.raw')
+                    }
+					
+			})
+		}
+
+
+		function showMessage(msg, timestamp)
+		{
+			console.log("Message", msg, timestamp)
+		}
+
+        function newGroup(grp, init)
+        {
+        /*
+            Name: newGroup
+            Description: Add a group to the tabs in the application
+            args:
+                grp-> name of the new group
+                init-> boolean to tell us to initialize the tabs
+        */
+
+            console.log("new group", grp);
+            $("div#tabs > ul").append(
+                "<li><a href='#"+nosp(grp)+"'>"+grp+"</a></li>"
+            );
+            $("div#tabs").append("<div id='"+nosp(grp)+"' class='INDIgroup'></div>");
+            if(init)
+                $("div#tabs").tabs();
+            else
+                $("div#tabs").tabs("refresh");
+                  
+        }
+	
+	</script>
+	<style>
+		:root
+		{
+			--indistate-ok:#4f0;			
+			--indistate-busy:#ffff6c;
+		}
+        body
+        {
+            font-size:10px;
+        }
+		
+		.INumberspan
+		{
+			display:inline-block;
+			width:250px;
+
+		}
+		span#num
+		{
+			display:inline;
+			float:left;
+		}
+		fieldset.INDIvp
+		{
+			display:block;
+		}
+		span.ITextspan
+		{
+			display:block;
+		}
+		textarea.IText_ro, textarea.IText_wo
+		{
+			display: inline;
+		}
+		textarea.IText_ro
+		{
+			background-color:lightgray;
+		}
+		textarea.IText_wo
+		{
+			background-color:#ededed;
+		}
+		.INumber_wo
+		{
+			background-color:#ededed;
+		}
+	</style>
+	</head>
+	<body onload=main() style="background:white;">
+
+		<div id="SNOOPER" class="INDIdevice"></div>
+        
+        
+		<div id="tabs" style="display:inline-block">
+			  <ul>
+                <!--
+				<li><a href="#TCS-NG-INDI">Telescope</a></li>
+				<li><a href="#DOME-NG-INDI">Dome</a></li>
+				<li><a href="#FOCUS-NG-INDI">FOCUS</a></li>
+                !-->
+			</ul>
+            <!--
+			<div id="TCS-NG-INDI" class="INDIdevice"></div>
+			<div id="DOME-NG-INDI" class="INDIdevice"></div>
+			<div id="FOCUS-NG-INDI" class="INDIdevice"></div>
+            -->
+        </div>
+        <div style="">
+            <div class="JS9Menubar"></div>
+            <div class="JS9Toolbar"></div>
+            <div class="JS9"></div>
+            <div style="margin-top: 2px;">
+            <div class="JS9Colorbar"></div>
+        </div>
+
+		<textarea rows=3 cols=75 id="INDImsg"></textarea>
+	</body>
+
+</html>
+
