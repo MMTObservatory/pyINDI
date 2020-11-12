@@ -4,21 +4,19 @@
 from pathlib import Path
 import sys
 import logging
-import click
 import tornado
 import datetime
 logging.basicConfig(level=logging.DEBUG)
 sys.path.insert(0, str(Path.cwd().parent))
 import tornado.web
-
 from pyindi.webclient import INDIWebApp, IndiHandler, INDIWebClient
+
 
 class Apogee(IndiHandler):
 
     def get(self):
-        
-        self.indi_render(Path.cwd()/"apogee.html", device_name="Apogee CCD")
 
+        self.indi_render(Path.cwd()/"apogee.html", device_name="Apogee CCD")
 
 
 def handle_blob(blob):
@@ -30,16 +28,12 @@ def handle_blob(blob):
     with open(fname, 'wb') as fd:
         fd.write(blob['data'])
 
-        
 
-
-wa = INDIWebApp(webport=5905, handle_blob=handle_blob)
+wa = INDIWebApp(webport=5905, handle_blob=handle_blob, indiport=7625)
 imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 
 wa.build_app(
-    [(r"/", Apogee), 
-     (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path":imgs})
-    ], 
+    [(r"/apogee", Apogee),
+     (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path": imgs})],
     debug=True)
-
