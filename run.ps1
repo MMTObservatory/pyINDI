@@ -1,1 +1,0 @@
-docker run  -v ${pwd}\src:/src  -it srswinde/indiserver /bin/bash
