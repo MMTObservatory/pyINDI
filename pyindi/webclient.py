@@ -47,7 +47,7 @@ ____________  |           ______V_____                      httpclients |       
 """
 
 
-class IndiHandler(tornado.web.RequestHandler):
+class INDIHandler(tornado.web.RequestHandler):
     indihead = r"""
         <script src="//code.jquery.com/jquery-1.12.4.js"></script>
         <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -88,7 +88,8 @@ class IndiHandler(tornado.web.RequestHandler):
         self.render(fname, **kwargs)
 
 
-class DefaultIndex(IndiHandler):
+
+class DefaultIndex(INDIHandler):
 
     def get(self):
         
