@@ -12,11 +12,11 @@ import tornado.web
 from pyindi.webclient import INDIWebApp, INDIHandler, INDIWebClient
 
 
-class Apogee(INDIHandler):
+class TestDevice(INDIHandler):
 
     def get(self):
 
-        self.indi_render(Path.cwd()/"apogee.html", device_name="Apogee CCD")
+        self.indi_render(Path.cwd()/"test.html", device_name="mydev")
 
 
 def handle_blob(blob):
@@ -34,6 +34,6 @@ imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 
 wa.build_app(
-    [(r"/apogee", Apogee),
+    [(r"/", TestDevice),
      (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path": imgs})],
     debug=True)

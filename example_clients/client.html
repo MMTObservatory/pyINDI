@@ -12,10 +12,10 @@
 	and are available at /static/ using
 	pyINDI's client libarary.-->
 	
-	<link rel="stylesheet" href="/static/indi/indi.css">
-	<script src="/static/indi/indi.js"></script>
-	<script src="/static/indi/utility.js"></script>
-	<script src="/static/indi/maps-indi.js"></script>
+	<link rel="stylesheet" href="/indi/static/indi.css">
+	<script src="/indi/static/indi.js"></script>
+	<script src="/indi/static/utility.js"></script>
+	<script src="/indi/static/maps-indi.js"></script>
 
 	<script>
 
@@ -26,66 +26,63 @@
 
 			start = new Date()
 			imgs = []
-			setPropertyCallback("{{ device_name }}.*", function(map) 
-			{
-				/*
-				This function will be called whenever an INDI property
-				with the device {{ device_name }} is received. 
-					*/
-				
-				switch( map.metainfo )
-				{
-					case "nvp":
-						ele = newNumber(map);
-					break;
-					case "svp":
-						ele = newSwitch(map);
-					break;	
-					case "tvp":
-						ele = newText(map);
-					break;
-					case "lvp":
-						ele = newLight(map);
-					break;
-				}
-				if( typeof ele != 'string')
-				{	
 
-					vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
-					if(vpele.length > 0)
-						ele.appendTo(vpele)
-					else
-						ele.appendTo($("body"))
-
-				}			
-				
-				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
-					var prop="background-color";
-				else
-					var prop="color";
-		
-				$(ele).find("legend").css( prop, indistate2css( map.state ) )
+      //Line builds a jquery-ui property. Simply replace handlePropery
+      //with your own function to overwrite this behavior. 
+			setPropertyCallback( "{{ device_name }}.*", handleProperty );
 
 
-			});
-
-
-			/*BLOB's have to be dealt with individually*/
-			setPropertyCallback("mydev.blobvec", function(map) 
-			{
-					var b64 = btoa(map.b1);
-					$("img").attr("src", "data:image/png;base64,"+map.b1);
-					
-			})
 		}
+
+  function handleProperty(map) 
+  {
+    /*
+    This function will be called whenever an INDI property
+    with the device {{ device_name }} is received. It uses
+    jquery-ui to build each vector property as an html fieldset
+      */
+    
+    switch( map.metainfo )
+    {
+      case "nvp":
+        ele = newNumber(map);
+      break;
+      case "svp":
+        ele = newSwitch(map);
+      break;	
+      case "tvp":
+        ele = newText(map);
+      break;
+      case "lvp":
+        ele = newLight(map);
+      break;
+    }
+    console.log("Here");
+    if( typeof ele != 'string')
+    {	
+      vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
+      if(vpele.length > 0)
+        ele.appendTo(vpele)
+      else
+        ele.appendTo($("body"))
+    }
+    
+    if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
+      var prop="background-color";
+
+    $(ele).find("legend").css( prop, indistate2css( map.state ) )
+
+
+  }
+
+
 	function showMapMessage(map)
 	{
+    // this is called everytime there is an
+    //INDImessage from the server. 
 		console.log("Message:", map.message);
 	}
-	function showMessage(msg, timestamp)
-	{
-		console.log("Message", msg, timestamp)
-	}
+
 	
 	</script>
 	<style>
@@ -108,11 +105,6 @@
 	</head>
 	<body onload=main() style="background:white;">
 
-	<span style="display:inline-block; border:1px solid black">
-		<H3>This is rendered from a BLOB</H3>
-		<img id="blobvec"></img>
-	</span>
-		<span id="num" indiname="test" indidevice="mydev" class="INDIvp"></span>
 	</body>
 
 
