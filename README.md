@@ -20,9 +20,12 @@ python setup.py install
 
 # Device Drivers
 
-Device drivers are usually run as an argument to the indiserver program. Ubuntu users can get the indiserver program by:
+Device drivers are usually run as an argument to the indiserver program. Ubuntu users can get the indiserver program by adding the indilib ppa and installing indi bin
 
 ```bash
+sudo apt-add-repository ppa:mutlaqja/ppa
+sudo apt-get update
+
 sudo apt install indi-bin
 ```
 
@@ -52,7 +55,7 @@ This should print the INDI xml.
 
 # Client
 
-The best way to get started with a client is to use the [SkeletonClient.py example] (example_clients/SkeletonClient.py). This is made to match [skeleton.py](example_drivers/skeleton.py) driver but should also work with other device drivers. 
+The best way to get started with a client is to use the [SkeletonClient.py example](example_clients/SkeletonClient.py). This is made to match [skeleton.py](example_drivers/skeleton.py) driver but should also work with other device drivers. 
 
 To run this client:
 
@@ -63,17 +66,17 @@ python SkeletonClient.py
 
 This will run the webserver and client.
 
-The root url is serving the [client.html](example_clients/client.html). 
+The root url is serving the [client.html page](example_clients/client.html). 
 
 ## client.html
 
 client.html is a good example of how to interact with the device driver with the [maps-indi](pyindi/www/static/maps-indi.js) api. This api gives you access to three functions. 
 
 1. setPropertyCallback
-This function maps a callback to an incoming indi vector property, that is recieved from the indiserver/device driver. This can either be a property definition (def) or an update (set). 
+This function maps a callback to an incoming indi vector property when it is recieved from the indiserver/device driver. This can either be a property definition (def) or an update (set). 
 
 2. setINDI
-This function sends an updated INDI vector property to the server/device driver. 
+This function sends an updated INDI vector property to the server/device driver from your webpage. 
 
 3. showMapMessage
 This function is called when the indiserver/device driver sens an INDI message. client.html simply prints to console.log. A dialog box on the webpage would be a better use of this funciton. 
