@@ -52,7 +52,17 @@
 					case "lvp":
 						ele = newLight(map);
 					break;
+            
+            default:
+              ele = null;
+
 				}
+
+        if(ele === null)
+          return
+
+        if(map.metainfo == 'tvp')
+          console.log(map)
 
 				if( typeof ele != 'string')
 				{		
@@ -68,8 +78,7 @@
 					var prop="background-color";
 				else
 					var prop="color";
-		
-				$(ele).css( prop, indistate2css( map.state ) )
+				//$(ele).firstChild.css( 'background-color', indistate2css( map.state ) )
 
 			});
 
@@ -77,27 +86,27 @@
 		}
 	    
 
-        function newGroup(grp, init)
-        {
-        /*
-            Name: newGroup
-            Description: Add a group to the tabs in the application
-            args:
-                grp-> name of the new group
-                init-> boolean to tell us to initialize the tabs
-        */
+    function newGroup(grp, init)
+    {
+    /*
+        Name: newGroup
+        Description: Add a group to the tabs in the application
+        args:
+            grp-> name of the new group
+            init-> boolean to tell us to initialize the tabs
+    */
 
-            console.log("new group", grp);
-            $("div#tabs > ul").append(
-                "<li><a href='#"+nosp(grp)+"'>"+grp+"</a></li>"
-            );
-            $("div#tabs").append("<div id='"+nosp(grp)+"' class='INDIgroup'></div>");
-            if(init)
-                $("div#tabs").tabs();
-            else
-                $("div#tabs").tabs("refresh");
-                  
-        }
+        console.log("new group", grp);
+        $("div#tabs > ul").append(
+            "<li><a href='#"+nosp(grp)+"'>"+grp+"</a></li>"
+        );
+        $("div#tabs").append("<div id='"+nosp(grp)+"' class='INDIgroup'></div>");
+        if(init)
+            $("div#tabs").tabs();
+        else
+            $("div#tabs").tabs("refresh");
+              
+    }
 
     function showMapMessage(map)
     {

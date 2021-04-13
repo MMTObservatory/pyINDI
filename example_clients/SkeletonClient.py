@@ -30,7 +30,7 @@ class Skeleton(INDIHandler):
 webport = 5905
 indiport = 7624
 
-wa = INDIWebApp(webport=webport, handle_blob=handle_blob, )
+wa = INDIWebApp( webport=webport  )
 imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 
