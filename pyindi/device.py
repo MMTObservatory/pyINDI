@@ -928,8 +928,12 @@ class device(ABC):
                     # This is where the `repeat` decorated
                     # functions are called the first time
                     for reg in self._registrants:
-                        func = getattr(self, reg.__name__)
-                        func()
+
+                        initiate_callback = getattr(self, reg.__name__)
+                        # initiate_callback is actually the 'get_instance'
+                        # function defined in device.repeat.
+                        initiate_callback()
+
                     self._once = False
 
 
@@ -1127,7 +1131,7 @@ class device(ABC):
 
             def get_instance(instance: device):
                 """
-                Set the funct to be called with call_later
+                Set the function to be called with call_later
                 asyncio procedure.
 
                 Called after ISGetProperties is called
@@ -1153,14 +1157,16 @@ class device(ABC):
                         millis / 1000.0,
                         call_with_error_handling)
                     instance.handles.append(cl)
-                    return cl
+                    return 
 
+                # The below line calls the wrapped
+                # function for the first time
                 cl = instance.mainloop.call_later(
                     millis / 1000.0,
                     call_with_error_handling)
 
                 instance.handles.append(cl)
-                return cl
+                return 
 
             return get_instance
 

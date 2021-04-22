@@ -62,6 +62,7 @@ class SkeletonDevice(device):
 
     @device.repeat(1000)
     def do_repeate(self):
+        self.IDMessage('Running repeat function')
         conn = self.__getitem__("CONNECTION")
         if conn["CONNECT"].value == 'Off':
             return
@@ -71,7 +72,6 @@ class SkeletonDevice(device):
 
         for light in lights:
             light.value = random.choice(states)
-
         self.IDSet(lights)
 
 
