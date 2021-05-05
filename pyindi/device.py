@@ -15,6 +15,7 @@ from abc import ABC
 from pathlib import Path
 import functools
 import traceback
+import inspect
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -869,6 +870,25 @@ class device(ABC):
 
         await future
 
+    async def repeat_queuer(self):
+        while self.running:
+            func = await self.repeat_q.get()
+            try:
+                if inspect.iscoroutinefunction(func):
+                    await func(self)
+                else:
+                    func(self)
+
+            except Exception as error:
+                sys.stderr.write(
+                    f"There was an exception the \
+                    later decorated fxn {func}:")
+
+                sys.stderr.write(f"{error}")
+                sys.stderr.write("See traceback below.")
+                traceback.print_exc(file=sys.stderr)
+
+
 
 #    def __init__(self, loop=None, config=None, name=None):
 #
@@ -1305,3 +1325,5 @@ class device(ABC):
             raise ValueError(message)
 
         return vec
+
+
