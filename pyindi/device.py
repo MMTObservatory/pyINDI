@@ -816,32 +816,95 @@ class device(ABC):
         name: Name of the device defaulting to name of the class
         """
 
-        if loop is None:
-            self.mainloop = asyncio.get_event_loop()
-        else:
-            self.mainloop = loop
-
-        if name is None:
-            self._devname = self.__class__.__name__
-        else:
-            self._devname = name
 
         self.props = []
         self.config = config
         self.timer_queue = asyncio.Queue()
 
-        self.reader, self.writer = \
-            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
 
         self.outq = asyncio.Queue()
         self.handles = []
 
         self._once = True
 
-        # Not sure why but the default exception handler
-        # halts the loops and never shows the traceback.
-        # So overwrite the default.
-        self.mainloop.set_exception_handler(self.exception)
+        self.repeat_q = asyncio.Queue()
+
+        self.mainloop = loop
+
+    def start(self): 
+        """
+        Start up the mainloop, grab the stdio and run the xml reader.
+        This method can hide the asynchronicity from subclasses. Simply
+        instantiate the subclass and call this method in the same thread
+        and you never have to know that this is asyncio. 
+
+        It is probably better to use the astart function but that requires
+        astart
+        """
+   
+        self.mainloop = asyncio.get_event_loop()
+        self.reader, self.writer = self.mainloop.run_until_complete(stdio())
+        self.running = True
+        future = asyncio.gather(
+            self.run(),
+            self.toindiserver(),
+            self.repeat_queuer()
+        )
+
+        self.mainloop.run_until_complete(future)
+
+    
+    async def astart(self):
+
+        """Start up in async mode"""
+
+        self.mainloop = asyncio.get_running_loop()
+        self.reader, self.writer = await stdio()
+        self.running = True
+        future = asyncio.gather(
+            self.run(),
+            self.toindiserver(),
+            self.repeat_queuer()
+        )
+
+        await future
+
+
+#    def __init__(self, loop=None, config=None, name=None):
+#
+#        """
+#        Arguments:
+#        loop: the asyncio event loop
+#        config: the configureable info from ConfigParser
+#        name: Name of the device defaulting to name of the class
+#        """
+#
+#        if loop is None:
+#            self.mainloop = asyncio.get_event_loop()
+#        else:
+#            self.mainloop = loop
+#
+#        if name is None:
+#            self._devname = self.__class__.__name__
+#        else:
+#            self._devname = name
+#
+#        self.props = []
+#        self.config = config
+#        self.timer_queue = asyncio.Queue()
+#
+#        self.reader, self.writer = \
+#            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
+#
+#        self.outq = asyncio.Queue()
+#        self.handles = []
+#
+#        self._once = True
+#
+#        # Not sure why but the default exception handler
+#        # halts the loops and never shows the traceback.
+#        # So overwrite the default.
+#        self.mainloop.set_exception_handler(self.exception)
 
     def exception(self, loop, context):
 
@@ -865,22 +928,7 @@ class device(ABC):
     def __repr__(self):
         return f"<{self.name()}>"
 
-    def start(self):
-        """
-        Start up the mainloop, grab the stdio and run the xml reader.
-        This method can hide the asynchronicity from subclasses. Simply
-        instantiate the subclass and call this method in the same thread
-        and you never have to know that this is asyncio. 
-        """
-        self.running = True
-        future = asyncio.gather(
-            self.run(),
-            self.toindiserver(),
-            #self.idle()
-        )
-        #print(type(future))
-        self.mainloop.run_until_complete(future)
-
+    
     async def toindiserver(self):
 
         while self.running:
@@ -924,6 +972,12 @@ class device(ABC):
 
                 self.initProperties()
 
+                # maybe we should run this concurrently
+                # with gather. If it blocks this run loop
+                # it will be difficult to debug. 
+                await self.asyncInitProperties()
+
+
                 if self._once:
                     # This is where the `repeat` decorated
                     # functions are called the first time
@@ -944,7 +998,9 @@ class device(ABC):
                     values = [float(ele.text.strip()) for ele in xml]
                     self.ISNewNumber(
                         xml.attrib["device"],
-                        xml.attrib["name"], values, names)
+                        xml.attrib["name"], 
+                        values, 
+                        names)
 
                 except Exception as error:
                     logging.debug(f"{error}")
@@ -970,7 +1026,9 @@ class device(ABC):
                     values = [str(ele.text).strip() for ele in xml]
                     self.ISNewSwitch(
                         xml.attrib["device"],
-                        xml.attrib["name"], values, names)
+                        xml.attrib["name"], 
+                        values, 
+                        names)
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
@@ -978,6 +1036,13 @@ class device(ABC):
 
     def initProperties(self):
         """"""
+        pass
+
+    async def asyncInitProperties(self):
+        """This function is called after the getProperties tags is 
+        recieved at the same time as initProperties. Override it
+        to start async tasks to be run in the event loop."""
+
         pass
 
     def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
