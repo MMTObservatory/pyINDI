@@ -822,6 +822,10 @@ class device(ABC):
         self.config = config
         self.timer_queue = asyncio.Queue()
 
+        if name is None:
+            self._devname = self.__class__.__name__
+        else:
+            self._devname = name
 
         self.outq = asyncio.Queue()
         self.handles = []
