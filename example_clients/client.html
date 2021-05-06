@@ -12,10 +12,10 @@
 	and are available at /static/ using
 	pyINDI's client libarary.-->
 	
-	<link rel="stylesheet" href="/static/indi/indi.css">
-	<script src="/static/indi/indi.js"></script>
-	<script src="/static/indi/utility.js"></script>
-	<script src="/static/indi/maps-indi.js"></script>
+	<link rel="stylesheet" href="/indi/static/indi.css">
+	<script src="/indi/static/indi.js"></script>
+	<script src="/indi/static/utility.js"></script>
+	<script src="/indi/static/maps-indi.js"></script>
 
 	<script>
 
@@ -32,10 +32,10 @@
 				This function will be called whenever an INDI property
 				with the device {{ device_name }} is received. 
 					*/
-				
 				switch( map.metainfo )
 				{
 					case "nvp":
+						console.log( map );
 						ele = newNumber(map);
 					break;
 					case "svp":
@@ -56,7 +56,6 @@
 						ele.appendTo(vpele)
 					else
 						ele.appendTo($("body"))
-
 				}			
 				
 				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
@@ -65,7 +64,6 @@
 					var prop="color";
 		
 				$(ele).find("legend").css( prop, indistate2css( map.state ) )
-
 
 			});
 
@@ -114,7 +112,6 @@
 	</span>
 		<span id="num" indiname="test" indidevice="mydev" class="INDIvp"></span>
 	</body>
-
 
 </html>
 
