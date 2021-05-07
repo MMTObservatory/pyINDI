@@ -1134,7 +1134,6 @@ class device(ABC):
         vp = self.IUFind(name=name, device=device)
 
         for nm, val in zip(names, values):
-            self.IDMessage(f"setting {nm} to {val}")
             vp[nm] = val
 
         if Set:
@@ -1178,7 +1177,7 @@ class device(ABC):
 
     def IDSet(self, vector: IVectorProperty, msg=None):
         if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
-            raise ("Must use IDSetBLOB to send BLOB to client.")
+            raise RuntimeError("Must use IDSetBLOB to send BLOB to client.")
         self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
         # self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
 
@@ -1194,7 +1193,8 @@ class device(ABC):
         if prop.device != self._devname:
             raise ValueError(f"INDI prop {prop.name} device does not match this device.")
 
-        self.props.append(prop)
+        if prop not in self.props:
+            self.props.append(prop)
         # Send it to the indiserver
         self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
 

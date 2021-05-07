@@ -284,10 +284,17 @@ function newNumber(INDIvp, appendTo)
 				.keypress(function(event)
 				{
 					
-					if(event.which == 13)	
+					if(event.which == 13)
 					{
-						let val = $(event.target).val()
-						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
+						let name_vals = []
+						$(event.target).parents('fieldset#'+nosp_vpname).find("input").each(function(ii, item)
+							{
+								let name = $(item).parent().attr("indiname")
+								name_vals[name_vals.length] = name;
+								name_vals[name_vals.length] = $(item).val();
+
+							})
+						setindi("Number", INDIvp.device+'.'+INDIvp.name, ...name_vals );
 					}
 				})
 				switch(INDIvp.perm)
@@ -421,7 +428,6 @@ function newSwitch( INDIvp, appendTo )
 					let name = $(event.target).val();
                     
 					let value =$(event.target).prop("checked") ? "On" : "Off";
-                    console.log($(event.target).prop("checked"))
 
 					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
 
@@ -454,7 +460,6 @@ function newSwitch( INDIvp, appendTo )
 			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
-            console.log("setting "+sp.name +"to " +sp.value)
 			state = sp.value === "On" ? true: false
 
 
@@ -653,6 +658,9 @@ function sendNewSwitch(event)
 
 function sendNewNumber(event)
 {
+
+	console.debug("Sending new number");
+	console.debug(event);
 	var fn = $(event.target).parent().parent(".INDInvp");
 	var INumber = $(event.target)
 	var out = {
@@ -670,7 +678,7 @@ function sendNewNumber(event)
 		{
 			"name":$(np).closest('span.INumberspan').attr("INDIname"),
 			"label":$(np).parent().attr("INDIlabel"),
-			"value": $(np).prop("value") 
+			"value": $(np).prop("value")
 			
 		});
 	});
