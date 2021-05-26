@@ -137,29 +137,31 @@ function newText( INDIvp, appendTo )
 			.prop("id", nosp_vpname)
 			.attr("device", INDIvp.device)
 			.attr("group", INDIvp.group)
-			.append("<legend>"+INDIvp.label+"</legend>");
+			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
 		
 		$.each(INDIvp.values, function(ii, tp)
 		{	
 			var label = tp.label.replace(" ", "_");
 			var name = tp.name.replace(' ', '_');
 			var tpid = nosp_dev+"__"+name;
-	
-			vphtmldef.append($('<span/>',
+			
+			vphtmldef.append($('<div/>',
 			{
 				'id': name,
-				'class': 'ITextspan',
+				'class': 'IText_div',
 				'INDIlabel':tp.label,
 				'INDIname':tp.name,
 			}
 			).append($('<label/>',
 			{
 				'text':	tp.label,
-				'for': tpid	
+				'for': tpid,
+				'class': 'IText_label'
 			})
 			).append( function()
 			{
-				var ro = $('<textarea rows=1 readonly/>').addClass('IText_ro').text(tp.text)
+				var ro = $('<textarea rows=1 readonly/>').addClass('IText_ro').text(tp.value)
+				//console.error(tp.value);
 				var wo = $('<textarea rows=1/>').addClass('IText_wo')
 				.keypress(function(event)
 				{
@@ -200,7 +202,7 @@ function newText( INDIvp, appendTo )
 		
 		var name = nosp(tp.name);
 		var tpid = nosp_dev+name;
-		$(vpselector).find("span[INDIname='"+tp.name+"'] textarea.IText_ro").text(tp.value)
+		$(vpselector).find("div[INDIname='"+tp.name+"'] textarea.IText_ro").text(tp.value)
 	});
 
 	return vpselector
@@ -239,7 +241,7 @@ function newNumber(INDIvp, appendTo)
 			.prop("id", nosp_vpname)
 			.attr("device", INDIvp.device)
 			.attr("group", INDIvp.group)
-			.append("<legend>"+INDIvp.label+"</legend>");
+			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
 		
 			
 		$.each(INDIvp.values, function(ii, np)
@@ -249,10 +251,10 @@ function newNumber(INDIvp, appendTo)
 			var name = np.name.replace(' ', '_');
 			var npid = nosp_dev+"__"+name;
 	
-			vphtmldef.append($('<span/>',
+			vphtmldef.append($('<div/>',
 			{
 				'id': name,
-				'class': 'INumberspan',
+				'class': 'INumber_div',
 				'INDIlabel':np.label,
 				'INDIname':np.name,
 				'INDIformat':np.format
@@ -260,7 +262,8 @@ function newNumber(INDIvp, appendTo)
 			).append($('<label/>',
 			{
 				'text':	np.label,
-				'for': npid	
+				'for': npid,
+				'class': 'INumber_label'
 			})
 			).append( function()
 			{
@@ -272,14 +275,16 @@ function newNumber(INDIvp, appendTo)
 				}
 				catch(err)
 				{
-					var len = 5;
+					var len = 10;
 				}
 				if(CONFIG["NUM_SIZE"] != null)
 				{
 					len=CONFIG["NUM_SIZE"];
 				}
-				var ro = $('<span/>', {'class':'INumber_ro'}).css({ width:10*len+'px' })
-				var wo = $("<input/>", {'type':'text', 'class':'INumber_wo'}).prop('size',len)
+				//var ro = $('<span/>', {'class':'INumber_ro'}).css({ width:10*len+'px' })
+				var ro = $('<label/>', { 'class': 'INumber_ro' });
+				// Removed .prop('size', len) from wo
+				var wo = $("<input/>", {'type':'text', 'class':'INumber_wo', 'id': npid})
 				.attr("value", np.value )
 				.keypress(function(event)
 				{
@@ -318,12 +323,13 @@ function newNumber(INDIvp, appendTo)
 	$.each( INDIvp.values, function(ii, np)
 	{
 		
-		var format = $(vpselector).find("span.INumberspan[INDIname='"+np.name+"']").attr("indiformat")
+		var format = $(vpselector).find("div.INumber_div[INDIname='"+np.name+"']").attr("indiformat")
 		var name = np.name.replace(' ', '_');
 		var npid = nosp_dev+name;
 		newvalue= formatNumber(np.value, format)
-		//$(vpselector).find("span.INumberspan[INDIname='"+np.name+"']  span.INumber_ro").text(Math.round(np.value*10000)/10000)
-		$(vpselector).find("span.INumberspan[INDIname='"+np.name+"']  span.INumber_ro").text(newvalue)
+		//$(vpselector).find("div.INumber_div[INDIname='"+np.name+"']  span.INumber_ro").text(Math.round(np.value*10000)/10000)
+		var update = $(vpselector).find("div.INumber_div[INDIname='"+np.name+"']  label.INumber_ro");
+		update.text(newvalue)
 
 	});
 	// return the jquery selector
@@ -371,6 +377,8 @@ function newSwitch( INDIvp, appendTo )
 			type = 'radio'
 	}
 	
+	
+
 	if( $(vpselector).length == 0 )
 	{
 		
@@ -378,7 +386,7 @@ function newSwitch( INDIvp, appendTo )
 			.prop("id", nosp_vpname)
 			.attr("device", INDIvp.device)
 			.attr("group", INDIvp.group)
-			.append("<legend>"+INDIvp.label+"</legend>");
+			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
 		
 		$.each(INDIvp.values, function(ii, sp)
 		{		
@@ -391,7 +399,7 @@ function newSwitch( INDIvp, appendTo )
 				$('<span/>',
 				{	
 					'INDIname'	:sp.name,
-					'class'			:"ISwitchspan",
+					'class'			:"ISwitch_span",
 					'id'				:name,
 				})
 				.append($('<label/>', 
@@ -421,7 +429,6 @@ function newSwitch( INDIvp, appendTo )
 					let name = $(event.target).val();
                     
 					let value =$(event.target).prop("checked") ? "On" : "Off";
-                    console.log($(event.target).prop("checked"))
 
 					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
 
@@ -431,13 +438,15 @@ function newSwitch( INDIvp, appendTo )
 			));
 			
 		});
-		icon=true;
+
+		
+		icon=false; // Was true
 		if(CONFIG["SHOW_SWITCH_ICON"] != null)
 		{
 			var icon = CONFIG["SHOW_SWITCH_ICON"]
 		}
-		vphtmldef.find( "input[type='"+type+"']" ).checkboxradio({icon:icon});
-
+		vphtmldef.find( "input[type='"+type+"']" ).checkboxradio();
+		
 		if( appendTo != undefined )
 		{
 			vphtmldef.appendTo( appendTo );
@@ -454,7 +463,7 @@ function newSwitch( INDIvp, appendTo )
 			//var label = sp.label.replace(" ", "_");
 			var name = sp.name.replace(' ', '_');
 			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
-            console.log("setting "+sp.name +"to " +sp.value)
+            //console.log("setting "+sp.name +"to " +sp.value)
 			state = sp.value === "On" ? true: false
 
 
@@ -467,11 +476,101 @@ function newSwitch( INDIvp, appendTo )
 	return vpselector;
 }
 
+/*********************************************************
+* newGroup
+* Args INDIvp-> object defining the INDI vector propert,
+*       appendTo -> jquery selector for which element to
+*       append the INDivp turned HTML element to.
+*
+* Desription:
+*   
+*
+*
+* Returns:
+*
+*********************************************************/
 
+const newGroup = (INDIvp) => {
+	// Basically works like this, if we need to append we return
+	// jquery selector, if not empty then return string
+	// We dont append stuff to strings
+
+	// Need to see if the group exists
+	// If not, make it and append to section
+	// If so, return group to append to
+	var nosp_vpgroup = INDIvp.group.replace(" ", "_").toUpperCase();
+	var nosp_device = INDIvp.device.replace(" ", "_");
+	var vpgroupselector = "div.INDIgroup[group='" + INDIvp.group + "']";
+	var vpgroup = $(vpgroupselector);
+
+	if (vpgroup.length == 0) {
+		console.log(`Creating new group: ${nosp_vpgroup}`);
+		// Doesn't exists, build and add attributes and classes
+		var vpgroupdef = $("<div class='INDIgroup'/>")
+			.attr("device", INDIvp.device)
+			.prop("id", nosp_vpgroup)
+			.attr("group", INDIvp.group);
+		
+			// Build title
+			// Build hide/show
+			vpgroupdef.append
+			(
+				$('<span/>',
+					{
+						'text': INDIvp.group,
+						'class': "IGroup_header"
+					})
+			)
+
+		// Append to the main section
+		// TODO determine what we want the main gui to be in
+		// Dashboard?
+		//vpgroupdef.appendTo($("section#" + nosp_device));
+		vpgroupdef.appendTo($("section"));
+		return vpgroupdef;
+	}
+
+	else {
+		console.debug(`Group already exists: ${nosp_vpgroup}`);
+		return vpgroup;
+	}
+
+}
+
+const newDevice = (INDIvp) => {
+	var vpdeviceselector = "section.INDIdevice[device='" + INDIvp.device + "']";
+	var nosp_device = INDIvp.device.replace(" ", "_");
+	var vpdevice = $(vpdeviceselector);
+
+	if (vpdevice.length == 0) {
+		console.log(`Creating new device: ${nosp_device}`);
+		// Doesn't exist, build the section and add attributes and classes
+		var vpdevicedef = $("<section class='INDIdevice'/>")
+			.attr("device", INDIvp.device)
+			.prop("id", nosp_device);
+		
+		vpdevicedef.append(
+			$('<span/>',
+				{
+					"text": INDIvp.device,
+					"class": "IDevice_header"
+				})
+		);
+
+		// Append to body
+		vpdevicedef.appendTo($("body"));
+		return vpdevicedef;
+
+	}
+	else {
+		console.debug(`Device already exists: ${nosp_device}`)
+		return vpdevice;
+	}
+}
 /*********************************************************
 * newLight
 * Args INDIvp-> object defining the INDI vector propert, 
-*       appendTo -> jquery selector for which elemebt to 
+*       appendTo -> jquery selector for which element to 
 *       append the INDivp turned HTML element to.
 *
 * Desription:
@@ -502,7 +601,7 @@ function newLight( INDIvp, appendTo )
             .prop("id", nosp_vpname)
             .attr("device", INDIvp.device)
             .attr("group", INDIvp.group)
-            .append("<legend>"+INDIvp.label+"</legend>");
+            .append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
 
         $.each(INDIvp.values, function(ii, lp)
         {       
@@ -612,7 +711,7 @@ function newLight( INDIvp, appendTo )
 function sendNewSwitch(event)
 {
 	var fs = $(event.target).closest(".INDIsvp")
-	console.log(event.target);
+	//console.log(event.target);
 	var out = {
 		"task":"updateSwitch",
 		"newSwitch":{
@@ -625,14 +724,14 @@ function sendNewSwitch(event)
 	fs.find("input.ISwitchinput").each(function(ii, sp)
 	{
 		out.newSwitch.sp.push({
-			"name":$(sp).closest( "span.ISwitchspan" ).attr( "INDIname" ),
-			"label":$(sp).closest( "span.ISwitchspan" ).attr( "INDIlabel" ),
-			"state":$(sp).closest( "span.ISwitchspan" ).find("input.ISwitchinput").prop( "checked" ),
+			"name":$(sp).closest( "span.ISwitch_span" ).attr( "INDIname" ),
+			"label":$(sp).closest( "span.ISwitch_span" ).attr( "INDIlabel" ),
+			"state":$(sp).closest( "span.ISwitch_span" ).find("input.ISwitchinput").prop( "checked" ),
 			
 		})
 	})
 	//INDIws.send(JSON.stringify(out));
-    console.log("Sending "+out.newSwitch.sp["name"]+" to "+ out.newSwitch.sp["state"])
+    //console.log("Sending "+out.newSwitch.sp["name"]+" to "+ out.newSwitch.sp["state"])
     setindi("Switch", out.device+'.'+out.name, out.newSwitch.sp["name"], out.newSwitch.sp["state"])
 	
 	
@@ -664,11 +763,11 @@ function sendNewNumber(event)
 		"np":[],
 		}
 	};
-	fn.find("span.INumberspan input.INumber_wo").each(function(ii, np)
+	fn.find("div.INumber_div input.INumber_wo").each(function(ii, np)
 	{	
 		out.newNumber.np.push(
 		{
-			"name":$(np).closest('span.INumberspan').attr("INDIname"),
+			"name":$(np).closest('div.INumber_div').attr("INDIname"),
 			"label":$(np).parent().attr("INDIlabel"),
 			"value": $(np).prop("value") 
 			
@@ -709,8 +808,8 @@ function sendNewText(event)
 	{
 		out.newText.tp.push(
 		{
-			"name":$(IText).closest("span.ITextspan").attr("INDIname"),
-			"label":$(IText).closest("span.ITextspan").attr("INDIlabel"),
+			"name":$(IText).closest("div.IText_div").attr("INDIname"),
+			"label":$(IText).closest("div.IText_div").attr("INDIlabel"),
 			"text":IText.prop("value"),
 
 		});
@@ -744,5 +843,3 @@ function indistate2css(INDIvp_state)
 	return retn;
 
 }
-
-

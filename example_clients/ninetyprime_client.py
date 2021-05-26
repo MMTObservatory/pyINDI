@@ -1,6 +1,4 @@
 #!/usr/bin/python3.8
-
-
 from pathlib import Path
 import sys
 import logging
@@ -19,28 +17,40 @@ client.html (in this directory)
 
 """
 
+WEBPORT = 5905
+INDIPORT = 7624
+
+class Skeleton(INDIHandler):
+    def __init__(self, html, device):
+        self._html = html
+        self._device = device
+
+    def get(self):
+        self.indi_render(
+            Path.cwd()/'ninetyprime-observer.html',
+            device_name=device
+        )
+
+
+
 class Skeleton(INDIHandler):
 
     def get(self):
 
-        self.indi_render(Path.cwd()/"client.html", device_name="Filter Simulator")
+        self.indi_render(Path.cwd()/"ninetyprime-observer.html", device_name="Dome Simulator")
 
-
-
-webport = 5905
-indiport = 7624
-
-wa = INDIWebApp( webport=webport  )
+webapp = INDIWebApp(webport=WEBPORT)
 imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 
-print(f"go to http://<server_name>:{webport}/")
+print(f"Go to http://<server_name>:{WEBPORT}/")
 print(f"If the server is on localhost go to:")
-print(f"http://localhost:{webport}/")
+print(f"http://localhost:{WEBPORT}/")
 
 
 # Build and start the application. 
-wa.build_app(
+webapp.build_app(
     [(r"/", Skeleton),
-     (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path": imgs})],
-    debug=True)
+    (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path": imgs})],
+    debug=True
+)
