@@ -37,11 +37,11 @@ if Path("/src").exists():
     """
     logging.basicConfig(format="%(asctime)-15s %(message)s",
                         filename=f'/src/{timestr}.log',
-                        level=logging.DEBUG)
+                        level=logging.ERROR)
 else:
     logging.basicConfig(format="%(asctime)-15s %(message)s",
                         filename=f'{timestr}.log',
-                        level=logging.DEBUG)
+                        level=logging.ERROR)
 
 
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
@@ -893,7 +893,6 @@ class device(ABC):
                 traceback.print_exc(file=sys.stderr)
 
 
-
 #    def __init__(self, loop=None, config=None, name=None):
 #
 #        """
@@ -957,6 +956,8 @@ class device(ABC):
 
         while self.running:
             output = await self.outq.get()
+
+            logging.debug(output)
 
             self.writer.write(output)
             await self.writer.drain()
@@ -1095,14 +1096,23 @@ class device(ABC):
             xmlstr = skfd.read()
             xml = etree.fromstring(xmlstr)
 
-        for ivec in xml.getchildren():
+        for xml_def in xml.getchildren():
+            if xml_def.tag[:3] != "def":
+                continue
             properties = []
-            for prop in ivec.getchildren():
+            for prop in xml_def.getchildren():
+                
                 att = prop.attrib
                 att.update({'value': prop.text.strip()})
                 properties.append(att)
-
-            self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
+            try:
+                ivec = self.vectorFactory(xml_def.tag, xml_def.attrib, properties)
+            except Exception as error:
+                logging.error(f"The following error was caused by this xml tag \
+                        \n {etree.tostring(xml_def)}")
+                logging.error(error)
+                raise
+            self.IDDef(ivec)
 
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
@@ -1189,9 +1199,8 @@ class device(ABC):
 
         # register the property internally
 
-
         if prop.device != self._devname:
-            raise ValueError(f"INDI prop {prop.name} device does not match this device.")
+            raise ValueError(f"INDI prop {prop.device}.{prop.name} device does not match this device ({self._devname}).")
 
         if prop not in self.props:
             self.props.append(prop)
@@ -1231,15 +1240,18 @@ class device(ABC):
                 def call_with_error_handling():
                     """Call the function but make sure
                     we have error handling with the traceback"""
-                    try:
-                        func(instance)
-                    except Exception as error:
-                        sys.stderr.write(
-                            f"There was an exception the \
-                            later decorated fxn {func}:")
-                        sys.stderr.write(f"{error}")
-                        sys.stderr.write("See traceback below.")
-                        traceback.print_exc(file=sys.stderr)
+
+
+                    instance.repeat_q.put_nowait(func)
+#                    try:
+#                        func(instance)
+#                    except Exception as error:
+#                        sys.stderr.write(
+#                            f"There was an exception the \
+#                            later decorated fxn {func}:")
+#                        sys.stderr.write(f"{error}")
+#                        sys.stderr.write("See traceback below.")
+#                        traceback.print_exc(file=sys.stderr)
 
                     # do it again in millis
                     cl = instance.mainloop.call_later(
