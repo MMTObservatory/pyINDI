@@ -1138,7 +1138,7 @@ class device(ABC):
 
         # We could let this return None but not finding a
         # property seems to be a pretty important issue.
-        raise ValueError(f"Could not find {device}, {name} in {self.props}")
+        raise ValueError(f"Could not find {device}, {name} in props")
 
     def IUUpdate(self, device, name, values, names, Set=False):
         vp = self.IUFind(name=name, device=device)
