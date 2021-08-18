@@ -150,6 +150,7 @@ const buildNewNumbers = (INDIvp, vphtmldef) => {
 		wo.classList.add("INumber_wo")
 		//wo.id = `nosp(INDIvp.device)__${nosp(INDIvp.name)}`;
 		wo.textContent = np.value;
+		wo.id = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
@@ -212,6 +213,7 @@ const buildNewTexts = (INDIvp, vphtmldef) => {
 		var wo = document.createElement("textarea");
 		wo.rows = 1;
 		wo.classList.add("IText_wo");
+		wo.id = `${nosp(INDIvp.device)}__${nosp(tp.name)}`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
