@@ -1,29 +1,30 @@
-INDIPERM_RO = "ro";
-INDIPERM_WO = "wo";
-INDIPERM_RW = "rw";
+const INDIPERM_RO = "ro";
+const INDIPERM_WO = "wo";
+const INDIPERM_RW = "rw";
 
-INDISTATE_IDLE = "Idle";
-INDISTATE_OK = "Ok";
-INDISTATE_BUSY = "Busy";
-INDISTATE_ALERT = "Alert";
+const INDISTATES = {
+	"Idle": "var(--indistate-idle)",
+	"Ok": "var(--indistate-ok)",
+	"Busy": "var(--indistate-busy)",
+	"Alert": "var(--indistate-alert)",
+	"Unknown": "var(--indistate-unknown)"
+};
 
-INDISWRULE_1OFMANY = "OneOfMany";
-INDISWRULE_ATMOST1 = "AtMostOne";
-INDISWRULE_NOFMANY = "AnyofMany";
-
-
-CONFIG ={
-	NUM_SIZE:null,
-	SHOW_SWITCH_ICON:null
-	
-
+const INDISWRULES = {
+	"OneOfMany": "radio",
+	"AtMostOne": "radio",
+	"AnyofMany": "checkbox"
 }
 
+const CONFIG ={
+	NUM_SIZE:null,
+	SHOW_SWITCH_ICON:null
+}
 
 /*********************
 * formatNumber
 * Args: numStr=>the number as a string
-*		fstr=> the INDI format string
+*		fStr=> the INDI format string
 *
 * Description:
 *		Format the floating point INDI numbers
@@ -34,83 +35,38 @@ CONFIG ={
 * too. 
 *
 **********************/
-
-function formatNumber(numStr, fstr)
+function formatNumber(numStr, fStr)
 {
 	num = parseFloat(numStr);
+	console.debug(`[formatNumber] numStr=${numStr} fStr=${fStr}`)
 	var outstr;
-	var total = parseInt( fstr.slice(0, fstr.length-1).split('.')[0] );
-	var decimal = parseInt( fstr.slice(0, fstr.length-1).split('.')[1] );
-	switch(fstr[fstr.length-1])
-	{
+	var decimal = parseInt(fStr.slice(0, fStr.length-1).split('.')[1] );
+	switch (fStr[fStr.length-1]) {
 		case 'f':
-			if(isNaN(decimal))
-				outStr = numStr
-			else
-				outStr = num.toFixed(decimal);
-			
-		break;
+			outStr = isNaN(decimal) ? numStr : String(num.toFixed(decimal));
+			break;
 		case 'i':
-			outStr = String( Math.round(num) )
-		break;
+			outStr = String(Math.round(num))
+			break;
 		default:
 			outStr = numStr
 	}
 	return outStr;
 }
 
-function nosp(str)
-{
-	return str.replace(/ /g, '_').replace('.', '__');
+const nosp = (str) => {
+	// Replaces spaces with _ and . with __
+	return str.replace(/ /g, '_');
 }
 
-
-/************************************************************
-* AddDevice
-* args 
-*	devname-> indi device name, 
-*	container-> the jquery selector string of the containing element
-*	tabdevice -> boolean value if true use jquery tabs to seperate
-*		devices if not but them in divs
-*
-*
-* Description:
-*	When a new device is sent from the INDI driver add it to the 
-* 	webpage either using jquery tabs or simply putting eache device
-*	in its own div. 
-*
-************************************************************/
-function AddDevice(devname, container, tabdevice)
-{
-	var devselector = "div.INDIdevice#"+nosp(devname);
-	container = (container==undefined)? 'body':container;
-	var uler = "ul";
-
-	if($(container).find(uler).length == 0)
-	{
-		$("<ul/>" ).appendTo(container) 
-	}
-	if( $(container).find( devselector ).length == 0 ) 
-	{
-		if(tabdevice)
-		{
-			var ul = $(container).find(uler);
-			$("<li><a href='#"+nosp(devname)+"'>"+devname+"</a></li>").appendTo( ul );
-			$("<div/>", {id:nosp(devname)}).addClass("INDIdevice").appendTo( container );
-		
-			$(container).tabs();
-		}
-	}
-	if (tabdevice)
-		$(container).tabs("refresh")
-	return devselector;
-		
+const nospperiod = (str) => {
+	return nosp(str).replace('.', '__');
 }
 
 /***********************************************************
 * newText 
 * Args INDIvp-> object defining the INDI vector propert, 
-*		appendTo -> jquery selector for which elemebt to 
+*		appendTo -> jquery selector for which element to 
 *		append the INDivp turned HTML element to.
 *
 * Desription:
@@ -125,90 +81,202 @@ function AddDevice(devname, container, tabdevice)
 *
 *********************************************************/
 
-function newText( INDIvp, appendTo )
-{
-	var nosp_vpname = INDIvp.name.replace( " ", "_" );
-	var vpselector = "fieldset.INDItvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
-	var nosp_dev = INDIvp.device.replace( " ", "_" );
-	var retn;
-	if( $(vpselector).length == 0 )
-	{
-		var vphtmldef = $("<fieldset class='INDIvp INDItvp'></fieldset>")
-			.prop("id", nosp_vpname)
-			.attr("device", INDIvp.device)
-			.attr("group", INDIvp.group)
-			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
-		
-		$.each(INDIvp.values, function(ii, tp)
-		{	
-			var label = tp.label.replace(" ", "_");
-			var name = tp.name.replace(' ', '_');
-			var tpid = nosp_dev+"__"+name;
-			
-			vphtmldef.append($('<div/>',
-			{
-				'id': name,
-				'class': 'IText_div',
-				'INDIlabel':tp.label,
-				'INDIname':tp.name,
-			}
-			).append($('<label/>',
-			{
-				'text':	tp.label,
-				'for': tpid,
-				'class': 'IText_label'
-			})
-			).append( function()
-			{
-				var ro = $('<textarea rows=1 readonly/>').addClass('IText_ro').text(tp.value)
-				//console.error(tp.value);
-				var wo = $('<textarea rows=1/>').addClass('IText_wo')
-				.keypress(function(event)
-				{
-					if(event.which == 13)	
-					{		
-						let val = $(event.target).prop("value")
-						setindi("Text", INDIvp.device+'.'+INDIvp.name, tp.name, val );
+const buildFieldset = (INDIvp) => {
+	/* Builds the default fieldset for indi vector property. Returns new fieldset*/
+	var fieldset = document.createElement("fieldset");
 
-						return false;
-					}
-				})
-				switch(INDIvp.perm)
-				{
-					case INDIPERM_RO:
-							$(this).append(ro);
-					break;
-					case INDIPERM_RW:
-							$(this).append(ro).append(wo);
-					break;
-					case INDIPERM_WO:
-							
-							$(this).append(wo);
-					break;
+	fieldset.classList.add("INDIvp", `INDI${INDIvp.metainfo}`); // Get class meta
+	fieldset.id = nosp(INDIvp.name);
+	fieldset.setAttribute("device", INDIvp.device); // FIXME Removed data-
+	fieldset.setAttribute("group", INDIvp.group); // FIXME Removed data-
 
-				}
-			}
-			))
-		});
-		if(appendTo != undefined)
-		{
-			vphtmldef.appendTo(appendTo);
+	// Create legend for fieldset
+	var legend = document.createElement("legend");
+
+	// Create span led in legend for indistate
+	var led = document.createElement("span");
+	led.classList.add("led");
+	
+	// Create text node for legend to not overwrite the led span
+	var text = document.createTextNode(INDIvp.label);
+
+	// Build fieldset by appending all
+	legend.appendChild(led);
+	legend.appendChild(text);
+	fieldset.appendChild(legend);
+
+	return fieldset
+};
+
+const buildNewNumbers = (INDIvp, vphtmldef) => {
+	/* Builds the new indi number */
+	INDIvp.values.forEach((np) => {
+		// Create div that the indi text row will exist
+		var div = document.createElement("div");
+
+		div.id = nosp(np.name);
+		div.setAttribute("INDIlabel", np.label); // FIXME Removed data-
+		div.setAttribute("INDIname", np.name); // FIXME Removed data-
+		div.setAttribute("INDIformat", np.format); // TODO Add data-
+		div.classList.add("INumber_div");
+
+		// Create label for indi text row
+		var label = document.createElement("label");
+
+		label.textContent = np.label;
+		label.classList.add("INumber_label");
+		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
+
+		div.appendChild(label);
+
+		// Formatting length of numbers
+		/* NOT IN USE
+		var re = /%(\d+)\.(\d+)[fm]/
+		try {
+			var numinfo = re.exec(np.format);
+			var len = parseInt(numinfo[1]);
 		}
-		return vphtmldef
+		catch (err) {
+			var len = 10;
+		} 
+		*/
+		
+		// Build ro and wo
+		var ro = document.createElement("label");
+
+		ro.classList.add("INumber_ro");
+		
+		var wo = document.createElement("input");
+		wo.classList.add("INumber_wo")
+		//wo.id = `nosp(INDIvp.device)__${nosp(INDIvp.name)}`;
+		wo.textContent = np.value;
+
+		// If "Enter" is pressed on writeonly area, send new text to indi
+		wo.addEventListener("keyup", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault() // TODO Test if needed
+				let value = event.target.value;
+				setindi("Number", `${INDIvp.device}.${INDIvp.name}`, np.name, value);
+			}
+		});
+		// Determine if it is readonly, writeonly, or both and append
+		switch (INDIvp.perm) {
+			case INDIPERM_RO:
+				div.appendChild(ro);
+				break;
+			case INDIPERM_RW:
+				div.appendChild(ro);
+				div.appendChild(wo);
+				break;
+			case INDIPERM_WO:
+				div.appendChild(wo);
+				break;
+			default:
+		}
+		// Append the div to the fieldset
+		vphtmldef.appendChild(div);
+
+	});
+	return vphtmldef;
+};
+
+const buildNewTexts = (INDIvp, vphtmldef) => {
+	/* Builds the new indi text */
+	INDIvp.values.forEach((tp) => {
+		console.warn(tp);
+		// Create div that the indi text row will exist
+		var div = document.createElement("div");
+
+		div.id = nosp(tp.name);
+		div.setAttribute("INDIlabel", tp.label); // FIXME Removed data-
+		div.setAttribute("INDIname", tp.name); // FIXME Removed data-
+		div.classList.add("IText_div");
+
+		// Create label for indi text row
+		var label = document.createElement("label");
+
+		label.textContent = tp.label;
+		label.classList.add("IText_label");
+		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(tp.name)}`;
+
+		div.appendChild(label);
+
+		// Build ro and wo
+		var ro = document.createElement("textarea");
+		
+		ro.rows = 1;
+		ro.readOnly = true;
+		ro.classList.add("IText_ro");
+		ro.textContent = tp.value;
+
+		var wo = document.createElement("textarea");
+		wo.rows = 1;
+		wo.classList.add("IText_wo");
+
+		// If "Enter" is pressed on writeonly area, send new text to indi
+		wo.addEventListener("keyup", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault() // TODO Test if needed
+				let value = event.target.value;
+				setindi("Text", `${INDIvp.device}.${INDIvp.name}`, tp.name, value);
+			}
+		});
+
+		wo.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+			}
+		})
+
+		// Determine if it is readonly, writeonly, or both and append
+		switch (INDIvp.perm) {
+			case INDIPERM_RO:
+				div.appendChild(ro);
+				break;
+			case INDIPERM_RW:
+				div.appendChild(ro);
+				div.appendChild(wo);
+				break;
+			case INDIPERM_WO:
+				div.appendChild(wo);
+				break;
+			default:
+		}
+
+		// Append the div to the fieldset
+		vphtmldef.appendChild(div);
+
+	});
+	return vphtmldef;
+};
+
+const newText = (INDIvp, appendTo) => {
+	/*  */
+	var vpselector = `fieldset.INDItvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	
+	// If the vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		var vphtmldef = buildFieldset(INDIvp);
+		vphtmldef = buildNewTexts(INDIvp, vphtmldef);
+
+		// Need to figure out how to replace jquery selector for the fieldset
+		if (appendTo != undefined) {
+			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
+		}
+
+		return $(vphtmldef); // TODO Remove jquery
 	}
 	
-	$.each(INDIvp.values, function(ii, tp)
-	{
-		
-		var name = nosp(tp.name);
-		var tpid = nosp_dev+name;
-		$(vpselector).find("div[INDIname='"+tp.name+"'] textarea.IText_ro").text(tp.value)
-	});
+	// Update values from indi
+	INDIvp.values.forEach((tp) => {
+		var tpselector = `div.IText_div[INDIname="${tp.name}"] textarea.IText_ro`;
+		var ro = document.querySelector(`${vpselector} ${tpselector}`);
 
-	return vpselector
+		ro.textContent = tp.value;
+	})
+
+	return vpselector 
 }
-
-
 
 /***********************************************************
 * newNumber 
@@ -228,114 +296,39 @@ function newText( INDIvp, appendTo )
 *
 *********************************************************/
 
-function newNumber(INDIvp, appendTo)
-{
-	var nosp_vpname = INDIvp.name.replace( " ", "_" );
-	var vpselector = "fieldset.INDInvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
-	var nosp_dev = INDIvp.device.replace( " ", "_" );
-	var retn;
-	//we need to create the html
-	if( $(vpselector).length == 0 )
-	{
-		var vphtmldef = $("<fieldset class='INDIvp INDInvp'></fieldset>")
-			.prop("id", nosp_vpname)
-			.attr("device", INDIvp.device)
-			.attr("group", INDIvp.group)
-			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
+function newNumber(INDIvp, appendTo) {
+	/*  */
+	var vpselector = `fieldset.INDInvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+
+	// If the vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		var vphtmldef = buildFieldset(INDIvp);
+		vphtmldef = buildNewNumbers(INDIvp, vphtmldef);
 		
-			
-		$.each(INDIvp.values, function(ii, np)
-		{	
-
-			var label = np.label.replace(" ", "_");
-			var name = np.name.replace(' ', '_');
-			var npid = nosp_dev+"__"+name;
-	
-			vphtmldef.append($('<div/>',
-			{
-				'id': name,
-				'class': 'INumber_div',
-				'INDIlabel':np.label,
-				'INDIname':np.name,
-				'INDIformat':np.format
-			}
-			).append($('<label/>',
-			{
-				'text':	np.label,
-				'for': npid,
-				'class': 'INumber_label'
-			})
-			).append( function()
-			{
-				var re = /%(\d+)\.(\d+)[fm]/
-				try
-				{
-					var numinfo = re.exec(np.format);
-					var len = parseInt(numinfo[1]);
-				}
-				catch(err)
-				{
-					var len = 10;
-				}
-				if(CONFIG["NUM_SIZE"] != null)
-				{
-					len=CONFIG["NUM_SIZE"];
-				}
-				//var ro = $('<span/>', {'class':'INumber_ro'}).css({ width:10*len+'px' })
-				var ro = $('<label/>', { 'class': 'INumber_ro' });
-				// Removed .prop('size', len) from wo
-				var wo = $("<input/>", {'type':'text', 'class':'INumber_wo', 'id': npid})
-				.attr("value", np.value )
-				.keypress(function(event)
-				{
-					
-					if(event.which == 13)	
-					{
-						let val = $(event.target).val()
-						setindi("Number", INDIvp.device+'.'+INDIvp.name, np.name, val );
-					}
-				})
-				switch(INDIvp.perm)
-				{
-					case INDIPERM_RO:
-							$(this).append(ro);
-					break;
-					case INDIPERM_RW:
-							$(this).append(ro).append(wo);
-					break;
-					case INDIPERM_WO:
-							
-							$(this).append(wo);
-					break;
-
-				}
-			}
-			))
-		});
 		if(appendTo != undefined)
 		{
-			vphtmldef.appendTo(appendTo);
-			return vpselector;
+			$(vphtmldef).appendTo(appendTo);
 		}
-		return vphtmldef
+		return $(vphtmldef)
 	}
 	
-	$.each( INDIvp.values, function(ii, np)
-	{
+	// Update values from indi
+	INDIvp.values.forEach((np) => {
+		var formatselector = document.querySelector(`div[INDIname="${np.name}"]`);
+		var format = formatselector.getAttribute("indiformat");
+		var npselector = `div.INumber_div[INDIname="${np.name}"] label.INumber_ro`;
+		var value = formatNumber(np.value, format);
 		
-		var format = $(vpselector).find("div.INumber_div[INDIname='"+np.name+"']").attr("indiformat")
-		var name = np.name.replace(' ', '_');
-		var npid = nosp_dev+name;
-		newvalue= formatNumber(np.value, format)
-		//$(vpselector).find("div.INumber_div[INDIname='"+np.name+"']  span.INumber_ro").text(Math.round(np.value*10000)/10000)
-		var update = $(vpselector).find("div.INumber_div[INDIname='"+np.name+"']  label.INumber_ro");
-		update.text(newvalue)
+		var ro = document.querySelector(`${vpselector} ${npselector}`)
+		ro.textContent = value;
+	})
 
-	});
-	// return the jquery selector
+	// Return string since already exists
 	return vpselector
 }
 /*end newNumber*/
+
+
 
 
 /***********************************************************
@@ -363,21 +356,7 @@ function newSwitch( INDIvp, appendTo )
 	var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
 	
 	var retn = $(vpselector);
-	switch(INDIvp.rule)
-	{
-		case INDISWRULE_1OFMANY:
-		case INDISWRULE_ATMOST1:
-			type = 'radio'
-		break;
-		case INDISWRULE_NOFMANY:
-			type = 'checkbox';
-		break;
-		default:
-            //console.log("Error unkown SVP rule"+INDIvp.rule);
-			type = 'radio'
-	}
-	
-	
+	var type = indisw2selector(INDIvp.rule);
 
 	if( $(vpselector).length == 0 )
 	{
@@ -610,21 +589,8 @@ function newLight( INDIvp, appendTo )
             var lpid = nosp_dev+"__"+name;
             var lpname = nosp_dev+'__'+nosp_vpname;
             var scolor = "transparent";
-            switch(lp.value)
-            {
-                case INDISTATE_IDLE:
-                    lightclass = "var( --indistate-idle )";
-                break;
-                case INDISTATE_OK: 
-                    lightclass = "var( --indistate-ok )'";
-                break;
-                case INDISTATE_BUSY:
-                    lightclass = "var( --indistate-busy )";
-                break;
-                case INDISTATE_ALERT:
-                    lightclass = "var( --indistate-alert )";
-                break;
-            }
+						var lightclass = indistate2css(lp.value);
+            
             vphtmldef.append
             (
                 $('<span/>',
@@ -665,24 +631,8 @@ function newLight( INDIvp, appendTo )
             var name = lp.name.replace(' ', '_');
             var lpid = nosp_dev +"__"+ name;
             var state = lp.state
-	    switch(lp.value)
-            {
-                case INDISTATE_IDLE:
-                    lightclass = "var( --indistate-idle )";
-                break;
-                case INDISTATE_OK:
-                    lightclass = "var( --indistate-ok )";
-                break;
-                case INDISTATE_BUSY:
-                    lightclass = "var( --indistate-busy )";
-                break;
-                case INDISTATE_ALERT:
-                    lightclass = "var( --indistate-alert )";
-                break;
-                default:
-                    lightclass = "var( --indistate-alert )";
-
-            }
+						var lightclass = indistate2css(lp.value);
+	    
             $(vpselector).find('label#'+lpid+'.ILightlabel').css("background-color", lightclass);
 
         });
@@ -818,28 +768,28 @@ function sendNewText(event)
 	INDIws.send(JSON.stringify(out));
 }
 
-
-function indistate2css(INDIvp_state)
-{
-	switch(INDIvp_state)
-	{
-
-		case( INDISTATE_IDLE ):
-			retn = 'var( --indistate-idle )'
-		break;
-		case( INDISTATE_OK ):
-			retn = 'var( --indistate-ok )'
-		break;
-		case( INDISTATE_BUSY ):
-			retn = 'var( --indistate-busy )'
-		break;
-		case( INDISTATE_ALERT ):
-			retn = 'var( --indistate-alert )'
-		break;
-		default:
-			throw("Unkown State error " + INDIvp_state + " Should be " + INDISTATE_IDLE + ", " +  INDISTATE_OK + ", " +INDISTATE_BUSY + "or " + INDISTATE_ALERTa + "not " + INDIvp_state  );
-	
+const indistate2css = (INDIvp_state) => {
+	/* Converts indi state to styling for alerts */
+	var state = INDISTATES["Unknown"] // Default return
+	if (INDISTATES.hasOwnProperty(INDIvp_state)) {
+		state = INDISTATES[INDIvp_state];
 	}
-	return retn;
+	else {
+		console.warn(`${INDIvp_state} is not valid INDI state, should be ${Object.keys(INDISTATES)}`);
+	}
+	
+	return state
+}
 
+const indisw2selector = (INDIvp_rule) => {
+	/* Converts indi switches to selector type */
+	var sw = "radio"; // Default return
+	if (INDISWRULES.hasOwnProperty(INDIvp_rule)) {
+		sw = INDISWRULES[INDIvp_rule];
+	}
+	else {
+		console.warn(`${INDIvp_rule} is not valid INDI rule, should be ${Object.keys(INDISWRULES)}`);
+	}
+
+	return sw
 }

@@ -20,111 +20,100 @@
  * set up web socket and some other init work
  */
 var gTypestr = "";                      // all INDI types we accept
-var websocket;                          // the persistent web socket connection
+var ws;                                 // the persistent web socket connection
 var gCanReadWrite = 0;                  // whether this page is allowed to set new INDI property values
 const ROport = 8081;                    // setindi() is muted when our page is on this port
 const wspage = "/indi/websocket";       // must match URL for wstunnel in lighttpd.conf
-$(function() {
-
-    // initialize the list of types that updateProperties will handle.
-    var ops = ["set", "def"];
-    for (var op in ops) {
-        var types = ["Number", "Switch", "Light", "Text", "BLOB"];
-        for (var t in types) {
-            if (gTypestr.length) {
-                gTypestr += ", "
-            }
-            gTypestr += ops[op] + types[t] + "Vector"
-        }
+document.addEventListener("DOMContentLoaded", () => {
+  // initialize the list of types that updateProperties will handle.
+  var ops = ["set", "def"];
+  for (var op in ops) {
+    var types = ["Number", "Switch", "Light", "Text", "BLOB"];
+    for (var t in types) {
+      if (gTypestr.length) {
+        gTypestr += ", "
+      }
+      gTypestr += ops[op] + types[t] + "Vector"
     }
+  }
     // console.log(gTypestr);
 
     // create web server connection
-    startWebSocket();
-});
+  wsStart();
+})
 
 /* create a websocket, repeat if it ever closes
  */
-function startWebSocket()
-{
-    if ("WebSocket" in window) {
+const wsStart = () => {
+  if ("WebSocket" in window) {
 
-        // create web socket
-        var loc = window.location;
-        if (loc.port != ROport)
-            gCanReadWrite = true;
-        const url = 'ws://' + loc.host + wspage;
-        console.log (url);
-        websocket = new WebSocket(url);
-
-        // dispatch incoming messages
-        websocket.addEventListener ('message', function (event) {
-            updateProperties (event.data);
-        });
-
-        websocket.addEventListener ('open', function(event) {
-            console.log ("WebServer is open");
-
-	    // resend any prior property callbacks
-	    for (var property in setPropertyCallbacks) {
-		var callback = setPropertyCallbacks[property];
-		if (callback) {
-		    // console.log ('requesting ' + property);
-		    setPropertyCallback(property, callback);
-		}
-	    }
-        });
-
-        // indicate lost connection
-        // https://tools.ietf.org/html/rfc6455#section-7.4.1
-        websocket.addEventListener ('close', function(event) {
-
-            var reason = "Unknown reason";
-                if (event.code == 1000) reason = "Normal closure";
-            else if(event.code == 1001) reason = "endpoint going away";
-            else if(event.code == 1002) reason = "protocol error";
-            else if(event.code == 1003) reason = "endpoint received data type it cannot accept";
-            else if(event.code == 1004) reason = "Reserved.";
-            else if(event.code == 1005) reason = "No status code present.";
-            else if(event.code == 1006) reason = "connection closed without Close control frame";
-            else if(event.code == 1007) reason = "data not consistent with the type of the message";
-            else if(event.code == 1008) reason = "message that violates its policy";
-            else if(event.code == 1009) reason = "message too large.";
-            else if(event.code == 1010) reason = "server failed to negotiate extension: " + event.reason;
-            else if(event.code == 1011) reason = "server can not fulfill request.";
-            else if(event.code == 1015) reason = "failure to perform a TLS handshake";
-            console.log ("Web socket closed: " + reason);
-
-	    // discard any partially received documents
-	    partial_doc = null;
-
-	    // restart web socket
-	    websocket = null;
-	    setTimeout (startWebSocket, 1000);
-        });
-
-        // error
-        websocket.addEventListener ('error', function() {
-            // no additional information if reported but we can assume close will follow shortly
-            // alert ('Websocket error');
-        });
-
-    } else {
-        alert ("WebSocket is not supported by this Browser");
+    // create web socket
+    var loc = window.location;
+    if (loc.port != ROport) {
+      gCanReadWrite = true;
     }
+    const url = 'ws://' + loc.host + wspage;
+    console.log(url);
+    ws = new WebSocket(url);
+
+    // dispatch incoming messages
+    ws.onmessage = (event) => {
+      updateProperties(event.data);
+    };
+
+    ws.onopen = (event) => {
+      console.log("WebSocket is open");
+      // resend any prior property callbacks
+      for (var property in setPropertyCallbacks) {
+        var callback = setPropertyCallbacks[property];
+        if (callback) {
+          console.log ('requesting ' + property);
+          setPropertyCallback(property, callback);
+        }
+      }
+    };
+
+    // indicate lost connection
+    ws.onclose = (event) => {
+      if (event.wasClean) {
+        console.warn(`Web Socket connection closed cleanly, code=${event.code} reason=${event.reason}`);
+      }
+      else {
+        console.warn(`Web Socket connection died, code=${event.code} reason=${event.reason}`);
+      }
+
+      // discard any partially received documents
+      partial_doc = null;
+
+      // restart web socket
+      ws = null;
+      setTimeout(() => {
+        wsStart()
+      }, 1000);
+    };
+
+    ws.onerror = (event) => {
+      console.error(`Web Socket error`)
+    };
+  }
+
+  else {
+    alert("Web Socket is not supported by this Browser");
+  }
+
 }
 
-/* wrapper over websocket.send that can tolerate connection not yet fully open
+/* wrapper over ws.send that can tolerate connection not yet fully open
  */
-function wsSend (msg)
-{
-
-    if (websocket && websocket.readyState == websocket.OPEN) {
-         //console.log("tx: " + msg);
-
-        websocket.send(msg);
-    } else
-        setTimeout (function() {wsSend(msg);}, 30);
+const wsSend = (msg) => {
+  if (ws && ws.readyState == ws.OPEN) {
+    ws.send(msg);
+  }
+  else {
+    setTimeout(() => {
+      wsSend(msg);
+    }, 30); // Retry in 30 ms
+  }
 }
 
 /*
@@ -212,32 +201,34 @@ function setindi() {
  *    telescope focus is changed.
  */
 var setPropertyCallbacks = {}
-function setPropertyCallback(property, callback) {
-    // console.log ("setPropertyCallback("+property+")");
-    setPropertyCallbacks[property] = callback;
+const setPropertyCallback = (property, callback) => {
+  setPropertyCallbacks[property] = callback;
+  
+  // request this property
+  var devname = property.split(".");
+  var device = devname[0];
+  var name = devname[1];
+  var getprop = `<getProperties version="1.7" device="${device}"`;
+  if (name != '*') {
+    getprop += ` name="${name}"`;
+  }
+  getprop += ` />\n`;
+  console.log(`[setPropertyCallback] ${getprop}`);
 
-    // request this property
-    var devname = property.split(".");
-    var device = devname[0];
-    var name = devname[1];
-    var getprop = '<getProperties version="1.7" device="' + device + '"';
-    if (name != '*')
-        getprop += ' name="' + name + '"';
-    getprop += ' />\n';
+  // send
+  wsSend(getprop);
 
-    // send
-    wsSend(getprop);
+  // also ask for BLOBs, harmless if not
+  var getblob = `<enableBLOB device="${device}"`;
+  if (name != '*') {
+    getblob += ` name="${name}"`
+  }
+  getblob += `>Also</enableBLOB>\n`;
 
-    // also ask for BLOBs, harmless if not
-    var getblob = '<enableBLOB device="' + device + '"';
-    if (name != '*')
-        getblob += ' name="' + name + '"';
-    getblob += '>Also</enableBLOB>\n';
-
-    // send
-    // console.log(getblob);
-    wsSend(getblob);
-}
+  // send
+  // console.log(getblob);
+  wsSend(getblob);
+};
 
 /*
  * Private function for flattening an INDI property's XML element into a javascript object.
