@@ -52,6 +52,8 @@ pyINDI's client libarary.-->
 
 
 		// Returns string if ele exists already
+		// This is because newText would return a jquery selector if new
+		// or a string if not new
 		if(typeof ele != 'string')
 		{	
 			vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
