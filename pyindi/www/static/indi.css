@@ -47,7 +47,7 @@
 	color: var(--text-device);
 	padding: 1rem .75rem;
 	display: block;
-
+	margin-bottom: 0;
 }
 .INDIgroup {
 	padding: .75rem .75rem;

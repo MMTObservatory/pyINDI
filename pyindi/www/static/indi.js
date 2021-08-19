@@ -21,67 +21,69 @@ const CONFIG ={
 	SHOW_SWITCH_ICON:null
 }
 
-/*********************
-* formatNumber
-* Args: numStr=>the number as a string
-*		fStr=> the INDI format string
-*
-* Description:
-*		Format the floating point INDI numbers
-* but don't mess with the sexagesimal
-* stuff. weh shall let the INDI client
-* do that. In fact we should probably
-* let the client do the floating point stuff 
-* too. 
-*
-**********************/
-function formatNumber(numStr, fStr)
-{
-	num = parseFloat(numStr);
-	console.debug(`[formatNumber] numStr=${numStr} fStr=${fStr}`)
-	var outstr;
-	var decimal = parseInt(fStr.slice(0, fStr.length-1).split('.')[1] );
-	switch (fStr[fStr.length-1]) {
-		case 'f':
-			outStr = isNaN(decimal) ? numStr : String(num.toFixed(decimal));
-			break;
-		case 'i':
-			outStr = String(Math.round(num))
-			break;
-		default:
-			outStr = numStr
-	}
-	return outStr;
-}
+/* Builders
 
-const nosp = (str) => {
-	// Replaces spaces with _ and . with __
-	return str.replace(/ /g, '_');
-}
+Description
+--------
+These functions are responsible for building the html elements
+and assigning data attributes, classes, and ids. They return
+the element that was built.
 
-const nospperiod = (str) => {
-	return nosp(str).replace('.', '__');
-}
+Every new INDI group requires a fieldset and each INDI device
+requires a new section. 
 
-/***********************************************************
-* newText 
-* Args INDIvp-> object defining the INDI vector propert, 
-*		appendTo -> jquery selector for which element to 
-*		append the INDivp turned HTML element to.
-*
-* Desription:
-*	Called when the websocket from the indi webclient
-*	generates or updates an INDI text. If this a 
-*	a never brefore seen INDI text HTML fieldset
-*	element is created with the correct value otherwise
-*	the element's text is updated. 
-*
-*
-* Returns: a jquery type selector string. 
-*
-*********************************************************/
+Functions
+---------
+- buildDevice   : builds section to hold new INDI device
+- buildGroup    : builds group to hold new INDI group
+- buildProperty : builds fieldset to hold new INDI group data
+- buildNumbers  : builds INDI number when new number is received
+- buildTexts    : builds INDI text when new text is received
+*/
+const buildGroup = (INDIvp) => {
+	/* Builds the default div for a new INDI group */
+	var div = document.createElement("div");
 
-const buildFieldset = (INDIvp) => {
+	div.setAttribute("device", INDIvp.device);
+	div.id = nosp(INDIvp.group).toUpperCase();
+	div.setAttribute("group", INDIvp.group);
+	div.classList.add("INDIgroup");
+
+	// Build the title for group
+	var p = document.createElement("p");
+
+	p.textContent = INDIvp.group;
+	p.classList.add("IGroup_header");
+
+	// TODO Add min/max button toggle to hide group
+
+	// Append all
+	div.appendChild(p);
+
+	return div;
+};
+
+const buildDevice = (INDIvp) => {
+	/* Builds the default section for new device */
+	var section = document.createElement("section");
+
+	section.setAttribute("device", INDIvp.device); // TODO Add data-
+	section.id = nosp(INDIvp.device)
+	section.classList.add("INDIdevice");
+
+	// Build label for device
+	var p = document.createElement("p");
+
+	p.classList.add("IDevice_header");
+	p.textContent = INDIvp.device;
+
+	// Append all
+	section.appendChild(p);
+
+	return section;
+};
+
+const buildProperty = (INDIvp) => {
 	/* Builds the default fieldset for indi vector property. Returns new fieldset*/
 	var fieldset = document.createElement("fieldset");
 
@@ -96,7 +98,7 @@ const buildFieldset = (INDIvp) => {
 	// Create span led in legend for indistate
 	var led = document.createElement("span");
 	led.classList.add("led");
-	
+
 	// Create text node for legend to not overwrite the led span
 	var text = document.createTextNode(INDIvp.label);
 
@@ -108,7 +110,7 @@ const buildFieldset = (INDIvp) => {
 	return fieldset
 };
 
-const buildNewNumbers = (INDIvp, vphtmldef) => {
+const buildNumbers = (INDIvp, vphtmldef) => {
 	/* Builds the new indi number */
 	INDIvp.values.forEach((np) => {
 		// Create div that the indi text row will exist
@@ -129,27 +131,14 @@ const buildNewNumbers = (INDIvp, vphtmldef) => {
 
 		div.appendChild(label);
 
-		// Formatting length of numbers
-		/* NOT IN USE
-		var re = /%(\d+)\.(\d+)[fm]/
-		try {
-			var numinfo = re.exec(np.format);
-			var len = parseInt(numinfo[1]);
-		}
-		catch (err) {
-			var len = 10;
-		} 
-		*/
-		
 		// Build ro and wo
 		var ro = document.createElement("label");
-
+		ro.textContent = np.value;
 		ro.classList.add("INumber_ro");
-		
+
 		var wo = document.createElement("input");
 		wo.classList.add("INumber_wo")
 		//wo.id = `nosp(INDIvp.device)__${nosp(INDIvp.name)}`;
-		wo.textContent = np.value;
 		wo.id = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
@@ -181,10 +170,58 @@ const buildNewNumbers = (INDIvp, vphtmldef) => {
 	return vphtmldef;
 };
 
-const buildNewTexts = (INDIvp, vphtmldef) => {
+const buildSwitches = (INDIvp, appendTo) => {
+	/* Builds the new INDI switch */
+	var div = document.createElement("div");
+	var type = indisw2selector(INDIvp.rule);
+	// Keeping div empty while I build everything else
+	INDIvp.values.forEach((sp) => {
+		var span = document.createElement("span");
+
+		span.setAttribute("INDIname", sp.name);
+		span.classList.add("ISwitch_span");
+		span.id = nosp(sp.name);
+
+		// Create label for button text
+		var label = document.createElement("label")
+
+		label.id = nosp(sp.name);
+		label.classList.add("ISwitchlabel");
+		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+		label.textContent = sp.label
+
+		// Create radio button
+		var input = document.createElement("input");
+		input.type = type;
+		input.id = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+		input.setAttribute("name", nosp(INDIvp.name));
+		input.setAttribute("device", nosp(INDIvp.device));
+		input.setAttribute("vector", INDIvp.name);
+		input.classList.add("ISwitchinput");
+		input.value = nosp(sp.name);
+		input.setAttribute("indiname", nosp(sp.name));
+		input.checked = sp.value === "On" ? true : false;
+		input.checked && label.classList.add("ui-state-active");
+		
+		// Create event listeners for input button
+		input.addEventListener("change", (event) => {
+			let name = event.target.value
+			let value = event.target.checked ? "On" : "Off"
+			setindi("Switch", `${INDIvp.device}.${INDIvp.name}`, name, value);
+		})
+		
+		// Append all
+		span.appendChild(label);
+		span.appendChild(input);
+		appendTo.appendChild(span);
+	})
+
+	return appendTo;
+};
+
+const buildTexts = (INDIvp, vphtmldef) => {
 	/* Builds the new indi text */
 	INDIvp.values.forEach((tp) => {
-		console.warn(tp);
 		// Create div that the indi text row will exist
 		var div = document.createElement("div");
 
@@ -204,7 +241,7 @@ const buildNewTexts = (INDIvp, vphtmldef) => {
 
 		// Build ro and wo
 		var ro = document.createElement("textarea");
-		
+
 		ro.rows = 1;
 		ro.readOnly = true;
 		ro.classList.add("IText_ro");
@@ -252,14 +289,36 @@ const buildNewTexts = (INDIvp, vphtmldef) => {
 	return vphtmldef;
 };
 
+
+
+
+
+
+/***********************************************************
+* newText 
+* Args INDIvp-> object defining the INDI vector propert, 
+*		appendTo -> jquery selector for which element to 
+*		append the INDivp turned HTML element to.
+*
+* Desription:
+*	Called when the websocket from the indi webclient
+*	generates or updates an INDI text. If this a 
+*	a never brefore seen INDI text HTML fieldset
+*	element is created with the correct value otherwise
+*	the element's text is updated. 
+*
+*
+* Returns: a jquery type selector string. 
+*
+*********************************************************/
 const newText = (INDIvp, appendTo) => {
-	/*  */
+	/* Creates a new text */
 	var vpselector = `fieldset.INDItvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
 	
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		var vphtmldef = buildFieldset(INDIvp);
-		vphtmldef = buildNewTexts(INDIvp, vphtmldef);
+		var vphtmldef = buildProperty(INDIvp);
+		vphtmldef = buildTexts(INDIvp, vphtmldef);
 
 		// Need to figure out how to replace jquery selector for the fieldset
 		if (appendTo != undefined) {
@@ -304,14 +363,14 @@ function newNumber(INDIvp, appendTo) {
 
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		var vphtmldef = buildFieldset(INDIvp);
-		vphtmldef = buildNewNumbers(INDIvp, vphtmldef);
+		var vphtmldef = buildProperty(INDIvp);
+		vphtmldef = buildNumbers(INDIvp, vphtmldef);
 		
 		if(appendTo != undefined)
 		{
-			$(vphtmldef).appendTo(appendTo);
+			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
 		}
-		return $(vphtmldef)
+		return $(vphtmldef) // TODO Remove jquery
 	}
 	
 	// Update values from indi
@@ -350,110 +409,35 @@ function newNumber(INDIvp, appendTo) {
 * Returns: a jquery type selector string. 
 *
 *********************************************************/
-
-function newSwitch( INDIvp, appendTo )
-{
-	var nosp_vpname = INDIvp.name.replace( " ", "_" );
-	var nosp_dev = INDIvp.device.replace( " ", "_" );
-	var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
+const newSwitch = (INDIvp, appendTo=null) => {
+	/* Builds new indi switches */
+	var vpselector = `fieldset.INDIsvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
 	
-	var retn = $(vpselector);
-	var type = indisw2selector(INDIvp.rule);
-
-	if( $(vpselector).length == 0 )
-	{
+	// If empty, build property and switches
+	if (!document.querySelector(vpselector)) {
+		var vphtmldef = buildProperty(INDIvp);
+		vphtmldef = buildSwitches(INDIvp, vphtmldef);
 		
-		var vphtmldef = $( "<fieldset class='INDIvp INDIsvp'/>" )
-			.prop("id", nosp_vpname)
-			.attr("device", INDIvp.device)
-			.attr("group", INDIvp.group)
-			.append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
-		
-		$.each(INDIvp.values, function(ii, sp)
-		{		
-			var label = sp.label.replace(" ", "_");
-			var name = sp.name.replace(' ', '_');
-			var spid = nosp_dev+"__"+nosp_vpname+"__"+name;
-			var spname = nosp_dev+'__'+nosp_vpname
-			vphtmldef.append
-			(
-				$('<span/>',
-				{	
-					'INDIname'	:sp.name,
-					'class'			:"ISwitch_span",
-					'id'				:name,
-				})
-				.append($('<label/>', 
-				{
-					'id'				:name,
-					'class'			:'ISwitchlabel',
-					'for'				:spid,
-					'text'			:sp.label
-
-				})).append(
-				$('<input/>',
-				{
-					'type'		:type,
-					'id'			:spid,
-					'name'		:nosp_vpname,
-					'device'	:nosp_dev,
-					'vector'	:INDIvp.name,
-					'class'		:'ISwitchinput',
-                    'value'     :name,
-                    'indiname'  :name,
-                    'checked'   : sp.value == "On" ? true:false
-                    
-				}
-				)
-				.prop( "checked", sp.state )
-				.on( 'change', function(event) {
-					let name = $(event.target).val();
-                    
-					let value =$(event.target).prop("checked") ? "On" : "Off";
-
-					setindi("Switch", INDIvp.device+'.'+INDIvp.name, name, value);
-
-                   
-					
-				} )
-			));
-			
-		});
-
-		
-		icon=false; // Was true
-		if(CONFIG["SHOW_SWITCH_ICON"] != null)
-		{
-			var icon = CONFIG["SHOW_SWITCH_ICON"]
+		if (appendTo != null) {
+			appendTo.appendChild(vphtmldef);
 		}
-		vphtmldef.find( "input[type='"+type+"']" ).checkboxradio();
-		
-		if( appendTo != undefined )
-		{
-			vphtmldef.appendTo( appendTo );
-			return vpselector;
-		}
-		return vphtmldef;
+
+		return $(vphtmldef);  // TODO remove jquery
 	}
 
-	else
-	{
-		
-		$.each(INDIvp.values, function(ii, sp)
-		{   
-			//var label = sp.label.replace(" ", "_");
-			var name = sp.name.replace(' ', '_');
-			var spid = nosp_dev +"__"+ nosp_vpname+"__"+name;
-            //console.log("setting "+sp.name +"to " +sp.value)
-			state = sp.value === "On" ? true: false
+	// Update values from indi
+	INDIvp.values.forEach((sp) => {
+		var spselector = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+		let state = sp.value === "On" ? true : false;
 
+		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
+		let label = document.querySelector(`label[for="${sw.id}"]`);
 
-			$(vpselector).find('input.ISwitchinput#'+spid).prop('checked', state);
-			//console.log($("body fieldset.INDIsvp#"+nosp_vpname+"[device='"+INDIvp.device+"']"))
-		});
-		
-	}
-	$(vpselector).find("input[type='"+type+"']").checkboxradio("refresh");
+		// Update the color of the switch depending on checked
+		let active = "ui-state-active";
+		sw.checked ? label.classList.add(active) : label.classList.remove(active);
+	});
+
 	return vpselector;
 }
 
@@ -470,82 +454,59 @@ function newSwitch( INDIvp, appendTo )
 * Returns:
 *
 *********************************************************/
+const newGroup = (INDIvp, appendTo=null) => {
+	/* Creates a new indi group */
+	var vpselector = `div.INDIgroup[group="${INDIvp.group}"]`;
 
-const newGroup = (INDIvp) => {
-	// Basically works like this, if we need to append we return
-	// jquery selector, if not empty then return string
-	// We dont append stuff to strings
+	// If vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new group: ${INDIvp.group}`);
 
-	// Need to see if the group exists
-	// If not, make it and append to section
-	// If so, return group to append to
-	var nosp_vpgroup = INDIvp.group.replace(" ", "_").toUpperCase();
-	var nosp_device = INDIvp.device.replace(" ", "_");
-	var vpgroupselector = "div.INDIgroup[group='" + INDIvp.group + "']";
-	var vpgroup = $(vpgroupselector);
-
-	if (vpgroup.length == 0) {
-		console.log(`Creating new group: ${nosp_vpgroup}`);
 		// Doesn't exists, build and add attributes and classes
-		var vpgroupdef = $("<div class='INDIgroup'/>")
-			.attr("device", INDIvp.device)
-			.prop("id", nosp_vpgroup)
-			.attr("group", INDIvp.group);
-		
-			// Build title
-			// Build hide/show
-			vpgroupdef.append
-			(
-				$('<span/>',
-					{
-						'text': INDIvp.group,
-						'class': "IGroup_header"
-					})
-			)
+		var vphtmldef = buildGroup(INDIvp);
 
-		// Append to the main section
-		// TODO determine what we want the main gui to be in
-		// Dashboard?
-		//vpgroupdef.appendTo($("section#" + nosp_device));
-		vpgroupdef.appendTo($("section"));
-		return vpgroupdef;
+		if (appendTo != null) {
+			appendTo.appendChild(vphtmldef);
+		}
+		else {
+			// Append to the parent section
+			var sectionselector = `section.INDIdevice[device="${INDIvp.device}"]`;
+			document.querySelector(sectionselector).appendChild(vphtmldef);
+		}
+
+		return vphtmldef;
 	}
-
 	else {
-		console.debug(`Group already exists: ${nosp_vpgroup}`);
-		return vpgroup;
+		console.debug(`Group already exists: ${INDIvp.group}`);
+		return $(vpselector); // TODO remove jquery
 	}
+};
 
-}
+const newDevice = (INDIvp, appendTo=null) => {
+	/* Creates a new indi device */
+	var vpselector = `section.INDIdevice[device="${INDIvp.device}"]`;
 
-const newDevice = (INDIvp) => {
-	var vpdeviceselector = "section.INDIdevice[device='" + INDIvp.device + "']";
-	var nosp_device = INDIvp.device.replace(" ", "_");
-	var vpdevice = $(vpdeviceselector);
+	// If vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new device: ${INDIvp.device}`);
 
-	if (vpdevice.length == 0) {
-		console.log(`Creating new device: ${nosp_device}`);
 		// Doesn't exist, build the section and add attributes and classes
-		var vpdevicedef = $("<section class='INDIdevice'/>")
-			.attr("device", INDIvp.device)
-			.prop("id", nosp_device);
-		
-		vpdevicedef.append(
-			$('<span/>',
-				{
-					"text": INDIvp.device,
-					"class": "IDevice_header"
-				})
-		);
+		var vphtmldef = buildDevice(INDIvp);
 
-		// Append to body
-		vpdevicedef.appendTo($("body"));
-		return vpdevicedef;
+		// Append to specified or to the body
+		if (appendTo != null) {
+			appendTo.appendChild(vphtmldef);
+		}
+		else {
+			document.body.appendChild(vphtmldef);
+		}
 
+		return vphtmldef;
 	}
 	else {
-		console.debug(`Device already exists: ${nosp_device}`)
-		return vpdevice;
+		console.debug(`Device already exists: ${INDIvp.device}`)
+
+		return $(vpselector);  // TODO Remove jquery
 	}
 }
 /*********************************************************
@@ -643,133 +604,22 @@ function newLight( INDIvp, appendTo )
     return vpselector;
 }  
 
-/*******************************************************************************
-* sendNewSwitch
-* args: event-> the javascript event that caused the function to be called (normally a click)
-*
-* Description:
-*	This function is called by an html event. The changed state of the indi switch
-* 	is then sent over the websocket to the webclient to update the indi driver. 
-*
-*
-*
-*
-*
-*
-*
-*
-*
-*******************************************************************************/
-function sendNewSwitch(event)
-{
-	var fs = $(event.target).closest(".INDIsvp")
-	//console.log(event.target);
-	var out = {
-		"task":"updateSwitch",
-		"newSwitch":{
-		"device":fs.attr('device'),
-		"group":fs.attr('group'),
-		"name":fs.prop('id'),
-		"sp":[]//{"name":$(event.target).attr("INDIname"),"state":$(event.target).prop("checked")},
-		}
-	};
-	fs.find("input.ISwitchinput").each(function(ii, sp)
-	{
-		out.newSwitch.sp.push({
-			"name":$(sp).closest( "span.ISwitch_span" ).attr( "INDIname" ),
-			"label":$(sp).closest( "span.ISwitch_span" ).attr( "INDIlabel" ),
-			"state":$(sp).closest( "span.ISwitch_span" ).find("input.ISwitchinput").prop( "checked" ),
-			
-		})
-	})
-	//INDIws.send(JSON.stringify(out));
-    //console.log("Sending "+out.newSwitch.sp["name"]+" to "+ out.newSwitch.sp["state"])
-    setindi("Switch", out.device+'.'+out.name, out.newSwitch.sp["name"], out.newSwitch.sp["state"])
-	
-	
-}
+/* INDI Utilities
 
+Description
+--------
+These functions are responsible for providing utilties to
+manage INDI properties.
 
-/*******************************************************************************
-* sendNewNumber
-* args: event-> the javascript event that caused the function to be called (normally a return key)
-*
-* Description:
-*	This function is called by an html event. The changed state of the indi number
-* 	is then sent over the websocket to the webclient to update the indi driver. 
-*
-*
-*
-*******************************************************************************/
-
-function sendNewNumber(event)
-{
-	var fn = $(event.target).parent().parent(".INDInvp");
-	var INumber = $(event.target)
-	var out = {
-		"task":"updateNumber",
-		"newNumber":{
-		"device":fn.attr('device'),
-		"group":fn.attr('group'),
-		"name":fn.prop('id'),
-		"np":[],
-		}
-	};
-	fn.find("div.INumber_div input.INumber_wo").each(function(ii, np)
-	{	
-		out.newNumber.np.push(
-		{
-			"name":$(np).closest('div.INumber_div').attr("INDIname"),
-			"label":$(np).parent().attr("INDIlabel"),
-			"value": $(np).prop("value") 
-			
-		});
-	});
-	INDIws.send(JSON.stringify(out));
-}
-
-
-
-/*******************************************************************************
-* sendNewText
-* args: event-> the javascript event that caused the function to be called (normally a return key)
-*
-* Description:
-*	This function is called by an html event. The changed state of the indi text
-* 	is then sent over the websocket to the webclient to update the indi driver. 
-*
-*
-*
-*******************************************************************************/
-
-function sendNewText(event)
-{
-	var ft = $(event.target).closest(".INDItvp");
-	var IText = $(event.target);
-	var out = {
-		"task":"updateText",
-		"newText":{
-		"device":ft.attr('device'),
-		"group":ft.attr('group'),
-		"name":ft.prop('id'),
-		"tp":[],
-		}
-	};
-
-	ft.find("textarea.IText_wo").each(function( ii, tp ) 
-	{
-		out.newText.tp.push(
-		{
-			"name":$(IText).closest("div.IText_div").attr("INDIname"),
-			"label":$(IText).closest("div.IText_div").attr("INDIlabel"),
-			"text":IText.prop("value"),
-
-		});
-
-	}); 
-	INDIws.send(JSON.stringify(out));
-}
-
+Functions
+---------
+- indistate2css   : converts INDI state to styling
+- indisw2selector : converts INDI switch to selector types
+- updateSwitches  : Updates the switches on the page
+- formatNumber    : Formats incoming indi numbers
+- nosp            : Replaces space with _
+- nospperiod      : Replaces space with _ and period with __
+*/
 const indistate2css = (INDIvp_state) => {
 	/* Converts indi state to styling for alerts */
 	var state = INDISTATES["Unknown"] // Default return
@@ -794,4 +644,62 @@ const indisw2selector = (INDIvp_rule) => {
 	}
 
 	return sw
+}
+
+const updateSwitches = (INDIvp) => {
+	/* Goes through all updates all switches on page */
+	var type = indisw2selector(INDIvp.rule)
+
+	document.querySelectorAll(`input[type="${type}"]`).forEach((sw) => {
+		let label = document.querySelector(`label[for="${sw.id}"]`);
+
+		if (sw.checked) {
+			label.classList.add("ui-state-active");
+		}
+		else {
+			label.classList.remove("ui-state-active");
+		}
+	})
+};
+
+
+/*********************
+* formatNumber
+* Args: numStr=>the number as a string
+*		fStr=> the INDI format string
+*
+* Description:
+*		Format the floating point INDI numbers
+* but don't mess with the sexagesimal
+* stuff. weh shall let the INDI client
+* do that. In fact we should probably
+* let the client do the floating point stuff
+* too.
+*
+**********************/
+const formatNumber = (numStr, fStr) => {
+	num = parseFloat(numStr);
+	console.debug(`[formatNumber] numStr=${numStr} fStr=${fStr}`)
+	var outstr;
+	var decimal = parseInt(fStr.slice(0, fStr.length - 1).split('.')[1]);
+	switch (fStr[fStr.length - 1]) {
+		case 'f':
+			outStr = isNaN(decimal) ? numStr : String(num.toFixed(decimal));
+			break;
+		case 'i':
+			outStr = String(Math.round(num))
+			break;
+		default:
+			outStr = numStr
+	}
+	return outStr;
+}
+
+const nosp = (str) => {
+	// Replaces spaces with _ and . with __
+	return str.replace(/ /g, '_');
+}
+
+const nospperiod = (str) => {
+	return nosp(str).replace('.', '__');
 }
