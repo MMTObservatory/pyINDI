@@ -1,89 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="shortcut icon" type="image/jpg" href="/indi/static/favicon.ico">
+		<title>pyINDI</title>
+		<!-- Load pyINDI scripts -->
+		<script src="/indi/static/indi.js"></script>
+		<script src="/indi/static/utility.js"></script>
+		<script src="/indi/static/maps-indi.js"></script>
+		<!-- Load pyINDI styling -->
+		<link rel="stylesheet" href="/indi/static/indi.css">
+		<script>
+			const main = () => {
+				/* Runs on load
+				
+				Description
+				-----------
+				Builds with default properties using below callback. Change
+				to modify the callbacks.
 
-<html lang="en" >
-<head>
-<link rel="shortcut icon" type="image/jpg" href="/indi/static/favicon.ico">
-<title>pyINDI</title>
-<script src="//code.jquery.com/jquery-1.12.4.js"></script>
-<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<!--These libraries are built with pyINDI
-and are available at /static/ using
-pyINDI's client libarary.-->
-<link rel="stylesheet" href="/indi/static/indi.css">
-<script src="/indi/static/indi.js"></script>
-<script src="/indi/static/utility.js"></script>
-<script src="/indi/static/maps-indi.js"></script>
+				Arguments
+				---------
+				None
 
-<script>
-	const INDI_TYPES = ["tvp", "lvp", "svp", "nvp"]
+				Returns
+				-------
+				None
+				*/
+				start = new Date()
+				imgs = []
 
-	//This is a hack to change the behavior of maps-indi.js
-	doLess = true;
-	const main = () => {
-		start = new Date()
-		imgs = []
-		//Line builds a jquery-ui property. Simply replace handlePropery
-		//with your own function to overwrite this behavior. 
-		setPropertyCallback( "{{ device_name }}.*", handleProperty );
-	}
-
-	const handleProperty = (map) => {
-		/*
-		This function will be called whenever an INDI property
-		with the device {{ device_name }} is received. It uses
-		jquery-ui to build each vector property as an html fieldset
-			*/
-		switch( map.metainfo )
-		{
-			case "nvp":
-				ele = newNumber(map);
-			break;
-			case "svp":
-				ele = newSwitch(map);
-			break;	
-			case "tvp":
-				ele = newText(map);
-			break;
-			case "lvp":
-				ele = newLight(map);
-			break;
-		}
-
-
-
-		// Returns string if ele exists already
-		// This is because newText would return a jquery selector if new
-		// or a string if not new
-		if(typeof ele != 'string')
-		{	
-			vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
-			if(vpele.length > 0) {
-				ele.appendTo(vpele)
-				console.warn('Appending to vpele');
+				setPropertyCallback( "{{ device_name }}.*", handleProperty );
 			}
-			else {
-				var device = newDevice(map);
-				var group = newGroup(map);
-				ele.appendTo(group);
+
+			const handleProperty = (INDIvp) => {
+				/* Handles incoming indi
+
+				Description
+				-----------
+				This function will be called whenever an INDI property with the device 
+				{{ device_name }} is received. This is where users should modify the
+				code to append to specific objects.
+
+				Arguments
+				---------
+				INDIvp   : Object that contains all information about the indi property
+
+				Returns
+				-------
+				None
+				*/
+				// If definition, create new group and device if needed
+				if (INDIvp.op === "def") {
+					var device = newDevice(INDIvp);
+					var group = newGroup(INDIvp);
+				}
+				
+				switch (INDIvp.metainfo) {
+					case "nvp":
+						ele = newNumber(INDIvp);
+					break;
+					case "svp":
+						ele = newSwitch(INDIvp);
+					break;
+					case "tvp":
+						ele = newText(INDIvp);
+					break;
+					case "lvp":
+						ele = newLight(INDIvp);
+					break;
+					default:
+				}
+
+				return;
 			}
-		}
-		// Update leds depending on state
-		if (INDI_TYPES.includes(map.metainfo)) {
-			var prop = "background-color" // What you want to change colors for state
-			$(ele).find(".led").css(prop, `${indistate2css(map.state)}`)
-		}
-	}
-
-	const  showMapMessage = (map) => {
-		// this is called everytime there is an
-		//INDImessage from the server. 
-		console.log("Message:", map.message);
-	}
-
-</script>
-</head>
-<body onload=main()>
-	
-</body>
+		</script>
+	</head>
+	<body onload=main()>
+		<!-- Use this area to build custom GUIs and map in callback -->
+	</body>
 </html>
 

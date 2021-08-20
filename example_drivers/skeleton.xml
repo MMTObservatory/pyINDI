@@ -32,7 +32,7 @@ On
         Idle
     </defLight>
 </defLightVector>
-<defSwitchVector device="SkeletonDevice" name="Switch Property" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
+<defSwitchVector device="SkeletonDevice" name="Switch Property" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="60" label="Switch Vector">
     <defSwitch name="1x">
 On
     </defSwitch>

@@ -350,8 +350,6 @@ const buildSwitches = (INDIvp, appendTo) => {
 		input.value = nosp(sp.name);
 		input.setAttribute("indiname", nosp(sp.name));
 		input.checked = sp.value === "On" ? true : false;
-		console.log(input.checked)
-		//input.checked && label.classList.add("ui-state-active");
 		
 		// Create event listeners for input button
 		input.addEventListener("change", (event) => {
@@ -449,14 +447,9 @@ const newDevice = (INDIvp, appendTo=null) => {
 
 		// Append to specified or to the body
 		appendTo ? appendTo.appendChild(vphtmldef) : document.body.appendChild(vphtmldef);
-
-		return vphtmldef;
 	}
-	else {
-		console.debug(`Device already exists: ${INDIvp.device}`)
 
-		return $(vpselector);  // TODO Remove jquery
-	}
+	return document.querySelector(vpselector);
 }
 
 const newGroup = (INDIvp, appendTo=null) => {
@@ -496,10 +489,8 @@ const newGroup = (INDIvp, appendTo=null) => {
 
 		return vphtmldef;
 	}
-	else {
-		console.debug(`Group already exists: ${INDIvp.group}`);
-		return $(vpselector); // TODO remove jquery
-	}
+	
+	return document.querySelector(vpselector);
 };
 
 const newText = (INDIvp, appendTo=null) => {
@@ -519,19 +510,23 @@ const newText = (INDIvp, appendTo=null) => {
 	vphtmldef  : HTML object that was just built
 	vpselector : String selector for that object
 	*/
-	var vpselector = `fieldset.INDItvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	var vpselector = genvpselector(INDIvp);
 	
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new text: ${INDIvp.name}`);
+
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildTexts(INDIvp, vphtmldef);
 
-		// Need to figure out how to replace jquery selector for the fieldset
-		if (appendTo != undefined) {
-			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
+		// Append to designated spot unless null then append to group
+		if (appendTo) {
+			appendTo.appendChild(vphtmldef);
 		}
-
-		return $(vphtmldef); // TODO Remove jquery
+		else {
+			var group = gengroupselector(INDIvp);
+			document.querySelector(group).appendChild(vphtmldef);
+		}
 	}
 	
 	// Update values from indi
@@ -542,7 +537,10 @@ const newText = (INDIvp, appendTo=null) => {
 		ro.textContent = tp.value;
 	})
 
-	return vpselector 
+	// Update LED color on indistate
+	updateLedState(INDIvp);
+
+	return document.querySelector(vpselector);
 }
 
 const newNumber = (INDIvp, appendTo=null) => {
@@ -562,17 +560,23 @@ const newNumber = (INDIvp, appendTo=null) => {
 	vphtmldef  : HTML object that was just built
 	vpselector : String selector for that object
 	*/
-	var vpselector = `fieldset.INDInvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	var vpselector = genvpselector(INDIvp);
 
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new number: ${INDIvp.name}`);
+
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildNumbers(INDIvp, vphtmldef);
 		
-		// Append to designated spot unless null
-		appendTo && appendTo.appendChild(vphtmldef);
-
-		return $(vphtmldef) // TODO Remove jquery
+		// Append to designated spot unless null then append to group
+		if (appendTo) {
+			appendTo.appendChild(vphtmldef);
+		}
+		else {
+			var group = gengroupselector(INDIvp);
+			document.querySelector(group).appendChild(vphtmldef);
+		}
 	}
 	
 	// Update values from indi
@@ -586,8 +590,10 @@ const newNumber = (INDIvp, appendTo=null) => {
 		ro.textContent = value;
 	})
 
-	// Return string since already exists
-	return vpselector
+	// Update LED color on indistate
+	updateLedState(INDIvp);
+
+	return document.querySelector(vpselector)
 }
 
 const newSwitch = (INDIvp, appendTo=null) => {
@@ -607,17 +613,23 @@ const newSwitch = (INDIvp, appendTo=null) => {
 	vphtmldef  : HTML object that was just built
 	vpselector : String selector for that object
 	*/
-	var vpselector = `fieldset.INDIsvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	var vpselector = genvpselector(INDIvp);
 	
 	// If empty, build property and switches
 	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new switch: ${INDIvp.name}`);
+
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildSwitches(INDIvp, vphtmldef);
 		
-		// Append to designated spot unless null
-		appendTo && appendTo.appendChild(vphtmldef);
-
-		return $(vphtmldef);  // TODO remove jquery
+		// Append to designated spot unless null then append to group
+		if (appendTo) {
+			appendTo.appendChild(vphtmldef);
+		}
+		else {
+			var group = gengroupselector(INDIvp);
+			document.querySelector(group).appendChild(vphtmldef);
+		}
 	}
 
 	// Update values from indi
@@ -628,11 +640,12 @@ const newSwitch = (INDIvp, appendTo=null) => {
 
 		// Update the color of the switch depending on checked
 		sw.checked = sp.value === "On" ? true : false;
-		console.log(sw, sp.value)
 	});
 
-	// Return string since already exists
-	return vpselector;
+	// Update LED color on indistate
+	updateLedState(INDIvp);
+
+	return document.querySelector(vpselector);
 }
 
 const newLight = (INDIvp, appendTo=null) => {
@@ -652,18 +665,23 @@ const newLight = (INDIvp, appendTo=null) => {
 	vphtmldef  : HTML object that was just built
 	vpselector : String selector for that object
 	*/
-	var vpselector = `fieldset.INDIlvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	var vpselector = genvpselector(INDIvp);
 
 	// If empty, build property and lights
 	if(!document.querySelector(vpselector)) {
+		console.debug(`Creating new light: ${INDIvp.name}`);
 		var vphtmldef = buildVector(INDIvp);
 		
 		vphtmldef = buildLights(INDIvp, vphtmldef);
 
-		// Append to designated spot unless null
-		appendTo && appendTo.appendChild(vphtmldef);
-
-		return $(vphtmldef); // TODO remove jquery
+		// Append to designated spot unless null then append to group
+		if (appendTo) {
+			appendTo.appendChild(vphtmldef);
+		}
+		else {
+			var group = gengroupselector(INDIvp);
+			document.querySelector(group).appendChild(vphtmldef);
+		}
 	}
 	
 	// Update values from indi
@@ -675,8 +693,10 @@ const newLight = (INDIvp, appendTo=null) => {
 		light.style.backgroundColor = indistate2css(lp.value);
 	});
 
-	// Return string since already exists
-	return vpselector;
+	// Update LED color on indistate
+	updateLedState(INDIvp);
+
+	return document.querySelector(vpselector);
 }  
 
 /* UTILITIES
@@ -693,7 +713,6 @@ Functions
 - updateSwitches  : Updates the switches on the page
 - formatNumber    : Formats incoming indi numbers
 - nosp            : Replaces space with _
-- nospperiod      : Replaces space with _ and period with __
 */
 const indistate2css = (INDIvp_state) => {
 	/* Converts indi state to styling for alerts */
@@ -721,25 +740,12 @@ const indisw2selector = (INDIvp_rule) => {
 	return sw
 }
 
-const updateSwitches = (INDIvp) => {
-	/* Goes through all updates all switches on page 
-	
-	NOT IN USE BUT KEEPING IN FOR NOW
-
-	*/
-	var type = indisw2selector(INDIvp.rule)
-
-	document.querySelectorAll(`input[type="${type}"]`).forEach((sw) => {
-		let label = document.querySelector(`label[for="${sw.id}"]`);
-
-		if (sw.checked) {
-			label.classList.add("ui-state-active");
-		}
-		else {
-			label.classList.remove("ui-state-active");
-		}
-	})
-};
+const updateLedState = (INDIvp) => {
+	/* Gets led and updates style depending on indistate */
+	var vpselector = genvpselector(INDIvp);
+	var led = document.querySelector(`${vpselector} .led`)
+	led.style.backgroundColor = indistate2css(INDIvp.state);
+}
 
 const formatNumber = (numStr, fStr) => {
 	/* Format indi numbers
@@ -759,7 +765,6 @@ const formatNumber = (numStr, fStr) => {
 	outStr : the correct formatted number as string
 	*/
 	num = parseFloat(numStr);
-	console.debug(`[formatNumber] numStr=${numStr} fStr=${fStr}`)
 	var outstr;
 	var decimal = parseInt(fStr.slice(0, fStr.length - 1).split('.')[1]);
 	switch (fStr[fStr.length - 1]) {
@@ -775,12 +780,17 @@ const formatNumber = (numStr, fStr) => {
 	return outStr;
 }
 
+const genvpselector = (INDIvp) => {
+	/* Generates vp selector for text, light, switch, number */
+	return `fieldset.INDI${INDIvp.metainfo}#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+}
+
+const gengroupselector = (INDIvp) => {
+	/* Generates group selector */
+	return `div.INDIgroup[group="${INDIvp.group}"]`;
+}
+
 const nosp = (str) => {
 	/* Replaces spaces with _ */
 	return str.replace(/ /g, '_');
-}
-
-const nospperiod = (str) => {
-	/* Replaces spaces with _ and . with __ */
-	return nosp(str).replace('.', '__');
 }
