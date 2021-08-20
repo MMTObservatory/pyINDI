@@ -99,21 +99,22 @@
 	background-color: var(--muted-dark);
 	border-color: var(--muted-dark);
 }
+input:checked + label{
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: var(--text-switch-active);
+}
+input:checked + label:hover {
+	background-color: var(--primary-dark);
+	border-color: var(--primary-dark);
+}
 .ISwitchinput {
 	position: absolute;
 	clip: rect(0,0,0,0);
 	pointer-events: none;
 }
 /* This should be used for when the button is active like radio button */
-.ui-state-active {
-	background-color: var(--primary);
-	border-color: var(--primary);
-	color: var(--text-switch-active);
-}
-.ui-state-active:hover {
-	background-color: var(--primary-dark);
-	border-color: var(--primary-dark);
-}
+
 legend {
 	font-size: 1.125rem;
 	font-weight: 700;
@@ -131,7 +132,6 @@ fieldset {
 	margin: 1.5rem .75rem;;
 	padding: 0;
 }
-
 .IText_label {
 	margin: 0;
 	line-height: 1.5;
@@ -249,63 +249,3 @@ When floating child in parent, the parent ignores them.
 	height: 12px;
 	border-radius: 50%;
 }
-
-/* 
-.led {
-	margin-right: 10px;
-	margin-top: 4px;
-	float: left;
-	width: 16px;
-	height: 16px;
-	border-radius: 50%;
-	background-color: #ffffff;
-	box-shadow: inset #878787 0 -1px 5px, rgba(0, 0, 0, 0.5) 0 1px 1px;
-}
-.led-alert {
-	background-color: #F00;
-	box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #441313 0 -1px 5px, rgba(255, 0, 0, 0.5) 0 2px 12px;
-}
-.led-busy {
-	background-color: #FF0;
-	box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #808002 0 -1px 5px, #FF0 0 2px 12px;
-}
-.led-ok {
-	background-color: #ABFF00;
-	box-shadow: rgba(0, 0, 0, 0.2) 0 2px 7px 1px, inset #304701 0 -1px 5px, #89FF00 0 2px 12px;
-}
-.led-blue {
-	background-color: #24E0FF;
-	box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 7px 1px, inset #006 0 -1px 5px, #3F8CFF 0 2px 12px;
-}
-*/
-
-
-/*
-.INDIgroup
-{
-	display:block;
-}
- */
-/* .ILightspan
-{
-	display:table;
-	border:1px solid black;
-	margin: 15px;
-	border-radius:5px;
-}
-
-.ILightlabel
-{
-	color:black;
-	padding:5px;
-	border-radius:5px;
-}
-textarea#INDImsg
-{
-	position:fixed;
-	bottom:10px;
-	right:10px;
-	margin:auto;
-	box-shadow: 5px 5px;
-}
-*/

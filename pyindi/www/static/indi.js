@@ -1,3 +1,4 @@
+/* CONSTANTS */
 const INDIPERM_RO = "ro";
 const INDIPERM_WO = "wo";
 const INDIPERM_RW = "rw";
@@ -16,12 +17,7 @@ const INDISWRULES = {
 	"AnyofMany": "checkbox"
 }
 
-const CONFIG ={
-	NUM_SIZE:null,
-	SHOW_SWITCH_ICON:null
-}
-
-/* Builders
+/* BUILDERS
 
 Description
 --------
@@ -34,14 +30,63 @@ requires a new section.
 
 Functions
 ---------
-- buildDevice   : builds section to hold new INDI device
-- buildGroup    : builds group to hold new INDI group
-- buildProperty : builds fieldset to hold new INDI group data
+- buildDevice   : builds section to hold new device
+- buildGroup    : builds group to hold new group
+- buildVector   : builds fieldset to hold new vector
 - buildNumbers  : builds INDI number when new number is received
 - buildTexts    : builds INDI text when new text is received
+- buildSwitches : builds INDI switches when new switch is received
+- buildLights   : builds INDI lights when new light is received
 */
+
+const buildDevice = (INDIvp) => {
+	/* Builds the default section for new device
+
+	Description
+	-----------
+	Called when the device doesn't exist on page
+
+	Arguments
+	---------
+	INDIvp : Object that contains all information about the indi property
+
+	Returns
+	-------
+	section : HTML object that was just built
+	*/
+	var section = document.createElement("section");
+
+	section.setAttribute("device", INDIvp.device); // TODO Add data-
+	section.id = nosp(INDIvp.device)
+	section.classList.add("INDIdevice");
+
+	// Build label for device
+	var p = document.createElement("p");
+
+	p.classList.add("IDevice_header");
+	p.textContent = INDIvp.device;
+
+	// Append all
+	section.appendChild(p);
+
+	return section;
+};
+
 const buildGroup = (INDIvp) => {
-	/* Builds the default div for a new INDI group */
+	/* Builds the default div for new group
+
+	Description
+	-----------
+	Called when the group doesn't exist on page
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+
+	Returns
+	-------
+	div : HTML object that was just built
+	*/
 	var div = document.createElement("div");
 
 	div.setAttribute("device", INDIvp.device);
@@ -63,28 +108,21 @@ const buildGroup = (INDIvp) => {
 	return div;
 };
 
-const buildDevice = (INDIvp) => {
-	/* Builds the default section for new device */
-	var section = document.createElement("section");
+const buildVector = (INDIvp) => {
+	/* Builds the default fieldset for new vector
 
-	section.setAttribute("device", INDIvp.device); // TODO Add data-
-	section.id = nosp(INDIvp.device)
-	section.classList.add("INDIdevice");
+	Description
+	-----------
+	Called when the vector doesn't exist on page
 
-	// Build label for device
-	var p = document.createElement("p");
+	Arguments
+	---------
+	INDIvp : Object that contains all information about the indi property
 
-	p.classList.add("IDevice_header");
-	p.textContent = INDIvp.device;
-
-	// Append all
-	section.appendChild(p);
-
-	return section;
-};
-
-const buildProperty = (INDIvp) => {
-	/* Builds the default fieldset for indi vector property. Returns new fieldset*/
+	Returns
+	-------
+	section : HTML object that was just built
+	*/
 	var fieldset = document.createElement("fieldset");
 
 	fieldset.classList.add("INDIvp", `INDI${INDIvp.metainfo}`); // Get class meta
@@ -110,134 +148,22 @@ const buildProperty = (INDIvp) => {
 	return fieldset
 };
 
-const buildNumbers = (INDIvp, vphtmldef) => {
-	/* Builds the new indi number */
-	INDIvp.values.forEach((np) => {
-		// Create div that the indi text row will exist
-		var div = document.createElement("div");
-
-		div.id = nosp(np.name);
-		div.setAttribute("INDIlabel", np.label); // FIXME Removed data-
-		div.setAttribute("INDIname", np.name); // FIXME Removed data-
-		div.setAttribute("INDIformat", np.format); // TODO Add data-
-		div.classList.add("INumber_div");
-
-		// Create label for indi text row
-		var label = document.createElement("label");
-
-		label.textContent = np.label;
-		label.classList.add("INumber_label");
-		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
-
-		div.appendChild(label);
-
-		// Build ro and wo
-		var ro = document.createElement("label");
-		ro.textContent = np.value;
-		ro.classList.add("INumber_ro");
-
-		var wo = document.createElement("input");
-		wo.classList.add("INumber_wo")
-		//wo.id = `nosp(INDIvp.device)__${nosp(INDIvp.name)}`;
-		wo.id = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
-
-		// If "Enter" is pressed on writeonly area, send new text to indi
-		wo.addEventListener("keyup", (event) => {
-			if (event.key === "Enter") {
-				event.preventDefault() // TODO Test if needed
-				let value = event.target.value;
-				setindi("Number", `${INDIvp.device}.${INDIvp.name}`, np.name, value);
-			}
-		});
-		// Determine if it is readonly, writeonly, or both and append
-		switch (INDIvp.perm) {
-			case INDIPERM_RO:
-				div.appendChild(ro);
-				break;
-			case INDIPERM_RW:
-				div.appendChild(ro);
-				div.appendChild(wo);
-				break;
-			case INDIPERM_WO:
-				div.appendChild(wo);
-				break;
-			default:
-		}
-		// Append the div to the fieldset
-		vphtmldef.appendChild(div);
-
-	});
-	return vphtmldef;
-};
-
-const buildLights = (INDIvp, appendTo) => {
-	/* Builds the new INDI light */
-	INDIvp.values.forEach((lp) => {
-		var label = document.createElement("label");
-
-		//label.id = lp.label; This was in the pyindi code, probably a bug
-		label.classList.add("ILightlabel");
-		label.id = `${nosp(INDIvp.device)}__${nosp(lp.name)}`;
-		label.textContent = lp.label;
-		label.style.backgroundColor = indistate2css(lp.value);
-		
-		// Append all
-		appendTo.appendChild(label);
-	});
-
-	return appendTo;
-};
-
-const buildSwitches = (INDIvp, appendTo) => {
-	/* Builds the new INDI switch */
-	var type = indisw2selector(INDIvp.rule);
-	// Keeping div empty while I build everything else
-	INDIvp.values.forEach((sp) => {
-		var span = document.createElement("span");
-
-		span.setAttribute("INDIname", sp.name);
-		span.classList.add("ISwitch_span");
-		span.id = nosp(sp.name);
-
-		// Create label for button text
-		var label = document.createElement("label")
-
-		label.id = nosp(sp.name);
-		label.classList.add("ISwitchlabel");
-		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
-		label.textContent = sp.label
-
-		// Create radio button
-		var input = document.createElement("input");
-		input.type = type;
-		input.id = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
-		input.setAttribute("name", nosp(INDIvp.name));
-		input.setAttribute("device", nosp(INDIvp.device));
-		input.setAttribute("vector", INDIvp.name);
-		input.classList.add("ISwitchinput");
-		input.value = nosp(sp.name);
-		input.setAttribute("indiname", nosp(sp.name));
-		input.checked = sp.value === "On" ? true : false;
-		input.checked && label.classList.add("ui-state-active");
-		
-		// Create event listeners for input button
-		input.addEventListener("change", (event) => {
-			let name = event.target.value
-			let value = event.target.checked ? "On" : "Off"
-			setindi("Switch", `${INDIvp.device}.${INDIvp.name}`, name, value);
-		})
-		
-		// Append all
-		span.appendChild(label);
-		span.appendChild(input);
-		appendTo.appendChild(span);
-	})
-
-	return appendTo;
-};
-
 const buildTexts = (INDIvp, vphtmldef) => {
-	/* Builds the new indi text */
+	/* Builds all text properties
+
+	Description
+	-----------
+	Called when the text doesn't exist on page
+
+	Arguments
+	---------
+	INDIvp    : Object that contains all information about the indi property
+	vphtmldef : HTML object to append new properties to
+
+	Returns
+	-------
+	vphtmldef : HTML object that was modified to add new properties
+	*/
 	INDIvp.values.forEach((tp) => {
 		// Create div that the indi text row will exist
 		var div = document.createElement("div");
@@ -306,172 +232,250 @@ const buildTexts = (INDIvp, vphtmldef) => {
 	return vphtmldef;
 };
 
+const buildNumbers = (INDIvp, vphtmldef) => {
+	/* Builds all number properties
 
+	Description
+	-----------
+	Called when the number doesn't exist on page
 
+	Arguments
+	---------
+	INDIvp    : Object that contains all information about the indi property
+	vphtmldef : HTML object to append new properties to
 
-
-
-/***********************************************************
-* newText 
-* Args INDIvp-> object defining the INDI vector propert, 
-*		appendTo -> jquery selector for which element to 
-*		append the INDivp turned HTML element to.
-*
-* Desription:
-*	Called when the websocket from the indi webclient
-*	generates or updates an INDI text. If this a 
-*	a never brefore seen INDI text HTML fieldset
-*	element is created with the correct value otherwise
-*	the element's text is updated. 
-*
-*
-* Returns: a jquery type selector string. 
-*
-*********************************************************/
-const newText = (INDIvp, appendTo) => {
-	/* Creates a new text */
-	var vpselector = `fieldset.INDItvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
-	
-	// If the vpselector is empty, build
-	if (!document.querySelector(vpselector)) {
-		var vphtmldef = buildProperty(INDIvp);
-		vphtmldef = buildTexts(INDIvp, vphtmldef);
-
-		// Need to figure out how to replace jquery selector for the fieldset
-		if (appendTo != undefined) {
-			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
-		}
-
-		return $(vphtmldef); // TODO Remove jquery
-	}
-	
-	// Update values from indi
-	INDIvp.values.forEach((tp) => {
-		var tpselector = `div.IText_div[INDIname="${tp.name}"] textarea.IText_ro`;
-		var ro = document.querySelector(`${vpselector} ${tpselector}`);
-
-		ro.textContent = tp.value;
-	})
-
-	return vpselector 
-}
-
-/***********************************************************
-* newNumber 
-* Args INDIvp-> object defining the INDI vector propert, 
-*		appendTo -> jquery selector for which elemebt to 
-*		append the INDivp turned HTML element to.
-*
-* Desription:
-*	Called when the websocket from the indi webclient
-*	generates or updates an INDI number. If this a 
-*	a never brefore seen INDI number, an HTML fieldset
-*	element is created with the correct value otherwise
-*	the element's number is updated. 
-*
-*
-* Returns: a jquery type selector string. 
-*
-*********************************************************/
-
-function newNumber(INDIvp, appendTo) {
-	/*  */
-	var vpselector = `fieldset.INDInvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
-
-	// If the vpselector is empty, build
-	if (!document.querySelector(vpselector)) {
-		var vphtmldef = buildProperty(INDIvp);
-		vphtmldef = buildNumbers(INDIvp, vphtmldef);
-		
-		if(appendTo != undefined)
-		{
-			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
-		}
-		return $(vphtmldef) // TODO Remove jquery
-	}
-	
-	// Update values from indi
+	Returns
+	-------
+	vphtmldef : HTML object that was modified to add new properties
+	*/
 	INDIvp.values.forEach((np) => {
-		var formatselector = document.querySelector(`div[INDIname="${np.name}"]`);
-		var format = formatselector.getAttribute("indiformat");
-		var npselector = `div.INumber_div[INDIname="${np.name}"] label.INumber_ro`;
-		var value = formatNumber(np.value, format);
+		// Create div that the indi text row will exist
+		var div = document.createElement("div");
+
+		div.id = nosp(np.name);
+		div.setAttribute("INDIlabel", np.label); // FIXME Removed data-
+		div.setAttribute("INDIname", np.name); // FIXME Removed data-
+		div.setAttribute("INDIformat", np.format); // TODO Add data-
+		div.classList.add("INumber_div");
+
+		// Create label for indi text row
+		var label = document.createElement("label");
+
+		label.textContent = np.label;
+		label.classList.add("INumber_label");
+		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
+
+		div.appendChild(label);
+
+		// Build ro and wo
+		var ro = document.createElement("label");
+		ro.textContent = np.value;
+		ro.classList.add("INumber_ro");
+
+		var wo = document.createElement("input");
+		wo.classList.add("INumber_wo")
+		//wo.id = `nosp(INDIvp.device)__${nosp(INDIvp.name)}`;
+		wo.id = `${nosp(INDIvp.device)}__${nosp(np.name)}`;
+
+		// If "Enter" is pressed on writeonly area, send new text to indi
+		wo.addEventListener("keyup", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault() // TODO Test if needed
+				let value = event.target.value;
+				setindi("Number", `${INDIvp.device}.${INDIvp.name}`, np.name, value);
+			}
+		});
+		// Determine if it is readonly, writeonly, or both and append
+		switch (INDIvp.perm) {
+			case INDIPERM_RO:
+				div.appendChild(ro);
+				break;
+			case INDIPERM_RW:
+				div.appendChild(ro);
+				div.appendChild(wo);
+				break;
+			case INDIPERM_WO:
+				div.appendChild(wo);
+				break;
+			default:
+		}
+		// Append the div to the fieldset
+		vphtmldef.appendChild(div);
+
+	});
+	return vphtmldef;
+};
+
+const buildSwitches = (INDIvp, appendTo) => {
+	/* Builds all switch properties
+
+	Description
+	-----------
+	Called when the switch doesn't exist on page
+
+	Arguments
+	---------
+	INDIvp    : Object that contains all information about the indi property
+	vphtmldef : HTML object to append new properties to
+
+	Returns
+	-------
+	vphtmldef : HTML object that was modified to add new properties
+	*/
+	var type = indisw2selector(INDIvp.rule);
+	// Keeping div empty while I build everything else
+	INDIvp.values.forEach((sp) => {
+		var span = document.createElement("span");
+
+		span.setAttribute("INDIname", sp.name);
+		span.classList.add("ISwitch_span");
+		span.id = nosp(sp.name);
+
+		// Create label for button text
+		var label = document.createElement("label")
+
+		label.id = nosp(sp.name);
+		label.classList.add("ISwitchlabel");
+		label.htmlFor = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+		label.textContent = sp.label
+
+		// Create radio button
+		var input = document.createElement("input");
+		input.type = type;
+		input.id = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+		input.setAttribute("name", nosp(INDIvp.name));
+		input.setAttribute("device", nosp(INDIvp.device));
+		input.setAttribute("vector", INDIvp.name);
+		input.classList.add("ISwitchinput");
+		input.value = nosp(sp.name);
+		input.setAttribute("indiname", nosp(sp.name));
+		input.checked = sp.value === "On" ? true : false;
+		console.log(input.checked)
+		//input.checked && label.classList.add("ui-state-active");
 		
-		var ro = document.querySelector(`${vpselector} ${npselector}`)
-		ro.textContent = value;
+		// Create event listeners for input button
+		input.addEventListener("change", (event) => {
+			let name = event.target.value
+			let value = event.target.checked ? "On" : "Off"
+			setindi("Switch", `${INDIvp.device}.${INDIvp.name}`, name, value);
+		})
+		
+		// Append all
+		span.appendChild(input);
+		span.appendChild(label);
+		appendTo.appendChild(span);
 	})
 
-	// Return string since already exists
-	return vpselector
-}
-/*end newNumber*/
+	return appendTo;
+};
 
+const buildLights = (INDIvp, appendTo) => {
+	/* Builds all light properties
 
+	Description
+	-----------
+	Called when the light doesn't exist on page
 
+	Arguments
+	---------
+	INDIvp    : Object that contains all information about the indi property
+	vphtmldef : HTML object to append new properties to
 
-/***********************************************************
-* newSwitch 
-* Args INDIvp-> object defining the INDI vector propert, 
-*		appendTo -> jquery selector for which elemebt to 
-*		append the INDivp turned HTML element to.
-*
-* Desription:
-*	Called when the websocket from the indi webclient
-*	generates or updates an INDI switch. If this a 
-*	a never brefore seen INDI switch HTML fieldset
-*	element is created with the correct value otherwise
-*	the element's switch is updated. 
-*
-*
-* Returns: a jquery type selector string. 
-*
-*********************************************************/
-const newSwitch = (INDIvp, appendTo=null) => {
-	/* Builds new indi switches */
-	var vpselector = `fieldset.INDIsvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
-	
-	// If empty, build property and switches
-	if (!document.querySelector(vpselector)) {
-		var vphtmldef = buildProperty(INDIvp);
-		vphtmldef = buildSwitches(INDIvp, vphtmldef);
-		
-		if (appendTo != null) {
-			appendTo.appendChild(vphtmldef);
-		}
+	Returns
+	-------
+	vphtmldef : HTML object that was modified to add new properties
+	*/
+	INDIvp.values.forEach((lp) => {
+		var label = document.createElement("label");
 
-		return $(vphtmldef);  // TODO remove jquery
-	}
+		//label.id = lp.label; This was in the pyindi code, probably a bug
+		label.classList.add("ILightlabel");
+		label.id = `${nosp(INDIvp.device)}__${nosp(lp.name)}`;
+		label.textContent = lp.label;
+		label.style.backgroundColor = indistate2css(lp.value);
 
-	// Update values from indi
-	INDIvp.values.forEach((sp) => {
-		var spselector = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
-
-		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
-		let label = document.querySelector(`label[for="${sw.id}"]`);
-
-		// Update the color of the switch depending on checked
-		let active = "ui-state-active";
-		sw.checked ? label.classList.add(active) : label.classList.remove(active);
+		// Append all
+		appendTo.appendChild(label);
 	});
 
-	return vpselector;
+	return appendTo;
+};
+
+/* NEW INDI INFORMATION
+
+Description
+-----------
+These functions are responsible for handling new information
+from the websocket. If the payload is new, build the appropriate
+type and return the html object built or update the information
+and return the selector string to the html object.
+
+Functions
+---------
+- newDevice
+- newGroup
+- newVector
+- newText
+- newNumber
+- newSwitch
+- newLight
+*/
+
+const newDevice = (INDIvp, appendTo=null) => {
+	/* Creates a new device
+
+	Description
+	-----------
+	Called when new device comes over the websocket.
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
+	var vpselector = `section.INDIdevice[device="${INDIvp.device}"]`;
+
+	// If vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		console.debug(`Creating new device: ${INDIvp.device}`);
+
+		// Doesn't exist, build the section and add attributes and classes
+		var vphtmldef = buildDevice(INDIvp);
+
+		// Append to specified or to the body
+		appendTo ? appendTo.appendChild(vphtmldef) : document.body.appendChild(vphtmldef);
+
+		return vphtmldef;
+	}
+	else {
+		console.debug(`Device already exists: ${INDIvp.device}`)
+
+		return $(vpselector);  // TODO Remove jquery
+	}
 }
 
-/*********************************************************
-* newGroup
-* Args INDIvp-> object defining the INDI vector propert,
-*       appendTo -> jquery selector for which element to
-*       append the INDivp turned HTML element to.
-*
-* Desription:
-*   
-*
-*
-* Returns:
-*
-*********************************************************/
 const newGroup = (INDIvp, appendTo=null) => {
-	/* Creates a new indi group */
+	/* Creates a new group
+
+	Description
+	-----------
+	Called when new group comes over the websocket.
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
 	var vpselector = `div.INDIgroup[group="${INDIvp.group}"]`;
 
 	// If vpselector is empty, build
@@ -498,63 +502,166 @@ const newGroup = (INDIvp, appendTo=null) => {
 	}
 };
 
-const newDevice = (INDIvp, appendTo=null) => {
-	/* Creates a new indi device */
-	var vpselector = `section.INDIdevice[device="${INDIvp.device}"]`;
+const newText = (INDIvp, appendTo=null) => {
+	/* Creates a new text 
+	
+	Description
+	-----------
+	Called when new text property comes over the websocket.
 
-	// If vpselector is empty, build
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
+	var vpselector = `fieldset.INDItvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	
+	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new device: ${INDIvp.device}`);
+		var vphtmldef = buildVector(INDIvp);
+		vphtmldef = buildTexts(INDIvp, vphtmldef);
 
-		// Doesn't exist, build the section and add attributes and classes
-		var vphtmldef = buildDevice(INDIvp);
-
-		// Append to specified or to the body
-		if (appendTo != null) {
-			appendTo.appendChild(vphtmldef);
-		}
-		else {
-			document.body.appendChild(vphtmldef);
+		// Need to figure out how to replace jquery selector for the fieldset
+		if (appendTo != undefined) {
+			$(vphtmldef).appendTo(appendTo); // TODO Remove jquery
 		}
 
-		return vphtmldef;
+		return $(vphtmldef); // TODO Remove jquery
 	}
-	else {
-		console.debug(`Device already exists: ${INDIvp.device}`)
+	
+	// Update values from indi
+	INDIvp.values.forEach((tp) => {
+		var tpselector = `div.IText_div[INDIname="${tp.name}"] textarea.IText_ro`;
+		var ro = document.querySelector(`${vpselector} ${tpselector}`);
 
-		return $(vpselector);  // TODO Remove jquery
-	}
+		ro.textContent = tp.value;
+	})
+
+	return vpselector 
 }
-/*********************************************************
-* newLight
-* Args INDIvp-> object defining the INDI vector propert, 
-*       appendTo -> jquery selector for which element to 
-*       append the INDivp turned HTML element to.
-*
-* Desription:
-*   Called when the websocket from the indi webclient
-*   generates or updates an INDI switch. If this a 
-*   a never brefore seen INDI switch HTML fieldset
-*   element is created with the correct value otherwise
-*   the element's switch is updated. 
-*
-*
-* Returns: a jquery type selector string. 
-*
-*********************************************************/
+
+const newNumber = (INDIvp, appendTo=null) => {
+	/* Creates a new number
+
+	Description
+	-----------
+	Called when new number property comes over the websocket.
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
+	var vpselector = `fieldset.INDInvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+
+	// If the vpselector is empty, build
+	if (!document.querySelector(vpselector)) {
+		var vphtmldef = buildVector(INDIvp);
+		vphtmldef = buildNumbers(INDIvp, vphtmldef);
+		
+		// Append to designated spot unless null
+		appendTo && appendTo.appendChild(vphtmldef);
+
+		return $(vphtmldef) // TODO Remove jquery
+	}
+	
+	// Update values from indi
+	INDIvp.values.forEach((np) => {
+		var formatselector = document.querySelector(`div[INDIname="${np.name}"]`);
+		var format = formatselector.getAttribute("indiformat");
+		var npselector = `div.INumber_div[INDIname="${np.name}"] label.INumber_ro`;
+		var value = formatNumber(np.value, format);
+		
+		var ro = document.querySelector(`${vpselector} ${npselector}`)
+		ro.textContent = value;
+	})
+
+	// Return string since already exists
+	return vpselector
+}
+
+const newSwitch = (INDIvp, appendTo=null) => {
+	/* Creates a new switch
+
+	Description
+	-----------
+	Called when new switch property comes over the websocket.
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
+	var vpselector = `fieldset.INDIsvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
+	
+	// If empty, build property and switches
+	if (!document.querySelector(vpselector)) {
+		var vphtmldef = buildVector(INDIvp);
+		vphtmldef = buildSwitches(INDIvp, vphtmldef);
+		
+		// Append to designated spot unless null
+		appendTo && appendTo.appendChild(vphtmldef);
+
+		return $(vphtmldef);  // TODO remove jquery
+	}
+
+	// Update values from indi
+	INDIvp.values.forEach((sp) => {
+		var spselector = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
+
+		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
+
+		// Update the color of the switch depending on checked
+		sw.checked = sp.value === "On" ? true : false;
+		console.log(sw, sp.value)
+	});
+
+	// Return string since already exists
+	return vpselector;
+}
+
 const newLight = (INDIvp, appendTo=null) => {
-	/* Creates a new light */
+	/* Creates a new light
+
+	Description
+	-----------
+	Called when new light property comes over the websocket.
+
+	Arguments
+	---------
+	INDIvp   : Object that contains all information about the indi property
+	appendTo : HTML object to append the new HTML elements
+
+	Returns
+	-------
+	vphtmldef  : HTML object that was just built
+	vpselector : String selector for that object
+	*/
 	var vpselector = `fieldset.INDIlvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
 
 	// If empty, build property and lights
 	if(!document.querySelector(vpselector)) {
-		var vphtmldef = buildProperty(INDIvp);
+		var vphtmldef = buildVector(INDIvp);
 		
 		vphtmldef = buildLights(INDIvp, vphtmldef);
 
-		if (appendTo != null) {
-			appendTo.appendChild(vphtmldef);	
-		}
+		// Append to designated spot unless null
+		appendTo && appendTo.appendChild(vphtmldef);
 
 		return $(vphtmldef); // TODO remove jquery
 	}
@@ -568,10 +675,11 @@ const newLight = (INDIvp, appendTo=null) => {
 		light.style.backgroundColor = indistate2css(lp.value);
 	});
 
+	// Return string since already exists
 	return vpselector;
 }  
 
-/* INDI Utilities
+/* UTILITIES
 
 Description
 --------
@@ -614,7 +722,11 @@ const indisw2selector = (INDIvp_rule) => {
 }
 
 const updateSwitches = (INDIvp) => {
-	/* Goes through all updates all switches on page */
+	/* Goes through all updates all switches on page 
+	
+	NOT IN USE BUT KEEPING IN FOR NOW
+
+	*/
 	var type = indisw2selector(INDIvp.rule)
 
 	document.querySelectorAll(`input[type="${type}"]`).forEach((sw) => {
@@ -629,22 +741,23 @@ const updateSwitches = (INDIvp) => {
 	})
 };
 
-
-/*********************
-* formatNumber
-* Args: numStr=>the number as a string
-*		fStr=> the INDI format string
-*
-* Description:
-*		Format the floating point INDI numbers
-* but don't mess with the sexagesimal
-* stuff. weh shall let the INDI client
-* do that. In fact we should probably
-* let the client do the floating point stuff
-* too.
-*
-**********************/
 const formatNumber = (numStr, fStr) => {
+	/* Format indi numbers
+	
+	Description
+	-----------
+	Format the floating point INDI numbers but don't mess with 
+	the sexagesimal stuff.
+
+	Arguments
+	---------
+	numStr : the number as a string
+	fStr   : the INDI format string
+
+	Returns
+	-------
+	outStr : the correct formatted number as string
+	*/
 	num = parseFloat(numStr);
 	console.debug(`[formatNumber] numStr=${numStr} fStr=${fStr}`)
 	var outstr;
@@ -663,10 +776,11 @@ const formatNumber = (numStr, fStr) => {
 }
 
 const nosp = (str) => {
-	// Replaces spaces with _ and . with __
+	/* Replaces spaces with _ */
 	return str.replace(/ /g, '_');
 }
 
 const nospperiod = (str) => {
+	/* Replaces spaces with _ and . with __ */
 	return nosp(str).replace('.', '__');
 }
