@@ -1,5 +1,5 @@
 :root {
-	--indistate-idle: #BDBDBD;
+	--indistate-idle: #EEEEEE;
 	--indistate-ok: #00E676;
 	--indistate-busy: #FFC400;
 	--indistate-alert: #FF1744;
@@ -59,6 +59,22 @@
 	line-height: 1.5;
 	font-size: 1.25rem;
 	color: var(--text-header)
+}
+.ILightlabel {
+	display: inline-block;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: center;
+	vertical-align: middle;
+	user-select: none;
+	border: 1px solid transparent;
+	padding: .25rem .5rem;
+	font-size: 1rem;
+	border-radius: .25rem;
+	overflow: visible;
+	background-color: var(--muted);
+	margin: .25rem .125rem;
+	color: var(--text-switch);
 }
 .ISwitchlabel {
 	display: inline-block;

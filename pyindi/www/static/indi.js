@@ -170,9 +170,26 @@ const buildNumbers = (INDIvp, vphtmldef) => {
 	return vphtmldef;
 };
 
+const buildLights = (INDIvp, appendTo) => {
+	/* Builds the new INDI light */
+	INDIvp.values.forEach((lp) => {
+		var label = document.createElement("label");
+
+		//label.id = lp.label; This was in the pyindi code, probably a bug
+		label.classList.add("ILightlabel");
+		label.id = `${nosp(INDIvp.device)}__${nosp(lp.name)}`;
+		label.textContent = lp.label;
+		label.style.backgroundColor = indistate2css(lp.value);
+		
+		// Append all
+		appendTo.appendChild(label);
+	});
+
+	return appendTo;
+};
+
 const buildSwitches = (INDIvp, appendTo) => {
 	/* Builds the new INDI switch */
-	var div = document.createElement("div");
 	var type = indisw2selector(INDIvp.rule);
 	// Keeping div empty while I build everything else
 	INDIvp.values.forEach((sp) => {
@@ -428,7 +445,6 @@ const newSwitch = (INDIvp, appendTo=null) => {
 	// Update values from indi
 	INDIvp.values.forEach((sp) => {
 		var spselector = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
-		let state = sp.value === "On" ? true : false;
 
 		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
 		let label = document.querySelector(`label[for="${sw.id}"]`);
@@ -526,82 +542,33 @@ const newDevice = (INDIvp, appendTo=null) => {
 * Returns: a jquery type selector string. 
 *
 *********************************************************/
-function newLight( INDIvp, appendTo )
-{
-    var nosp_vpname = INDIvp.name.replace( " ", "_" );
-    var nosp_dev = INDIvp.device.replace( " ", "_" );
-    var vpselector = "fieldset.INDIvp#"+nosp_vpname+"[device='"+INDIvp.device+"']";
+const newLight = (INDIvp, appendTo=null) => {
+	/* Creates a new light */
+	var vpselector = `fieldset.INDIlvp#${nosp(INDIvp.name)}[device="${INDIvp.device}"]`;
 
+	// If empty, build property and lights
+	if(!document.querySelector(vpselector)) {
+		var vphtmldef = buildProperty(INDIvp);
+		
+		vphtmldef = buildLights(INDIvp, vphtmldef);
 
-    var retn = $(vpselector);
-    type = 'checkbox'
+		if (appendTo != null) {
+			appendTo.appendChild(vphtmldef);	
+		}
 
-    if( $(vpselector).length == 0 )
-    {
+		return $(vphtmldef); // TODO remove jquery
+	}
+	
+	// Update values from indi
+	INDIvp.values.forEach((lp) => {
+		let lpselector = `label#${nosp(INDIvp.device)}__${nosp(lp.name)}.ILightlabel`;
+		let light = document.querySelector(`${vpselector} ${lpselector}`);
 
-        var vphtmldef = $( "<fieldset class='INDIvp INDIlvp'/>" )
-            .prop("id", nosp_vpname)
-            .attr("device", INDIvp.device)
-            .attr("group", INDIvp.group)
-            .append("<legend><span class='led'></span>"+INDIvp.label+"</legend>");
+		// Update the color of the light depending on indistate
+		light.style.backgroundColor = indistate2css(lp.value);
+	});
 
-        $.each(INDIvp.values, function(ii, lp)
-        {       
-            var label = lp.label.replace(" ", "_");
-            var name = lp.name.replace(' ', '_');
-            var lpid = nosp_dev+"__"+name;
-            var lpname = nosp_dev+'__'+nosp_vpname;
-            var scolor = "transparent";
-						var lightclass = indistate2css(lp.value);
-            
-            vphtmldef.append
-            (
-                $('<span/>',
-                {
-                    'INDIlabel' :lp.label,
-                    'INDIname'  :lp.name,
-                    'class'         :"ILightspan",
-                    'id'                :name,
-                })
-                .append($('<label/>',
-                {
-                    'id'                :name,
-                    'class'         :'ILightlabel',
-                    'id'               :lpid,
-                    'text'          :lp.label,
-					'style'		:	"background-color:"+lightclass
-
-                })));
-           
-        });
-
-        vphtmldef.find( "input[type='"+type+"']" ).checkboxradio();
-
-        if( appendTo != undefined )
-        {
-            vphtmldef.appendTo( appendTo );
-            return vpselector;
-          
-        }
-
-        return vphtmldef;
-    }
-
-    else
-    {
-        $.each(INDIvp.values, function(ii, lp)
-        {
-            var name = lp.name.replace(' ', '_');
-            var lpid = nosp_dev +"__"+ name;
-            var state = lp.state
-						var lightclass = indistate2css(lp.value);
-	    
-            $(vpselector).find('label#'+lpid+'.ILightlabel').css("background-color", lightclass);
-
-        });
-    }
-    $(vpselector).find("input[type='"+type+"']").checkboxradio("refresh");
-    return vpselector;
+	return vpselector;
 }  
 
 /* INDI Utilities

@@ -7,7 +7,7 @@ Off
 On
     </defSwitch>
 </defSwitchVector>
-<defNumberVector device="SkeletonDevice" name="Number Property" label="" group="Main Control" state="Idle" perm="rw" timeout="0">
+<defNumberVector device="SkeletonDevice" name="Number Property" label="Number Vector" group="Main Control" state="Idle" perm="rw" timeout="0">
     <defNumber name="NUMBER_1" label="First" format="%10.6m" min="0" max="60" step="1">
 3
     </defNumber>
@@ -32,7 +32,7 @@ On
         Idle
     </defLight>
 </defLightVector>
-<defSwitchVector device="SkeletonDevice" name="Menu" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
+<defSwitchVector device="SkeletonDevice" name="Switch Property" group="Main Control" state="Idle" perm="rw" rule="OneOfMany" timeout="60">
     <defSwitch name="1x">
 On
     </defSwitch>
