@@ -638,14 +638,11 @@ const newSwitch = (INDIvp, appendTo=null) => {
 
 		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
 		let label = document.querySelector(`label[for="${sw.id}"]`);
-		console.log(sw, label);
 
 		// Update the color of the switch depending on checked
 		var active = "ISwitchlabel-active";
 		sw.checked = sp.value === "On" ? true : false;
-		if (sw.checked) {
-			console.warn(`This one is on ${sw.id}`)
-		}
+
 		sw.checked ? label.classList.add(active) : label.classList.remove(active);
 	});
 

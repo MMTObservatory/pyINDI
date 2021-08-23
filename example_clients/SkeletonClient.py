@@ -23,7 +23,7 @@ class Skeleton(INDIHandler):
 
     def get(self):
 
-        self.indi_render(Path.cwd()/"client.html", device_name="SkeletonDevice")
+        self.indi_render(Path.cwd()/"client.html", device_name="Filter Simulator")
 
 
 
