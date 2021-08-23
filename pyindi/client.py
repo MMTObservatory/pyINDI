@@ -1,13 +1,5 @@
-import time
 import asyncio
-from lxml import etree
-from tornado.queues import Queue
-from collections import namedtuple
-import json
-from pathlib import Path
 import logging
-
-
 
 """
     INDIClient runs two tasks that are infinite loops and run 
@@ -41,128 +33,169 @@ import logging
         it would be nice to remove tornado dependencies in this module. 
 
 """
+class INDIConn:
+    """Async class to manage the connection to indiserver"""
+    def __init__(self):
+        self.writer = None
+        self.reader = None
+        self.timeout = 3
+        self.read_width = 30000
+
+    async def connect(self, host, port):
+        """Connects to a ip and port"""
+        logging.debug('Connecting to indiserver')
+        future = asyncio.open_connection(host, int(port))
+        # Wait for timeout
+        try:
+            self.reader, self.writer = await asyncio.wait_for(
+                future,
+                timeout=self.timeout
+            )
+        except asyncio.TimeoutError:
+            logging.debug('Socket timeout trying to connect')
+            raise
+        except ConnectionRefusedError:
+            logging.debug(f'indiserver is not on')
+            raise
+        
+        return None
+
+    async def disconnect(self):
+        """Disconnect from the ip and port"""
+        # Check if writer is init
+        if self.is_connected:
+            logging.debug('Disconnecting from indiserver')
+            self.writer.close()
+            await self.writer.wait_closed()
+
+            # Reset variables
+            self.reset()
+
+        return None
+        
+    def reset(self):
+        """Resets the stream parameters"""
+        logging.debug('Resetting stream')
+        self.reader = self.writer = None
+        return None
+
+    @property
+    def is_connected(self):
+        return self.writer is not None and self.reader is not None
+
+    @property
+    def response(self):
+        return self._response
+
+    async def send_msg(self, msg):
+        """Sends a message over the connection"""
+        logging.debug('Sending message')
+        msg = msg.encode()
+        self.writer.write(msg)
+        await self.writer.drain()
+
+        return None
+        
+    async def recv_msg(self):
+        """Receives a message over the connection"""
+        logging.debug('Receiving message')
+        if self.reader.at_eof():
+                raise Exception("INDI server closed")
+        response = await self.reader.read(self.read_width)
+        print(response.decode())
+        self._response = response.decode()
+
+        return self._response
 
 class INDIClient:
     """This class sends/recvs INDI data to/from the indiserver 
     tcp/ip socket. See the above diagram for help understanding
     its data flow.  """
+    def __init__(self):
+        return None        
 
-    to_indiQ = Queue()
-
-
-    def start(self, host="localhost", port=7624, read_width=30000):
+    def start(self, host="localhost", port=7624):
         self.port = port
         self.host = host
-        self.read_width=read_width
         self.lastblob = None
-
+        self.conn = None
 
     async def xml_from_indiserver(self, data):
-
+        """Model method"""
         raise NotImplemented("This method should be implemented by the subclass")
 
-
     async def read_from_indiserver(self):
-
-        """Read data from self.reader and then call
-        xml_from_indiserver with this data as an arg."""
-
-        while self.running:
-            try:
-                if self.reader.at_eof():
-                    raise Exception("INDI server closed")
-
-                # Read data from indiserver
-                data = await self.reader.read(self.read_width)
-                await self.xml_from_indiserver(data)
-
-
-            except Exception as err:
-                self.running = 0
-                logging.warning(f"Could not read from INDI server {err}")
-                raise
-
-        self.writer.close()
-        await self.writer.wait_closed()
-        logging.warning(f"Finishing read_from_indiserver task")
+        """Read data from self.reader and then call xml_from_indiserver with this data as an arg."""
+        while self.is_connected:
+            response = await self.conn.recv_msg()
+            await self.xml_from_indiserver(response)
         
+        logging.warning("Finished reading from indiserver")
+        return None
 
     async def connect(self):
-        """Attempt to connect to the indiserver in a loop.
-        """
-        while 1:
+        """Attempt to connect to the indiserver in a loop."""
+        while True:
             
             task = None
-            try: 
-                self.reader, self.writer = await asyncio.open_connection(
-                        self.host, self.port)
-                logging.debug(f"Connected to indiserver {self.host}:{self.port}")
-                self.running = True
+            await self.disconnect()
 
-                self.task = asyncio.gather(self.read_from_indiserver())
-                #self.task = asyncio.gather(self.read_from_indiserver(),
-                        #self.write_to_indiserver() )
+            try:
+                self.conn = INDIConn()
+                await self.conn.connect(self.host, self.port)
+                logging.debug(
+                    f"Connected to indiserver {self.host}:{self.port}"
+                )
+
+                self.task = asyncio.gather(
+                    self.read_from_indiserver(),
+                    return_exceptions=True
+                )
+
                 await self.task
                 logging.debug("INDI client tasks finished. indiserver crash?")
-                logging.debug("Attempting to connect again")
                 
-            except ConnectionRefusedError:
-                self.running = False
-                logging.debug("Can not connect to INDI server\n")
-
-            except asyncio.TimeoutError:
-                logging.debug("Lost connection to INDI server\n")
+                
+            except Exception:
+                pass
 
             finally:
+                # If gets here, need to disconnect and retry connection
                 if task is not None:
                     task.cancel()
+                await self.disconnect()
 
             await asyncio.sleep(2.0)
+            logging.debug("Attempting to connect again")
 
-    
+    async def disconnect(self):
+        """Disconnects from client when issue"""
+        if self.is_connected:
+            await self.conn.disconnect()
+            self.conn = None
+        
+        return None
+            
+    @property
+    def is_connected(self):
+        """Checks if it is connected"""
+        return self.conn is not None and self.conn.is_connected
+
     async def xml_to_indiserver(self, xml):
-        """
-        put the xml argument in the 
-        to_indiQ. 
-        """
-        try:
-            self.writer.write(xml.encode())
-            await self.writer.drain()
-            logging.debug(f"Added message to to_indiQ: {xml}")
-        except Exception as err:
-            logging.debug(f"Could not write to INDI server {err}")
-            self.running = 0
-            raise
-        #await self.to_indiQ.put(xml)
-        
-        
-
-    async def write_to_indiserver(self):
-        """Collect INDI data from the from the to_indiQ.
-        and send it on its way to the indiserver. 
-        """
-
-        while self.running:
+        """Write to indiserver"""
+        if self.is_connected:
             try:
-                #to_indi = await asyncio.wait_for( self.to_indiQ.get(), 10 )
-                to_indi = await self.to_indiQ.get()
-                logging.debug(f"writing this to indi {to_indi}")
-            except asyncio.TimeoutError as error:
-                # This allows us to check the self.running state
-                # if there is no data in the to_indiQ
-                continue
-            try:
-                #logging.debug(f"writing this to indi {to_indi}")
-                self.writer.write(to_indi.encode())
-                await self.writer.drain()
-            except Exception as err:
-                self.running = 0
-                logging.debug(f"Could not write to INDI server {err}")
+                await self.conn.send_msg(xml)
 
-        logging.debug("Finishing write_to_indiserver task")
+            except Exception as error:
+                logging.debug(f"Connection was lost, could not write to indiserver")
+                self.disconnect()
+                raise
+        else:
+            logging.critical("Not connected to indiserver")
 
+        return None
 
-    
 class INDIClientSingleton(INDIClient):
     """
     INDIClient as a singleton. This works well
