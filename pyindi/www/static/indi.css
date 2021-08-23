@@ -99,6 +99,7 @@
 	background-color: var(--muted-dark);
 	border-color: var(--muted-dark);
 }
+/* 
 input:checked + label{
 	background-color: var(--primary);
 	border-color: var(--primary);
@@ -107,7 +108,17 @@ input:checked + label{
 input:checked + label:hover {
 	background-color: var(--primary-dark);
 	border-color: var(--primary-dark);
+} 
+*/
+.ISwitchlabel-active {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: var(--text-switch-active);
 }
+.ISwitchlabel-active:hover {
+	background-color: var(--primary-dark);
+	border-color: var(--primary-dark);
+} 
 .ISwitchinput {
 	position: absolute;
 	clip: rect(0,0,0,0);

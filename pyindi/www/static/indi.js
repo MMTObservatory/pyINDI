@@ -637,9 +637,16 @@ const newSwitch = (INDIvp, appendTo=null) => {
 		var spselector = `${nosp(INDIvp.device)}__${nosp(INDIvp.name)}__${nosp(sp.name)}`;
 
 		let sw = document.querySelector(`input.ISwitchinput#${spselector}`);
+		let label = document.querySelector(`label[for="${sw.id}"]`);
+		console.log(sw, label);
 
 		// Update the color of the switch depending on checked
+		var active = "ISwitchlabel-active";
 		sw.checked = sp.value === "On" ? true : false;
+		if (sw.checked) {
+			console.warn(`This one is on ${sw.id}`)
+		}
+		sw.checked ? label.classList.add(active) : label.classList.remove(active);
 	});
 
 	// Update LED color on indistate
@@ -794,3 +801,19 @@ const nosp = (str) => {
 	/* Replaces spaces with _ */
 	return str.replace(/ /g, '_');
 }
+
+const updateSwitches = (INDIvp) => {
+	/* Goes through all updates all switches on page */
+	var type = indisw2selector(INDIvp.rule)
+
+	document.querySelectorAll(`input[type="${type}"]`).forEach((sw) => {
+		let label = document.querySelector(`label[for="${sw.id}"]`);
+
+		if (sw.checked) {
+			label.classList.add("ui-state-active");
+		}
+		else {
+			label.classList.remove("ui-state-active");
+		}
+	})
+};

@@ -102,7 +102,6 @@ class INDIConn:
         if self.reader.at_eof():
                 raise Exception("INDI server closed")
         response = await self.reader.read(self.read_width)
-        print(response.decode())
         self._response = response.decode()
 
         return self._response
