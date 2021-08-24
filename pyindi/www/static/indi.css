@@ -1,77 +1,262 @@
-
 :root {
-	--indistate-idle: transparent;
-	--indistate-ok: rgb(0,128,0);
-	--indistate-busy: yellow;
-	--indistate-alert: red;
+	--indistate-idle: #EEEEEE;
+	--indistate-ok: #00E676;
+	--indistate-busy: #FFC400;
+	--indistate-alert: #FF1744;
+	--indistate-unknown: magenta;
+	--primary-light: #82B1FF;
+	--primary: #3D5AFE;
+	--primary-dark: #304FFE;
+	--muted: #EEEEEE;
+	--muted-dark: #E0E0E0;
+	--muted-light: #F5F5F5;
+	--bg-body: #f8f9fa;
+	--bg-gui: #fff;
+	font-size: 14px;
+	--gray-50: #FAFAFA;
+	--gray-100: #F5F5F5;
+	--gray-200: #EEEEEE;
+	--gray-300: #E0E0E0;
+	--gray-400: #BDBDBD;
+	--gray-500: #9E9E9E;
+	--gray-600: #757575;
+	--gray-700: #616161;
+	--gray-800: #424242;
+	--gray-900: #212121;
+	--text-header: #616161;
+	--text-subheader: #424242;
+	--text-label: #212121;
+	--text-value: #616161;
+	--text-switch: #212121;
+	--text-switch-active: #FAFAFA;
+	--bg-input: #fff;
+	--bg-device: #00796B;
+	--text-device: #FAFAFA;
 }
+.INDIdevice {
+	margin: 1rem 1rem;
+	background-color: var(--bg-device);
+	border-radius: .25rem;
+	max-width: 640px;
+	margin: 0 auto;			
+}
+.IDevice_header {
+	font-weight: 700;
+	line-height: 1.5;
+	font-size: 1.25rem;
+	color: var(--text-device);
+	padding: 1rem .75rem;
+	display: block;
+	margin-bottom: 0;
+}
+.INDIgroup {
+	padding: .75rem .75rem;
+	margin: 0;
+	background-color: white;
+}
+.IGroup_header {
+	font-weight: 700;
+	line-height: 1.5;
+	font-size: 1.25rem;
+	color: var(--text-header)
+}
+.ILightlabel {
+	display: inline-block;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: center;
+	vertical-align: middle;
+	user-select: none;
+	border: 1px solid transparent;
+	padding: .25rem .5rem;
+	font-size: 1rem;
+	border-radius: 1rem;
+	overflow: visible;
+	background-color: var(--muted);
+	margin: .25rem .125rem;
+	color: var(--text-switch);
+}
+.ISwitchlabel {
+	display: inline-block;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: center;
+	text-decoration: none;
+	vertical-align: middle;
+	cursor: pointer;
+	user-select: none;
+	border: 1px solid transparent;
+	padding: .5rem .75rem;
+	font-size: 1rem;
+	border-radius: .25rem;
+	overflow: visible;
+	background-color: var(--muted);
+	margin: .25rem .125rem;
+	box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2);
+	color: var(--text-switch);
+}
+.ISwitchlabel:hover {
+	background-color: var(--muted-dark);
+	border-color: var(--muted-dark);
+}
+/* 
+input:checked + label{
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: var(--text-switch-active);
+}
+input:checked + label:hover {
+	background-color: var(--primary-dark);
+	border-color: var(--primary-dark);
+} 
+*/
+.ISwitchlabel-active {
+	background-color: var(--primary);
+	border-color: var(--primary);
+	color: var(--text-switch-active);
+}
+.ISwitchlabel-active:hover {
+	background-color: var(--primary-dark);
+	border-color: var(--primary-dark);
+} 
+.ISwitchinput {
+	position: absolute;
+	clip: rect(0,0,0,0);
+	pointer-events: none;
+}
+/* This should be used for when the button is active like radio button */
 
-.IText_ro
-{
-	/*resize:none;*/
-	display:table;
-	background:transparent;
-	border:none;
-	max-height: 25px;
-	overflow:visible;
-	height:auto;
-	font-weight:bold;
-	font-size:16px;
-	
+legend {
+	font-size: 1.125rem;
+	font-weight: 700;
+	margin-bottom: .25rem;
+	color: var(--text-subheader);
 }
-.IText_wo
-{
-	color:black;
-	/*resize:none;*/
+body {
+	font-family: sans-serif;
+	background-color: var(--bg-body);
 }
-
-.IText_ro, .INumber_ro
-{
-	margin-left:5px;
-	margin-right:5px;
+fieldset {
+	background-color: inherit;
+	border: none;
+	border-radius: .25rem;
+	margin: 1.5rem .75rem;;
+	padding: 0;
 }
-
-fieldset
-{
-	display:inline-block;
+.IText_label {
+	margin: 0;
+	line-height: 1.5;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	float: left;
+	vertical-align: middle;
+	width: 12rem;
+	color: var(--text-label)
 }
-
-fieldset.INDIsvp
-{
-	--indistate-idle: transparent;
+.IText_ro {
+	resize: none;
+	border: none;
+	border-radius: .25rem;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	font-size: 1rem;
+	line-height: 1.5;
+	background-color: inherit;
+	background-clip: padding-box;
+	appearance: none;
+	float: left;
+	margin-bottom: 0;
+	outline: none;
+	font-family: inherit;
+	margin-left: 1rem;
+	width: 12rem;
+	color: var(--text-value)
 }
-
-
-textarea#INDImsg
-{
-	position:fixed;
-	bottom:10px;
-	right:10px;
-	margin:auto;
-	box-shadow: 5px 5px;
+.IText_wo {
+	resize: none;
+	border: 1px solid var(--muted-dark);
+	border-radius: .25rem;
+	padding-top: .375rem;
+	padding-bottom: .375rem;
+	font-size: 1rem;
+	line-height: 1.5;
+	background-color: var(--bg-input);
+	background-clip: padding-box;
+	appearance: none;
+	margin-bottom: 0;
+	outline: none;
+	font-family: inherit;
+	margin-left: 1rem;
+	transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+	float: right;
+	width: 12rem;
+	color: var(--text-label)
 }
-
-.INDIgroup
-{
-	display:block;
+.IText_wo:focus {
+	border-color: var(--primary);
+	outline: none;
+	box-shadow: 0 0 0 0.125rem var(--primary-light);
 }
-
-.ILightspan
-{
-	display:table;
-	border:1px solid black;
-	margin: 15px;
-	border-radius:5px;
+/* 
+https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
+When floating child in parent, the parent ignores them.
+*/
+.IText_div:after {
+	content: " "; 
+	display: block;
+	clear: both;
 }
-
-.ILightlabel
-{
-	color:black;
-	padding:5px;
-	border-radius:5px;
+.INumber_div:after {
+	content: " "; 
+	display: block;
+	clear: both;
 }
-legend
-{
-	background-color:inherit;
-	border:inherit;
+.INumber_label {
+	margin-bottom: 0;
+	line-height: 1.5;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	float: left;
+	width: 12rem;
+	color: var(--text-label);
+}
+.INumber_ro {
+	margin-bottom: 0;
+	line-height: 1.5;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	margin-left: 1rem;
+	float: left;
+	width: 12rem;
+	color: var(--text-value);
+	background-color: inherit;
+}
+.INumber_wo {
+	border: 1px solid var(--muted-dark);
+	border-radius: .25rem;
+	padding-top: .375rem;
+	padding-bottom: .375rem;
+	font-size: 1rem;
+	line-height: 1.5;
+	background-color: var(--bg-input);
+	background-clip: padding-box;
+	appearance: none;
+	transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+	width: 12rem;
+	float: right;
+	margin-bottom: 0;
+	color: var(--text-label);
+}
+.INumber_wo:focus {
+	border-color: var(--primary);
+	outline: none;
+	box-shadow: 0 0 0 0.125rem var(--primary-light);
+}
+.led {
+	margin-right: 5px;
+	margin-top: 2px;
+	float: left;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
 }

@@ -1,515 +1,523 @@
-/* indi.js
- * These functions define the connection to an indiserver using web sockets.
- * Nothing here needs to be edited but lighttpd.conf requires the following:
- *
- * 1. add mod_wstunnel to server.modules
- * 2. add the following snippet:
+/* Constants */
+const INDI_OPS = [
+  "set",
+  "def"
+]
+const INDI_TYPES = [
+  "Number",
+  "Text",
+  "Switch",
+  "Light",
+  "BLOB"
+]
+const INDI_DEBUG = true; // Turn on debugging
+const READONLY_PORT = 8081; // setindi() is muted when on this port
+const WS_PAGE = "/indi/websocket"; // Must match URL
+const WS_SEND_WAIT = 30 // millaseconds, how long to wait to resend
+const WS_RETRY = 1000 // millaseconds, how long to wait to reconnect
+const XML_START_REGEX = /<.e[twf]\S*Vector/; // accept <set <new <def <get
+const XML_MESSAGE_REGEX = /<message\s+.*\/>.*/g;
 
-	$HTTP["url"] =~ "^/indi-websocket" {
-	      wstunnel.server = ( "" => ( ( "host" => "127.0.0.1", "port" => "7624" ) ) )
-	      wstunnel.ping-interval = 10
-	      wstunnel.frame-type = "text"
-	      server.stream-request-body  = 2
-	      server.stream-response-body = 2
-	}
+/* Globals */
+var indi_types = ""; // All INDI types we accept
+var ws; // The persistent web socket connection
+var read_write = false; // The websocket will trigger this true if connected
+var setPropertyCallbacks = {} // Stores callbacks for properties
+var partial_doc = ""; // accumulate xml in pieces
 
- *
- */
+document.addEventListener("DOMContentLoaded", () => {
+  /* Initialize the list of types that updateProperties will handle */
+  INDI_OPS.forEach((op) => {
+    INDI_TYPES.forEach((type) => {
+      if (indi_types.length) {
+        indi_types += ", "; // Append , and space if there already is part of str
+      }
+      indi_types += `${op}${type}Vector`;
+    })
+  })
 
-/* one-time function called when page is first loaded.
- * set up web socket and some other init work
- */
-var gTypestr = "";                      // all INDI types we accept
-var websocket;                          // the persistent web socket connection
-var gCanReadWrite = 0;                  // whether this page is allowed to set new INDI property values
-const ROport = 8081;                    // setindi() is muted when our page is on this port
-const wspage = "/indi/websocket";       // must match URL for wstunnel in lighttpd.conf
-$(function() {
+  console.log(`Accepting ${indi_types}`);
 
-    // initialize the list of types that updateProperties will handle.
-    var ops = ["set", "def"];
-    for (var op in ops) {
-        var types = ["Number", "Switch", "Light", "Text", "BLOB"];
-        for (var t in types) {
-            if (gTypestr.length) {
-                gTypestr += ", "
-            }
-            gTypestr += ops[op] + types[t] + "Vector"
+  // create web server connection
+  wsStart();
+})
+
+const wsStart = () => {
+  /* Creates websocket connection
+  
+  Description
+  -----------
+  Responsible for event listeners for websocket. If websocket closes will try again in WS_RETRY millaseconds. Error codes aren't worried about because we never get information from websocket errors due to security risks.
+
+  Arguments
+  ---------
+  None
+
+  Returns
+  -------
+  None
+  */
+  if ("WebSocket" in window) {
+
+    // create web socket
+    var loc = window.location;
+    if (loc.port != READONLY_PORT) {
+      read_write = true;
+    }
+    const url = 'ws://' + loc.host + WS_PAGE;
+    console.log(url);
+    ws = new WebSocket(url);
+
+    // dispatch incoming messages
+    ws.onmessage = (event) => {
+      updateProperties(event.data);
+    };
+
+    ws.onopen = (event) => {
+      console.log("WebSocket is open");
+      // resend any prior property callbacks
+      for (var property in setPropertyCallbacks) {
+        var callback = setPropertyCallbacks[property];
+        if (callback) {
+          console.log ('requesting ' + property);
+          setPropertyCallback(property, callback);
         }
-    }
-    // console.log(gTypestr);
+      }
+    };
 
-    // create web server connection
-    startWebSocket();
-});
+    // indicate lost connection
+    ws.onclose = (event) => {
+      if (event.wasClean) {
+        console.warn(`Web Socket connection closed cleanly, code=${event.code} reason=${event.reason}`);
+      }
+      else {
+        console.warn(`Web Socket connection died, code=${event.code} reason=${event.reason}`);
+      }
 
-/* create a websocket, repeat if it ever closes
- */
-function startWebSocket()
-{
-    if ("WebSocket" in window) {
+      // discard any partially received documents
+      partial_doc = null;
 
-        // create web socket
-        var loc = window.location;
-        if (loc.port != ROport)
-            gCanReadWrite = true;
-        const url = 'ws://' + loc.host + wspage;
-        console.log (url);
-        websocket = new WebSocket(url);
+      // restart web socket
+      ws = null;
+      setTimeout(() => {wsStart()}, WS_RETRY);
+    };
 
-        // dispatch incoming messages
-        websocket.addEventListener ('message', function (event) {
-            updateProperties (event.data);
-        });
+    ws.onerror = (event) => {
+      console.error(`Web Socket error`)
+    };
+  }
 
-        websocket.addEventListener ('open', function(event) {
-            console.log ("WebServer is open");
+  else {
+    alert("Web Socket is not supported by this Browser");
+  }
 
-	    // resend any prior property callbacks
-	    for (var property in setPropertyCallbacks) {
-		var callback = setPropertyCallbacks[property];
-		if (callback) {
-		    // console.log ('requesting ' + property);
-		    setPropertyCallback(property, callback);
-		}
-	    }
-        });
-
-        // indicate lost connection
-        // https://tools.ietf.org/html/rfc6455#section-7.4.1
-        websocket.addEventListener ('close', function(event) {
-
-            var reason = "Unknown reason";
-                if (event.code == 1000) reason = "Normal closure";
-            else if(event.code == 1001) reason = "endpoint going away";
-            else if(event.code == 1002) reason = "protocol error";
-            else if(event.code == 1003) reason = "endpoint received data type it cannot accept";
-            else if(event.code == 1004) reason = "Reserved.";
-            else if(event.code == 1005) reason = "No status code present.";
-            else if(event.code == 1006) reason = "connection closed without Close control frame";
-            else if(event.code == 1007) reason = "data not consistent with the type of the message";
-            else if(event.code == 1008) reason = "message that violates its policy";
-            else if(event.code == 1009) reason = "message too large.";
-            else if(event.code == 1010) reason = "server failed to negotiate extension: " + event.reason;
-            else if(event.code == 1011) reason = "server can not fulfill request.";
-            else if(event.code == 1015) reason = "failure to perform a TLS handshake";
-            console.log ("Web socket closed: " + reason);
-
-	    // discard any partially received documents
-	    partial_doc = null;
-
-	    // restart web socket
-	    websocket = null;
-	    setTimeout (startWebSocket, 1000);
-        });
-
-        // error
-        websocket.addEventListener ('error', function() {
-            // no additional information if reported but we can assume close will follow shortly
-            // alert ('Websocket error');
-        });
-
-    } else {
-        alert ("WebSocket is not supported by this Browser");
-    }
 }
 
-/* wrapper over websocket.send that can tolerate connection not yet fully open
- */
-function wsSend (msg)
-{
+const wsSend = (msg) => {
+  /* Sends msg over ws
+  
+  Description
+  -----------
+  Wrapper over the websocket that keeps trying if the websocket would suddenly disconnect.
 
-    if (websocket && websocket.readyState == websocket.OPEN) {
-         //console.log("tx: " + msg);
+  Arguments
+  ---------
+  msg : string message to send over ws
 
-        websocket.send(msg);
-    } else
-        setTimeout (function() {wsSend(msg);}, 30);
+  Returns
+  -------
+  None
+  */
+  if (ws && ws.readyState == ws.OPEN) {
+    ws.send(msg);
+  }
+  else {
+    setTimeout(() => {wsSend(msg);}, WS_SEND_WAIT);
+  }
+
+  return;
 }
 
-/*
- * API function for setting an INDI property.
- * Parameters are variable.
- * The first parameter must indicate the property data type, which is either Number, Text,
- *    Switch, or Light.
- * The second parameter must indicate the INDI device and property name as a string
- *    separated by a period, e.g.: "Telescope.Position"
- * The remaining parameters must be INDI property element-value pairs.
- *
- * Example:
- *   setIndi("Number", "Telescope.Position", "RA", "2 31 49", "Dec", "89 15.846");
- *
- * This is sent as:
- *   <newNumberVector device="Telescope" name="Position">
- *      <oneNumber name="RA">2 31 49</oneNumber>
- *      <oneNumber name="Dec">89 15.846</oneNumber>
- *   </newNumberVector>
- *
- * N.B. the message is only set if !gCanReadWrite
- *
- */
-function setindi() {
-    // sanity check
-    if (arguments.length < 4 || (arguments.length % 2) != 0) {
-        alert ('Bug! malformed setindi(' + arguments + ')');
-        return;
-    }
+const setindi = (...theArgs) => {
+  /* Sets an INDI property
+  
+  Description
+  -----------
+  The first parameter must indicate the property data type, which is either 
+  Number, Text, Switch, or Light. The second parameter must indicate the INDI 
+  device and property name as a string separated by a period, e.g.: "Telescope.
+  Position". The remaining parameters must be INDI property element-value pairs.
 
-    // pull out type, device and name
-    var type = arguments[0];
-    var devname = arguments[1].split(".");
-    var device = devname[0];
-    var name = devname[1];
+  The message is only sent if READ_WRITE is true.
+  
+  Arguments
+  ---------
+  theArgs : variable amount of arguments
 
-    // start
-    var xml = '<new' + type + 'Vector device="' + device + '" name="' + name + '">\n';
-    var setcmd = arguments[1];
-    var sep = '.';
+  Example
+  -------
+  setIndi("Number", "Telescope.Position", "RA", "2 31 49", "Dec", "89 15.846");
 
-    // add each element
-    for (var i = 2; i < arguments.length; i += 2) {
-        xml += '  <one' + type + ' name="' + arguments[i] + '">' + 
-            scrubEntities(arguments[i+1]) + '</one' + type + '>\n';
-        setcmd += sep + arguments[i] + '=' + arguments[i+1];
-        sep = ';';
-    }
+  This is sent as:
+  <newNumberVector device="Telescope" name="Position">
+    <oneNumber name="RA">2 31 49</oneNumber>
+    <oneNumber name="Dec">89 15.846</oneNumber>
+  </newNumberVector>
+  
+  Returns
+  -------
+  None
+  */
+  // Sanity check
+  if (theArgs.length < 4 || (theArgs.length % 2) != 0) {
+    alert(`Error! Malformed setindi(${theArgs})\nPlease contact support.`);
+    return;
+  }
 
-    // closure
-    xml += '</new' + type + 'Vector>';
+  var type = theArgs[0];
+  var devname = theArgs[1].split(".");
+  var device = devname[0];
+  var name = devname[1];
 
-    var msgprefix;
-    if (gCanReadWrite) {
-        // send
-        wsSend (xml);
-        msgprefix = "INDI message: ";
-    } else {
-        alert ("All commands are disabled in Read-Only mode");
-        msgprefix = "INDI message (not sent): ";
-    }
+  // Build xml
+  var xml = '<new' + type + 'Vector device="' + device + '" name="' + name + '">\n';
+  var setcmd = theArgs[1];
+  var sep = '.';
 
-    // show on page
-    var map = {};
-    map["message"] = msgprefix + setcmd;
-    map["timestamp"] = getTimeStampNow();
-    if (typeof showMapMessage != 'undefined')
-	showMapMessage (map);
+  // Add each element
+  for (var i=2; i<theArgs.length; i+=2) {
+    xml += `  <one${type} name="${theArgs[i]}">`;
+    xml += `${theArgs[i+1]}</one${type}>\n`;
+    setcmd += `${sep}${theArgs[i]}=${theArgs[i+1]}`;
+    sep = ';';
+  }
+
+  // Close xml
+  xml += `</new${type}Vector>`;
+
+  var msgprefix;
+
+  if (read_write) {
+    // Send xml
+    wsSend(xml);
+    msgprefix = "Websocket send: ";
+  } 
+  else {
+    alert("All commands are disabled in Read-Only mode");
+    msgprefix = "Websocket send (not sent): ";
+  }
+
+  showmsg(`${msgprefix}${setcmd}`);
+
+  return;
 }
 
-/*
- * API function for setting up a callback function when a given INDI property arrives.
- * Also requests these properties from the indiserver.
- * N.B. this only supports one callback per property per page.
- * Properties are specified as INDI device and property name separated by a period, e.g.:
- *   "Telescope.Position"
- * If property name is '*', eg 'Telescope.*', then ALL properties with the given device will
- *   be called.
- * Property callbacks must be a javascript function that takes the property mapped as a
- *  javascript object parameter. See flattenIndi() for details.
- *
- * Example:
- *   setPropertyCallback("Telescope.Focus", function(map) { updatePosition(map) });
- *    This calls the function updatePosition() with the property "Telescope.Focus" when the
- *    telescope focus is changed.
- */
-var setPropertyCallbacks = {}
-function setPropertyCallback(property, callback) {
-    // console.log ("setPropertyCallback("+property+")");
-    setPropertyCallbacks[property] = callback;
+const setPropertyCallback = (property, callback) => {
+  /* Sets property callback
 
-    // request this property
-    var devname = property.split(".");
-    var device = devname[0];
-    var name = devname[1];
-    var getprop = '<getProperties version="1.7" device="' + device + '"';
-    if (name != '*')
-        getprop += ' name="' + name + '"';
-    getprop += ' />\n';
+  Description
+  -----------
+  API function for setting up a callback function when a given INDI property 
+  arrives. Also requests these properties from the indiserver. This only 
+  supports one callback per property per page. Properties are specified as INDI 
+  device and property name separated by a period, e.g.:"Telescope.Position". If 
+  property name is '*', eg 'Telescope.*', then ALL properties with the given 
+  device will be called. Property callbacks must be a javascript function that 
+  takes the property mapped as a javascript object parameter.
 
-    // send
-    wsSend(getprop);
+  Arguments
+  ---------
+  theArgs : variable amount of arguments
 
-    // also ask for BLOBs, harmless if not
-    var getblob = '<enableBLOB device="' + device + '"';
-    if (name != '*')
-        getblob += ' name="' + name + '"';
-    getblob += '>Also</enableBLOB>\n';
+  Example
+  -------
+  setPropertyCallback("Telescope.Focus", function(map) { updatePosition(map) });
+  
+  This calls the function updatePosition() with the property "Telescope.Focus" 
+  when the telescope focus is changed.
 
-    // send
-    // console.log(getblob);
-    wsSend(getblob);
-}
+  Returns
+  -------
+  None
+  */
+  setPropertyCallbacks[property] = callback;
+  
+  // Request this property
+  var devname = property.split(".");
+  var device = devname[0];
+  var name = devname[1];
+  var getprop = `<getProperties version="1.7" device="${device}"`;
+  
+  if (name != '*') {
+    getprop += ` name="${name}"`;
+  }
 
-/*
- * Private function for flattening an INDI property's XML element into a javascript object.
- *
- * Element values are accessed by their name: map['Position'] or map.Position
- * Top level attributes are also accessed by name: map['state'] or map.state (beware name collisions!)
- * Element attributes are accessed after their name: map['Position.label']
- *
- * Note that step, min, max attributes and the value for Properties of type Number are converted to
- *   numeric type, all others are string type. Also, BLOBs are already unpacked from base64.
- */
-function flattenIndi(xml) {
-    var map = {};
+  getprop += ` />\n`;
 
-    // firefox breaks content into 4096 byte chunks. this collapes them all again. see:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=423442
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=194231
-    xml.normalize();
+  // Send over ws
+  wsSend(getprop);
 
-    for (var i = 0; i < xml.attributes.length; i++) {
-        var a = xml.attributes[i];
-        map[a.name] = a.value;
-    }
+  // Also ask for BLOBs, harmless if not
+  var getblob = `<enableBLOB device="${device}"`;
+  if (name != '*') {
+    getblob += ` name="${name}"`
+  }
 
-    map.op = xml.nodeName.substring(0,3);	// new, set or def
+  getblob += `>Also</enableBLOB>\n`;
 
-    var isnum = xml.nodeName.indexOf("Number") < 0 ? 0 : 1;
-    var isblob = xml.nodeName.indexOf("BLOB") < 0 ? 0 : 1;
+  // Send over ws
+  wsSend(getblob);
+
+  return;
+};
 
 
-		
-		
-
-    for (var c = 0; c < xml.childNodes.length; c++) {
-        var child = xml.childNodes[c];
-        var name = $(child).attr("name");
-        if (name != undefined) {
-            for (var i = 0; i < child.attributes.length; i++) {
-                var a = child.attributes[i];
-		if (isnum && (a.name=="step" || a.name=="min" || a.name=="max"))
-		    map[name + "." + a.name] = parseFloat(a.value);
-		else
-		    map[name + "." + a.name] = a.value;
-            }
-
-	    // text values are in their own separate child node
-            if (child.firstChild != undefined) {
-		var val = child.firstChild.nodeValue;
-		if (isnum)
-		    map[name] = parseFloat(jQuery.trim(val));
-		else if (isblob)
-		    map[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); // clean base64
-		else
-		    map[name] = jQuery.trim(val);
-            } else
-		map[name] = "";
-        }
-    }
-
-    return map;
-}
-
-
-/*
- * Private function for flattening an INDI property's XML element into a javascript object.
- * 
- * This copies the flattenIndi function but uses a nesting approach (less flattened) 
- *  
- * Note that step, min, max attributes and the value for Properties of type Number are converted to
- *   numeric type, all others are string type. Also, BLOBs are already unpacked from base64.
- */
 function flattenIndiLess(xml) {
-    var map = {};
+  /* Flattens indi xml to Object
 
-    // firefox breaks content into 4096 byte chunks. this collapes them all again. see:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=423442
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=194231
-    xml.normalize();
+  Description
+  -----------
+  Function for flattening an INDI property's XML element into a javascript 
+  object. This copies the flattenIndi function but uses a nesting approach 
+  (less flattened). Note that step, min, max attributes and the value for 
+  Properties of type Number are converted to numeric type, all others are 
+  string type. Also, BLOBs are already unpacked from base64.
 
-		var isnum = false;
-		var isblob = false;
-    if( xml.nodeName.includes("Number") )
-		{
-			isnum = true;
-			map.metainfo = "nvp"; 
-		}
-		else if( xml.nodeName.includes("Blob") )
-		{
-			isblob = true;
-			map.metainfo = "bvp";
-		}
- 		else if( xml.nodeName.includes("Text") )
-		{
-			map.metainfo = "tvp";	
-		}
-		else if( xml.nodeName.includes("Light") )
-			map.metainfo = "lvp";
-		else if( xml.nodeName.includes("Switch") )
-			map.metainfo = "svp";
+  Arguments
+  ---------
+  xml : parsed xml
 
-    map.op = xml.nodeName.substring(0,3);	// new, set or def
+  Returns
+  -------
+  INDIvp : object with indi properties
+  */
+  var INDIvp = {};
 
-    for (var i = 0; i < xml.attributes.length; i++) 
-		{
-        var a = xml.attributes[i];
-        map[a.name] = a.value;
-					
+  // firefox breaks content into 4096 byte chunks. this collapes them all again. see:
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=423442
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=194231
+  xml.normalize();
+
+  var isnum = false;
+  var isblob = false;
+
+  if (xml.nodeName.includes("Number")) {
+    isnum = true;
+    INDIvp.metainfo = "nvp"; 
+  }
+  else if (xml.nodeName.includes("Blob")) {
+    isblob = true;
+    INDIvp.metainfo = "bvp";
+  }
+  else if (xml.nodeName.includes("Text")) {
+    INDIvp.metainfo = "tvp";	
+  }
+  else if (xml.nodeName.includes("Light")) {
+    INDIvp.metainfo = "lvp";
+  }
+  else if (xml.nodeName.includes("Switch")) {
+    INDIvp.metainfo = "svp";
+  }
+
+  // Slice nodeName to init new, set, or def
+  INDIvp.op = xml.nodeName.substring(0,3);
+
+  // Build INDIvp
+  for (var i = 0; i < xml.attributes.length; i++) {
+    var attr = xml.attributes[i];
+    INDIvp[attr.name] = attr.value;	
+  }
+
+	children = []
+	var i = 0;
+  var child_nodes = xml.children;
+  for (var j=0; j<child_nodes.length; j++) 
+  {
+    var child = child_nodes[j];
+    var name = child.getAttribute("name");
+
+    if (name != undefined) {
+      children[i] = {};
+
+      // Go through child attributes and build INDIvp
+      for (var k=0; k<child.attributes.length; k++) {
+        var attr = child.attributes[k];
+
+        if (isnum && (attr.name == "step" || attr.name == "min" || attr.name=="max")) {
+          children[i][attr.name] = parseFloat(attr.value);
+          INDIvp[`${name}.${attr.name}`] = parseFloat(attr.value);
+        }
+        else {
+          children[i][attr.name] = attr.value;
+          INDIvp[`${name}.${attr.name}`] = attr.value;
+        }
+      }
+
+      // Text values are in their own separate child node
+      if (child.firstChild ) {
+        var val = child.firstChild.nodeValue;
+        if (isnum) {
+          INDIvp[name] = parseFloat(val.trim());
+          children[i].value = INDIvp[name];
+        }
+        else if (isblob) {
+          // Clean base64
+          INDIvp[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); 
+        }
+        else {
+          INDIvp[name] = val.trim();
+          children[i].value = INDIvp[name];
+        }
+      }
     }
+    else {
+      INDIvp[name] = "";
+    }
+    INDIvp.values = children;
+    i++;
+  }
 
-
-
-	childObjs = []
-	var jj=0;
-    for (var c = 0; c < xml.childNodes.length; c++) 
-		{
-			var child = xml.childNodes[c];
-			var name = $(child).attr("name");
-			if (name != undefined) 
-			{
-				childObjs[jj] = {};
-				for (var i = 0; i < child.attributes.length; i++) 
-				{
-					var a = child.attributes[i];
-					if (isnum && (a.name=="step" || a.name=="min" || a.name=="max"))
-					{
-						childObjs[jj][a.name] = parseFloat(a.value);
-						map[name + "." + a.name] = parseFloat(a.value);
-					}
-					else
-					{
-						childObjs[jj][a.name] = a.value;
-						map[name + "." + a.name] = a.value;
-					}
-				}
-
-					// text values are in their own separate child node
-				if (child.firstChild != undefined) 
-				{
-				var val = child.firstChild.nodeValue;
-				if (isnum)
-				{
-						map[name] = parseFloat(jQuery.trim(val));
-						childObjs[jj].value = map[name];
-				}
-				else if (isblob)
-				{
-						map[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); // clean base64
-
-				}
-				else
-				{
-						map[name] = jQuery.trim(val);
-						childObjs[jj].value = map[name];
-				}
-
-				} 
-				else
-					map[name] = "";
-				map.values = childObjs;
-				jj++;
-		}
-	}
-
-    return map;
+  return INDIvp;
 }
 
+const updateProperties = (xml_text) => {
+  /* Parses xml for for callbacks
 
-/*
- * Private function which fires callbacks interested in the given received INDI messages.
- * N.B. the given text can be a fragment or contain more than one complete document.
- */
-var partial_doc = '';                                   // accumulate xml in pieces
-var start_xml_re = /<.e[twf]\S*Vector/;                 // accept <set <new <def <get
-function updateProperties(xml_text) {
-    // append next chunk
-    if (xml_text == undefined)
+  Description
+  -----------
+  Function which fires callbacks interested in the given received INDI messages.
+  The given text can be a fragment or contain more than one complete document.
+
+  Arguments
+  ---------
+  xml_text : xml text from indi
+
+  Returns
+  -------
+  None
+  */
+  if (!xml_text) {
+    return;
+  }
+  // Append next chunk
+  partial_doc += xml_text; 
+
+  // Process any/all complete INDI messages in partial_doc
+  while (true) {
+    // Find first opening tag, done if none
+    partial_doc = scrapeMessages(partial_doc);
+
+    var start_match = XML_START_REGEX.exec(partial_doc);
+
+    if (!start_match || start_match.index < 0) {
+      return;
+    }
+
+    // Find next matching closing tag, done if none
+    // [0] is the matched string
+    var end_xml_str = `${start_match[0].replace("<", "</")}>`; 
+    var end_idx = partial_doc.indexOf(end_xml_str, start_match.index);
+    if (end_idx < 0) {
+      return;
+    }
+    var end_after_idx = end_idx+end_xml_str.length;
+
+    // Extract property xml and remove from partial_doc
+    var xml_doc = partial_doc.substring(start_match.index, end_after_idx);
+			
+    partial_doc = partial_doc.substring(end_after_idx);
+    
+    try {
+      const parser = new DOMParser();
+      var dom = parser.parseFromString(xml_doc, "application/xml");
+
+      // I think I need to filter out the first tag name
+      // Only one vector comes in per xml
+      var root_node = dom.documentElement; // Root node
+      var root_name = root_node.nodeName; // Root name
+      var device = root_node.getAttribute("device");
+      var name = root_node.getAttribute("name");
+      // Check if root name is in list of indi_types
+      if (!indi_types.split(', ').includes(root_name)) {
+        console.warn(`Bad type: ${root_name}`);
         return;
-    // console.log(partial_doc.length + " + " + xml_text.length);
-    partial_doc += xml_text; 
+      }
+      
+      /*
+      // https://www.reddit.com/r/javascript/comments/4xcown/why_are_there_empty_textnodes_in_the_dom/
+      var child_nodes = root_node.children; // Keeps out empty text nodes
+      for (var i=0; i<child_nodes.length; i++) {
+        console.log(child_nodes[i])
+      } 
+      */
 
-    // process any/all complete INDI messages in partial_doc
-    while (true) 
-		{
-        
-        // find first opening tag, done if none
-        partial_doc = scrapeMessages(partial_doc)
-        var start_match = start_xml_re.exec(partial_doc);
-        if (start_match == undefined || start_match.index < 0)
-            break;
-        // console.log('start at ' + start_match.index + " with " + start_match[0]);;
+      // Gets function from handleProperty callback in client.html
+      // If property doesn't exist specified then use general
+      /*
+      The rest of this was in a jquery each function and I don't know why because only one xml payload is delivered at a time. Maybe it was designed for multiple in the beginning then converted. For example, if there were more than one root node then this would only go over the first one. Keep this in mind if an error occurs during this part. That could be the fix.
+      */
+      var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`];
 
-        // find next matching closing tag, done if none
-        var end_xml_str = start_match[0].replace("<", "</") + ">";      // [0] is the matched string
-        var end_idx = partial_doc.indexOf(end_xml_str, start_match.index);
-        if (end_idx < 0)
-            break;
-        var end_after_idx = end_idx+end_xml_str.length;
-        // console.log('end at ' + end_after_idx + " with " + end_xml_str);
-
-        // extract property xml and remove from partial_doc
-        var xml_doc = partial_doc.substring(start_match.index, end_after_idx);
-				
-
-					
-        partial_doc = partial_doc.substring(end_after_idx);
-				
-
-        // parse and spring callback if anyone interested
-        try 
-				{
-					// console.log(xml_doc);
-			    // xml_doc = xml_doc.replace(/[^A-Za-z0-9_<>/ ='":-.\n]/g, '');
-					$(gTypestr, $.parseXML(xml_doc)).each(function() {
-						// console.log("parse ok. length = " + xml_doc.length);
-						// handy device and name
-						var dev = $(this).attr('device');
-						var nam = $(this).attr('name');
-
-						// call callbacks interested in this property
-						// console.log (dev + "." + nam);
-
-
-						var cb = setPropertyCallbacks[dev+'.'+nam] || setPropertyCallbacks[dev+'.*'];
-						if (cb) 
-						{
-							//hack for pyindi style map
-							if( typeof doLess == "undefined")
-								var map = flattenIndi(this);
-							else
-								var map = flattenIndiLess(this);
-							cb(map);
-
-							if (map["message"] && typeof showMapMessage != 'undefined')
-							{
-								showMapMessage (map);
-							}
-						}
-          });
-				}
-        catch(e) 
-				{
-					console.log ('Parse fail', e);
-					throw e
-					// console.log ('Parse fail:\n' + xml_doc);
-        }
+      if (callback) {
+        var INDIvp = flattenIndiLess(root_node);
+        callback(INDIvp);
+      }
     }
+    catch (e) {
+      console.warn(`Parse failed: ${e}`);
+      return;
+    }
+  }
+
+  return;
 }
 
-var msg_xml_re = /<message\s+.*\/>.*/g;
-function scrapeMessages(part)
-{				
-    try
-    {
-        var cp_part = part
-        while((msg_match = msg_xml_re.exec(part)) !== null)
-        {
-            //TODO: We should check for device here.
-            if(typeof showMessage != 'undefined')
-            {
-                let ele = $.parseXML(msg_match[0]).childNodes[0];
-                let msg = ele.attributes["message"].textContent;
-                let timestamp = ele.attributes["timestamp"].textContent;
-                showMessage(msg, timestamp)
-            }
-            cp_part = cp_part.replace(msg_match[0], '')
-            //TODO remove xml element from partial_doc
-        }
-    }
-    catch(e)
-    {
-        console.log("Trouble parsing message", e)
-    }
-    return cp_part
+const scrapeMessages = (partial_doc) => {
+  /* Parses xml for for messages
 
+  Description
+  -----------
+  Function that scrapes the incoming xml for messages and prints to console if 
+  INDI_DEBUG is true.
+
+  Arguments
+  ---------
+  partial_doc : xml text from indi
+
+  Returns
+  -------
+  cp_partial_doc : copy of partial doc put in
+  */
+  try {
+    var cp_partial_doc = partial_doc;
+
+    while ((match = XML_MESSAGE_REGEX.exec(partial_doc))) {
+      //TODO: We should check for device here.
+      // Parse match
+      const parser = new DOMParser();
+      var dom = parser.parseFromString(match, "application/xml");
+      var root_node = dom.documentElement; // Root node
+
+      var msg = root_node.getAttribute("message");
+      
+      var msgprefix = "INDI message: "
+      showmsg(`${msgprefix}${msg}`);
+
+      // Removes message from xml
+      cp_partial_doc = cp_partial_doc.replace(match[0], "")
+    }
+  }
+  catch (e) {
+    console.warn(`Trouble parsing message: ${e}`);
+  }
+  return cp_partial_doc;
+}
+
+const showmsg = (msg) => {
+  /* Prints to console if INDI_DEBUG is true */
+  if (INDI_DEBUG) {
+    console.debug(msg);
+  }
+
+  return;
 }
