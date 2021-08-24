@@ -8,14 +8,23 @@
 		<link rel="shortcut icon" type="image/png" sizes="32x32" href="">
 		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
 		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
+		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
 		<title>pyINDI</title>
 		<!-- Load pyINDI scripts -->
-		<script src="/indi/static/indi.js"></script>
-		<script src="/indi/static/utility.js"></script>
-		<script src="/indi/static/maps-indi.js"></script>
+		<script src="/indi/static/js/indi.js"></script>
+		<script src="/indi/static/js/maps-indi.js"></script>
+		<script src="/indi/static/js/custom.js"></script>
 		<!-- Load pyINDI styling -->
-		<link rel="stylesheet" href="/indi/static/indi.css">
+		<link rel="stylesheet" href="/indi/static/css/indi.css">
+		<!-- Custom GUI styling -->
+		<link rel="stylesheet" href="/indi/static/css/custom.css">
 		<script>
+			/* Constants */
+			const CUSTOM_GUI = false;
+
+			/* Globals */
+			var available = {} // Available elements to use for custom gui
+
 			const main = () => {
 				/* Runs on load
 				
@@ -32,10 +41,37 @@
 				-------
 				None
 				*/
+				CUSTOM_GUI && console.log('Custom gui selected')
 				start = new Date()
 				imgs = []
 
 				setPropertyCallback( "{{ device_name }}.*", handleProperty );
+			}
+
+			const updateAvailable = (INDIvp, omit=false) => {
+				/* Updates hash table of available vectors
+
+				Description
+				-----------
+				This function updates the available vectors to use when building
+				the gui or custom gui. The indentifier is built using the device 
+				name and the name because the name is unique per device. I wanted to use a group to generalize it more, however when not a "def" then the
+				group is not included. This works out though because we can narrow down
+				more of what to exclude.
+
+				Arguments
+				---------
+				INDIvp : Object that contains all information about the indi property
+				omit   : If true, stores the value as false to omit from gui
+
+				Returns
+				-------
+				None
+				*/
+				var identifier = `${INDIvp.device}.${INDIvp.name}`;
+				available[identifier] = omit ? false : true;
+
+				return;
 			}
 
 			const handleProperty = (INDIvp) => {
@@ -47,6 +83,11 @@
 				{{ device_name }} is received. This is where users should modify the
 				code to append to specific objects.
 
+				If wanting to use a custom GUI, enable in the configuration and use 
+				appendTo for each grouping. If you assign the group to a specific 
+				location, all of the nested properties will populate in the group 
+				location.
+
 				Arguments
 				---------
 				INDIvp   : Object that contains all information about the indi property
@@ -56,11 +97,43 @@
 				None
 				*/
 				// If definition, create new group and device if needed
+
+				/*
+				If we want a custom gui, we need to build the html below in <body>.
+				In that, we should use a data-attribute so when a new INDIvp comes
+				in, we try to find the data-attribute. To start off, lets only use the
+				group for custom positioning because all children will automatically
+				be built there. After, we can focus on skipping group and only doing
+				the vectors. 
+				*/
 				if (INDIvp.op === "def") {
-					var device = newDevice(INDIvp);
-					var group = newGroup(INDIvp);
+					if (!CUSTOM_GUI) {
+						var device = newDevice(INDIvp);
+						var group = newGroup(INDIvp);
+
+						// Update
+						updateAvailable(INDIvp);
+					}
+					else {
+						// Get the element to build the new group in
+						appendToSelector = `[data-gui="${INDIvp.device}.${INDIvp.group}"]`;
+						var appendTo = document.querySelector(appendToSelector);
+
+						// If the placement doesn't exist, issue to console and return
+						if (!appendTo) {
+							console.debug(`Skipping ${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
+							updateAvailable(INDIvp, omit=true);
+							return;
+						}
+						var group = newGroup(INDIvp, appendTo);
+						updateAvailable(INDIvp);
+					}
 				}
-				
+				// Build properties
+				if (!available[`${INDIvp.device}.${INDIvp.name}`]) {
+					return;
+				}
+
 				switch (INDIvp.metainfo) {
 					case "nvp":
 						ele = newNumber(INDIvp);
@@ -81,8 +154,10 @@
 			}
 		</script>
 	</head>
-	<body onload=main()>
+	<body>
 		<!-- Use this area to build custom GUIs and map in callback -->
+		<div data-gui="Dome Simulator.Main Control"></div>
 	</body>
+	<script>document.body.addEventListener("load", main());</script>
 </html>
 

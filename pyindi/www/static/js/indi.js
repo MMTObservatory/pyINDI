@@ -14,7 +14,7 @@ const INDISTATES = {
 const INDISWRULES = {
 	"OneOfMany": "radio",
 	"AtMostOne": "radio",
-	"AnyofMany": "checkbox"
+	"AnyOfMany": "checkbox"
 }
 
 /* BUILDERS
@@ -94,15 +94,35 @@ const buildGroup = (INDIvp) => {
 	div.setAttribute("group", INDIvp.group);
 	div.classList.add("INDIgroup");
 
+	// Build icon for min/max
+	// TODO do we want this when custom-gui?
+	var i = document.createElement("i");
+	i.classList.add("fas", "fa-minus-circle", "minmax"); // fontawesome
+
+	// Handle the minimize and maximize button click
+	i.addEventListener("click", (event) => {
+		if (event.target.classList.contains("fa-minus-circle")) {
+			event.target.classList.add("fa-plus-circle");
+			event.target.classList.remove("fa-minus-circle");
+		}
+		else {
+			event.target.classList.add("fa-minus-circle");
+			event.target.classList.remove("fa-plus-circle");
+		}
+		// Next sibling is the p so go to next
+		let nextSibling = event.target.nextElementSibling.nextElementSibling;
+		hide(nextSibling);
+	})
+  
 	// Build the title for group
 	var p = document.createElement("p");
-
 	p.textContent = INDIvp.group;
 	p.classList.add("IGroup_header");
 
 	// TODO Add min/max button toggle to hide group
 
 	// Append all
+	div.appendChild(i);
 	div.appendChild(p);
 
 	return div;
@@ -440,7 +460,7 @@ const newDevice = (INDIvp, appendTo=null) => {
 
 	// If vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new device: ${INDIvp.device}`);
+		console.debug(`Creating new device=${INDIvp.device}`);
 
 		// Doesn't exist, build the section and add attributes and classes
 		var vphtmldef = buildDevice(INDIvp);
@@ -473,7 +493,7 @@ const newGroup = (INDIvp, appendTo=null) => {
 
 	// If vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new group: ${INDIvp.group}`);
+		console.debug(`Creating new group=${INDIvp.device}.${INDIvp.group}`);
 
 		// Doesn't exists, build and add attributes and classes
 		var vphtmldef = buildGroup(INDIvp);
@@ -514,7 +534,7 @@ const newText = (INDIvp, appendTo=null) => {
 	
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new text: ${INDIvp.name}`);
+		console.debug(`Creating new text==${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
 
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildTexts(INDIvp, vphtmldef);
@@ -564,7 +584,7 @@ const newNumber = (INDIvp, appendTo=null) => {
 
 	// If the vpselector is empty, build
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new number: ${INDIvp.name}`);
+		console.debug(`Creating new number==${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
 
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildNumbers(INDIvp, vphtmldef);
@@ -617,7 +637,7 @@ const newSwitch = (INDIvp, appendTo=null) => {
 	
 	// If empty, build property and switches
 	if (!document.querySelector(vpselector)) {
-		console.debug(`Creating new switch: ${INDIvp.name}`);
+		console.debug(`Creating new switch=${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
 
 		var vphtmldef = buildVector(INDIvp);
 		vphtmldef = buildSwitches(INDIvp, vphtmldef);
@@ -673,7 +693,7 @@ const newLight = (INDIvp, appendTo=null) => {
 
 	// If empty, build property and lights
 	if(!document.querySelector(vpselector)) {
-		console.debug(`Creating new light: ${INDIvp.name}`);
+		console.debug(`Creating new light=${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
 		var vphtmldef = buildVector(INDIvp);
 		
 		vphtmldef = buildLights(INDIvp, vphtmldef);
@@ -814,3 +834,13 @@ const updateSwitches = (INDIvp) => {
 		}
 	})
 };
+
+const hide = (nextSibling) => {
+	/* Toggles hiding and showing all siblings */
+	while (nextSibling) { // Returns null if no next sibling
+		// Toggle the hide class
+		nextSibling.classList.toggle("hide");
+		nextSibling = nextSibling.nextElementSibling;
+	}
+	return;
+}
