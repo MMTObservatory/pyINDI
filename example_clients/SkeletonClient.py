@@ -23,7 +23,7 @@ class Skeleton(INDIHandler):
 
     def get(self):
 
-        self.indi_render(Path.cwd()/"client.html", device_name="Dome Simulator")
+        self.indi_render(Path.cwd()/"client.html", device_name="Upper Dome")
 
 
 

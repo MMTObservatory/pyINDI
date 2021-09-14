@@ -28,8 +28,8 @@
   --black: #000;
 	--text-header: #616161;
 	--text-subheader: #424242;
-	--text-label: #212121;
-	--text-value: #616161;
+	--text-label: #424242;
+	--text-value: #212121;
 	--text-switch: #212121;
 	--text-switch-active: #FAFAFA;
 	--bg-input: #fff;
@@ -63,13 +63,16 @@
 	font-size: 1.25rem;
 	color: var(--text-header);
 	display: inline-block;
+	margin-bottom: 0;
+	margin-top: 0;
+}
+.ILightdiv {
 }
 .ILightlabel {
 	display: inline-block;
 	font-weight: 400;
 	line-height: 1.5;
 	text-align: center;
-	vertical-align: middle;
 	user-select: none;
 	border: 1px solid transparent;
 	padding: .25rem .5rem;
@@ -79,6 +82,7 @@
 	background-color: var(--muted);
 	margin: .25rem .125rem;
 	color: var(--text-switch);
+	min-width: 50px;
 }
 .ISwitchlabel {
 	display: inline-block;
@@ -98,6 +102,7 @@
 	margin: .25rem .125rem;
 	box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2);
 	color: var(--text-switch);
+	margin-right: .5rem;
 }
 .ISwitchlabel:hover {
 	background-color: var(--muted-dark);
@@ -154,7 +159,7 @@ fieldset {
 	padding-bottom: calc(.375rem + 1px);
 	float: left;
 	vertical-align: middle;
-	width: 12rem;
+	width: 14rem;
 	color: var(--text-label)
 }
 .IText_ro {
@@ -276,4 +281,18 @@ When floating child in parent, the parent ignores them.
 
 .hide {
 	display: none;
+}
+
+.blinking-busy {
+  animation: blinker 1.5s linear infinite;
+}
+
+.blinking-alert {
+  animation: blinker 0.5s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
 }

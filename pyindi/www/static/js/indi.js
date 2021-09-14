@@ -11,6 +11,14 @@ const INDISTATES = {
 	"Unknown": "var(--indistate-unknown)"
 };
 
+const INDIBLINKS = {
+	"Idle" : null,
+	"Ok": null,
+	"Busy": "blinking-busy",
+	"Alert": "blinking-alert",
+	"Unknown": null
+}
+
 const INDISWRULES = {
 	"OneOfMany": "radio",
 	"AtMostOne": "radio",
@@ -94,6 +102,10 @@ const buildGroup = (INDIvp) => {
 	div.setAttribute("group", INDIvp.group);
 	div.classList.add("INDIgroup");
 
+	// Build header group
+	var headerDiv = document.createElement("div");
+	headerDiv.classList.add("IGroupdiv");
+
 	// Build icon for min/max
 	// TODO do we want this when custom-gui?
 	var i = document.createElement("i");
@@ -110,8 +122,13 @@ const buildGroup = (INDIvp) => {
 			event.target.classList.remove("fa-plus-circle");
 		}
 		// Next sibling is the p so go to next
-		let nextSibling = event.target.nextElementSibling.nextElementSibling;
-		hide(nextSibling);
+		//let nextSibling = event.target.nextElementSibling.nextElementSibling;
+		//hide(nextSibling);
+
+		let fieldset = document.querySelector(`fieldset[group="${INDIvp.group}"]`);
+		console.log(fieldset);
+		hide(fieldset);
+
 	})
   
 	// Build the title for group
@@ -122,8 +139,9 @@ const buildGroup = (INDIvp) => {
 	// TODO Add min/max button toggle to hide group
 
 	// Append all
-	div.appendChild(i);
-	div.appendChild(p);
+	headerDiv.appendChild(i);
+	headerDiv.appendChild(p);
+	div.appendChild(headerDiv);
 
 	return div;
 };
@@ -404,7 +422,11 @@ const buildLights = (INDIvp, appendTo) => {
 	vphtmldef : HTML object that was modified to add new properties
 	*/
 	INDIvp.values.forEach((lp) => {
+		var div = document.createElement("div"); // To store each light in
 		var label = document.createElement("label");
+
+		// Setup div with class to modify width
+		div.classList.add("ILightdiv");
 
 		//label.id = lp.label; This was in the pyindi code, probably a bug
 		label.classList.add("ILightlabel");
@@ -413,7 +435,8 @@ const buildLights = (INDIvp, appendTo) => {
 		label.style.backgroundColor = indistate2css(lp.value);
 
 		// Append all
-		appendTo.appendChild(label);
+		div.appendChild(label)
+		appendTo.appendChild(div);
 	});
 
 	return appendTo;
@@ -554,7 +577,8 @@ const newText = (INDIvp, appendTo=null) => {
 		var tpselector = `div.IText_div[INDIname="${tp.name}"] textarea.IText_ro`;
 		var ro = document.querySelector(`${vpselector} ${tpselector}`);
 
-		ro.textContent = tp.value;
+		// Handle null content
+		ro.textContent = isNull(tp.value) ? "" : tp.value
 	})
 
 	// Update LED color on indistate
@@ -715,6 +739,21 @@ const newLight = (INDIvp, appendTo=null) => {
 
 		// Update the color of the light depending on indistate
 		light.style.backgroundColor = indistate2css(lp.value);
+
+		// Assign class for blinking
+		let blink = indistate2blink(lp.value);
+		if (!blink) {
+			// No blink so remove 
+			light.classList.remove("blinking-busy", "blinking-alert")
+		}
+		else if (blink === "blinking-busy") {
+			light.classList.remove("blinking-alert");
+			light.classList.add(blink)
+		}
+		else if (blink === "blinking-alert") {
+			light.classList.remove("blinking-busy");
+			light.classList.add(blink)
+		}
 	});
 
 	// Update LED color on indistate
@@ -749,6 +788,16 @@ const indistate2css = (INDIvp_state) => {
 	}
 	
 	return state
+}
+
+const indistate2blink = (INDIvp_state) => {
+	/* Converts indi state to blinking for lights */
+	var blink = null;
+	if (INDIBLINKS.hasOwnProperty(INDIvp_state)) {
+		blink = INDIBLINKS[INDIvp_state];
+	}
+
+	return blink
 }
 
 const indisw2selector = (INDIvp_rule) => {
@@ -843,4 +892,8 @@ const hide = (nextSibling) => {
 		nextSibling = nextSibling.nextElementSibling;
 	}
 	return;
+}
+
+const isNull = (value) => {
+	return (value === undefined || value === null);
 }

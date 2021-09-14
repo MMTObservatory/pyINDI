@@ -39,7 +39,7 @@ if Path("/src").exists():
                         level=logging.DEBUG)
 else:
     logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'{timestr}.log',
+                        filename=f'/home/mtnops/.mtnops/{timestr}.log',
                         level=logging.DEBUG)
 
 
@@ -468,7 +468,7 @@ class IProperty:
             self.state = val
         elif isinstance(self, ISwitch):
             self.state = val
-        elif isinstance(self, IBlob):
+        elif isinstance(self, IBLOB):
             self.data = val
         else:
             raise TypeError(f"""
@@ -1119,7 +1119,7 @@ class device(ABC):
 
 
         if prop.device != self._devname:
-            raise ValueError(f"INDI prop {prop.name} device does not match this device.")
+            raise ValueError(f"INDI prop {prop.name} device does not match this device, {prop.device} {self._devname}")
 
         self.props.append(prop)
         # Send it to the indiserver

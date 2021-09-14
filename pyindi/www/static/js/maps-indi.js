@@ -169,6 +169,7 @@ const setindi = (...theArgs) => {
   None
   */
   // Sanity check
+  console.log(theArgs);
   if (theArgs.length < 4 || (theArgs.length % 2) != 0) {
     alert(`Error! Malformed setindi(${theArgs})\nPlease contact support.`);
     return;
@@ -247,13 +248,22 @@ const setPropertyCallback = (property, callback) => {
   var device = devname[0];
   var name = devname[1];
   var getprop = `<getProperties version="1.7" device="${device}"`;
+  //var getprop = `<getProperties version="1.7" `;
+
+  /* if (device !== "*") {
+    getprop += `device="${device}" `;
+  }
   
-  if (name != '*') {
-    getprop += ` name="${name}"`;
+  if (device !== "*" && name !== '*') {
+    getprop += `name="${name}" `;
+  } */
+
+  if (name !== '*') {
+    getprop += ` name="${name}" `;
   }
 
-  getprop += ` />\n`;
-
+  getprop += `/>\n`;
+  console.log(getprop)
   // Send over ws
   wsSend(getprop);
 
