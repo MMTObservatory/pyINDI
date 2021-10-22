@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 
 import sys
 from pathlib import Path
@@ -65,7 +65,7 @@ class tester( INDIDevice.device ):
         blob = self.IUFind( name="blobvec", device="mydev" ).bp[0]
 
         try:
-            cap = cv2.VideoCapture( "http://webcam.mmto.arizona.edu/mjpg/video.mjpg" )
+            cap = cv2.VideoCapture( "http://webcam3.mmto.arizona.edu/mjpg/video.mjpg" )
             ret, frame = cap.read()
             im = Image.fromarray(frame)
             bytedata = io.BytesIO()

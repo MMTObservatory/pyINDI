@@ -26,17 +26,42 @@ class SkeletonDevice(device):
         self.buildSkeleton("skeleton.xml")
 
     def ISNewText(self, device, name, names, values):
-        """Handle new text values"""
+        """A new text vector has been updated from 
+        the client. In this case we update the text
+        vector with the IUUpdate function. In a real
+        device driver you would probably want to do 
+        something more than that. 
+
+        This function is always called by the 
+        mainloop
+        """
+
         self.IDMessage(f"Updating {name} text")
         self.IUUpdate(device, name, names, values, Set=True)
 
     def ISNewNumber(self, device, name, names, values):
 
-        """Handle new number values"""
+        """A numer vector has been updated from the client.
+        In this case we update the number with the IUUpdate
+        function. In a real device driver you would want to 
+        do something more than this. 
+
+        This function is always called by the 
+        mainloop
+        """
+
         self.IDMessage(f"Updating {name} number")
         self.IUUpdate(device, name, names, values, Set=True)
 
     def ISNewSwitch(self, device, name, names, values):
+
+        """A numer switch has been updated from the client.
+        This function handles when a new switch
+        
+        This function is always called by the 
+        mainloop
+        """
+
 
         self.IDMessage(f"{device}, {name=='CONNECTION'}, {names}, {values}")
 
@@ -62,7 +87,15 @@ class SkeletonDevice(device):
 
     @device.repeat(1000)
     def do_repeate(self):
+
         self.IDMessage('Running repeat function')
+
+        """
+        This function is called after the first get
+        properties is initiated and then every 1000ms 
+        after that. 
+        """
+
         conn = self.__getitem__("CONNECTION")
         if conn["CONNECT"].value == 'Off':
             return

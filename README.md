@@ -3,46 +3,84 @@ Pure Python 3.7+ implementation of INDI for client and server
 
 [![Powered by AstroPy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org)
 
+# Instrument Neutral Distributed Interface (INDI) Overview
+At it's core, INDI is a small set of xml definitions that are designed to be passed between a set of devices and clients.  Those definitions are described in detail by INDI's create Elwood Downey in the [INDI White Paper](http://www.clearskyinstitute.com/INDI/INDI.pdf). You can also find the DTD file in this repo [here](./pyindi/data). The passing of the XML between the device drivers and clients is almost always done by a server called indiserver
+
+
+[indilib](https://indilib.org) is a c++ implementation of the INDI protocol with support for other languages (including python) via swig. It has a massive following in the astronomy community with lots of clients and devices/drivers. 
+
+This repository aims to be a pure python implementation of the INDI protocol. It uses the indilib naming scheme for many of its methods and variable. 
+
+
+# Install
+
+```
+python setup.py install
+```
+
+# Device Drivers
+
+Device drivers are usually run as an argument to the indiserver program. Ubuntu users can get the indiserver program by adding the indilib ppa and installing indi bin
+
+```bash
+sudo apt-add-repository ppa:mutlaqja/ppa
+sudo apt-get update
+
+sudo apt install indi-bin
+```
+
+```
+indiserver <path to executable device driver>
+```
+
+To learn how to build a device driver with this repo, look in [example_drivers](example_drivers/) directory. The [skeleton.py](example_drivers/skeleton.py) shows how to build a device driver from a skeleton xml file. To run this driver with indiserver type:
+
+
+```
+cd example_drivers
+
+# the -vv argument gives you verbose output
+indiserver -vv ./skeleton.py
+```
+
+This will start the indiserver with the skeleton driver running on port 7624. You can see all the output from indiserver by using netcat:
+
+```
+echo "<getProperties version='1.7'>" | nc localhost 7624
+```
+
+This should print the INDI xml. 
+
+
+
 # Client
 
-## Simple Webclient
-If all you want to do is recv and send indi properties from a webpage, see `simple_webclient.py` in the example_clients.py. With that script you can give the path to the html file you wish to use and you are off. If you had the page `indi.html` in your current directory you could simply use the command line:
+The best way to get started with a client is to use the [SkeletonClient.py example](example_clients/SkeletonClient.py). This is made to match [skeleton.py](example_drivers/skeleton.py) driver but should also work with other device drivers. 
+
+To run this client:
 
 ```
-python simple_webclient.py indi.html
+cd example_clients/
+python SkeletonClient.py
 ```
 
-In order to access indi via the webclient you will need to include a few things in the head tag:
+This will run the webserver and client.
 
-```html
-        <script src="//code.jquery.com/jquery-1.12.4.js"></script>
-	    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+The root url is serving the [client.html page](example_clients/client.html). 
 
-    	<!--These libraries are built with pyINDI
-	    and are available at /static/ using
-    	pyINDI's client libarary.-->
-	
-	    <link rel="stylesheet" href="/static/indi/indi.css">
-    	<script src="/static/indi/indi.js"></script>
-	    <script src="/static/indi/utility.js"></script>
-	    <script src="/static/indi/maps-indi.js"></script>
-```        
-you can also include this by adding 
-```
-{% autoescape None %}
-{{ indihead }}
-```
-inside the head tag of you html.
+## client.html
 
-The above scripts give you access to the functions:
-- setPropertyCallback
-- setINDI
-- showMapMessage
+client.html is a good example of how to interact with the device driver with the [maps-indi](pyindi/www/static/maps-indi.js) api. This api gives you access to three functions. 
+
+1. setPropertyCallback
+This function maps a callback to an incoming indi vector property when it is recieved from the indiserver/device driver. This can either be a property definition (def) or an update (set). 
+
+2. setINDI
+This function sends an updated INDI vector property to the server/device driver from your webpage. 
+
+3. showMapMessage
+This function is called when the indiserver/device driver sens an INDI message. client.html simply prints to console.log. A dialog box on the webpage would be a better use of this funciton. 
+
     
 
- This is most of what you need to interact with the INDI driver.
- [See this link for an example](https://github.com/MMTObservatory/pyINDI/blob/master/example_clients/client.html)
-
-## Slightly More Complex Webclient
-You can also build your own tornado app. You would have to model it on the `INDIWebclient` class in `client.py`
 

@@ -798,7 +798,7 @@ class device(ABC):
 
     Either way you should use the mainloop member
     of this class to utilize concurrency. With IO 
-    bound calls use the many available futures/task
+    bound calls, use the many available futures/task
     methods. With CPU bound you should use 
     self.mainloop.run_in_executor to run tasks 
     in a process pool. 
@@ -1070,6 +1070,7 @@ class device(ABC):
 
         pass
 
+
     def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
         """
         create a callback to be executed after a delay.
@@ -1091,6 +1092,12 @@ class device(ABC):
             await asyncio.sleep(1.0)
 
     def buildSkeleton(self, skelfile):
+        """
+        Build properties from a skeleton File.. 
+        args:
+            skelfile: string path to skeleton
+            file.
+        """
 
         with open(skelfile) as skfd:
             xmlstr = skfd.read()
@@ -1114,6 +1121,7 @@ class device(ABC):
                 raise
             self.IDDef(ivec)
 
+
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
             "Device driver must \
@@ -1121,6 +1129,8 @@ class device(ABC):
 
     def IUFind(self, name, device=None, group=None):
         """
+        Find and return the vector property by name. 
+
         Modeled after the IUFindXXX set of equations
         [see here](http://www.indilib.org/api/group__\
                 dutilFunctions.html#gac8609374933e4aaea5a16cbafcc51ce2)
@@ -1141,6 +1151,16 @@ class device(ABC):
         raise ValueError(f"Could not find {device}, {name} in props")
 
     def IUUpdate(self, device, name, values, names, Set=False):
+        """
+        Update the indi vector property. It looks up 
+        the indi vector by device name and property name. 
+        Args:
+            device -> name of the device
+            name -> name of the vector property
+            values -> list of new values
+            names -> list of names of the property to be updated
+        """
+
         vp = self.IUFind(name=name, device=device)
 
         for nm, val in zip(names, values):
