@@ -656,7 +656,8 @@ class ISwitchVector(IVectorProperty):
                  perm: IPerm,
                  timeout: float = 0,
                  label: str = None,
-                 group: str = None):
+                 group: str = None, 
+                 timestamp: str = None):
         """
          ## Arguments:
          * np: List of INumber properties in the INumberVector
@@ -676,7 +677,7 @@ class ISwitchVector(IVectorProperty):
 
         if value not in list(ISState):
             raise ValueError(
-                "ISwitch value must be in 'On' or 'Off' not {value}")
+                f"ISwitch value must be in 'On' or 'Off' not {value}")
 
         # If its one of many we need to set the
         # other items.
@@ -741,7 +742,8 @@ class IBLOBVector(IVectorProperty):
                  perm: IPerm,
                  label: str = None,
                  timeout: str = None,
-                 group: str = None):
+                 group: str = None, 
+                 timestamp: str = None):
         """
          ## Arguments:
          * np: List of INumber properties in the INumberVector
@@ -807,6 +809,7 @@ class device(ABC):
     """
 
     _registrants = []
+    _NewPropertyMethods = {}
 
     def __init__(self, loop=None, config=None, name=None):
 
@@ -957,7 +960,7 @@ class device(ABC):
         while self.running:
             output = await self.outq.get()
 
-            logging.debug(output)
+            logging.debug(output.decode())
 
             self.writer.write(output)
             await self.writer.drain()
@@ -986,7 +989,10 @@ class device(ABC):
                 logging.debug(f"Could not parse xml {error} {inp}")
                 continue
 
-            logging.debug(etree.tostring(xml, pretty_print=True))
+            logging.info("Parsed data from client")
+            logging.info(etree.tostring(xml, pretty_print=True).decode())
+            logging.info("End client data")
+
             if xml.tag == "getProperties":
 
                 if "device" in xml.attrib:
@@ -1014,7 +1020,21 @@ class device(ABC):
                         initiate_callback()
 
                     self._once = False
+            
+            elif xml.attrib['name'] in self._NewPropertyMethods:
+                names = [ele.attrib["name"] for ele in xml]
+                if "Number" in xml.tag:
+                    values = [float(ele.text.strip()) for ele in xml]
+                else:
+                    values = [str(ele.text.strip()) for ele in xml]
 
+                self._NewPropertyMethods[xml.attrib['name']](
+                        self,
+                        xml.attrib["device"],
+                        xml.attrib['name'],
+                        values,
+                        names
+                        )
 
             elif xml.tag == "newNumberVector":
 
@@ -1099,12 +1119,21 @@ class device(ABC):
             file.
         """
 
+        ok_tags = (
+                "defSwitchVector",
+                "defTextVector",
+                "defNumberVector",
+                "defBLOBVector",
+                "defLightVector",
+                )
+
         with open(skelfile) as skfd:
             xmlstr = skfd.read()
             xml = etree.fromstring(xmlstr)
 
         for xml_def in xml.getchildren():
-            if xml_def.tag[:3] != "def":
+            if xml_def.tag not in ok_tags:
+                # Ignore anything not a vector definition.
                 continue
             properties = []
             for prop in xml_def.getchildren():
@@ -1178,18 +1207,19 @@ class device(ABC):
                                   implement ISGetProperties")
 
     def IDMessage(self, msg: str,
-                  timestamp: Union[str, datetime.datetime, None] = None):
+                  timestamp: Union[str, datetime.datetime, None] = None,
+                  msgtype: Union["INFO", "WARN", "DEBUG"]="INFO"):
 
         if type(timestamp) == datetime.datetime:
-            timestamp = timestamp.isoformat()
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
 
         elif timestamp is None:
-            timestamp = datetime.datetime.now().isoformat()
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-        xml = f'<message message="{msg}" '
+        xml = f'<message message="[{msgtype}] {msg}" '
         xml += f'timestamp="{timestamp}" '
-        xml += f'device="{self.name()}"> '
-        xml += '\n\n</message>'
+        xml += f'device="{self.name()}"/> '
+    
         self.outq.put_nowait(xml.encode())
         # self.writer.write(xml.encode())
 
@@ -1228,6 +1258,18 @@ class device(ABC):
         self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
 
         # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
+
+    @classmethod
+    def NewVectorProperty(cls, name: str):
+
+        def get_function(func: Callable):
+
+            cls._NewPropertyMethods[name] = func
+            return func
+
+        return get_function
+
+
 
     @classmethod
     def repeat(cls, millis: int):
