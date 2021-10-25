@@ -1005,8 +1005,11 @@ class device(ABC):
 
                 # maybe we should run this concurrently
                 # with gather. If it blocks this run loop
-                # it will be difficult to debug. 
-                await self.asyncInitProperties()
+                # it will be difficult to debug.
+                if "device" in xml.attrib:
+                    await self.asyncInitProperties(xml.attrib['device'])
+                else:
+                    await self.asyncInitProperties()
 
 
                 if self._once:
