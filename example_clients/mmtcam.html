@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+
+<html lang="en" >
+	<head>
+	<title>MMTCAM</title>
+	<script src="//code.jquery.com/jquery-1.12.4.js"></script>
+	<script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/vader/jquery-ui.css">
+
+
+	<!--These libraries are built with pyINDI
+	and are available at /static/ using
+	pyINDI's client libarary.-->
+	
+	<link rel="stylesheet" href="/indi/static/indi.css">
+	<script src="/indi/static/indi.js"></script>
+	<script src="/indi/static/utility.js"></script>
+	<script src="/indi/static/maps-indi.js"></script>
+
+	<!-- JS9 stuff-->
+	<link type="text/css" rel="stylesheet" href="/indi/static/js9/js9support.css">
+	<link type="text/css" rel="stylesheet" href="/indi/static/js9/js9.css">
+	<script type="text/javascript" src="/indi/static/js9/js9prefs.js"></script>
+	<script type="text/javascript" src="/indi/static/js9/js9support.min.js"></script>
+	<script type="text/javascript" src="/indi/static/js9/js9.min.js"></script>
+	<script type="text/javascript" src="/indi/static/js9/js9plugins.js"></script>
+
+
+	<script>
+
+		//This is a hack to change the behavior of maps-indi.js
+		doLess = true;
+		ALLMESSAGES = [];
+		function main()
+		{
+
+			start = new Date()
+			imgs = [];
+			GLOBALS = {
+				is_exposing:false
+			};
+
+
+			$("a#simbutton").on("click", function(event){
+				if($("a#simbutton").hasClass("active"))
+				{
+					setindi("Switch", "MmtcamDevice.SIMULATION", "OFF", 'On');
+					GLOBALS['is_simulation'] = false;
+					$("a#simbutton").removeClass("active");
+				}
+				else
+				{
+					setindi("Switch", "MmtcamDevice.SIMULATION", "ON", 'On');
+					GLOBALS['is_simulation'] = true;
+					$("a#simbutton").addClass("active");
+				}
+			})
+			
+			setPropertyCallback("{{ device_name }}.SIMULATION", function(map)
+			{
+				if(map.ON == "On")
+				{
+					$("a#simbutton").addClass("active");
+					GLOBALS['is_simulation'] = true;
+				}
+				else
+				{
+					$("a#simbutton").removeClass("active");
+					GLOBALS['is_simulation'] = false;
+				}
+						
+			})
+
+			$("a#connbutton").on("click", function(event){
+				if($("a#connbutton").hasClass("active"))
+				{
+					setindi("Switch", "MmtcamDevice.CONNECTION", "DISCONNECT", 'On', "CONNECT", "Off");
+					$("a#connbutton").removeClass("active");
+				}
+				else
+				{
+					setindi("Switch", "MmtcamDevice.CONNECTION", "CONNECT", 'On', "DISCONNECT", "Off");
+					$("a#connbutton").addClass("active");
+				}
+			})
+			
+			setPropertyCallback("MmtcamDevice.CONNECTION", function(map)
+			{
+				if(map.CONNECT == "On")
+				{
+					$("a#connbutton").addClass("active");
+				}
+				else
+				{
+					$("a#connbutton").removeClass("active");
+				}
+						
+			})
+
+			
+			$("a#overscan_button").on("click", function(event){
+				if($("a#overscan_button").hasClass("active"))
+				{
+					setindi("Switch", "MmtcamDevice.OVERSCAN", "ON", 'Off', "OFF", "On");
+					$( "a#overscan_button" ).removeClass( "active" );
+				}
+				else
+				{
+					setindi( "Switch", "MmtcamDevice.OVERSCAN", "ON", 'On', "OFF", "Off" );
+					$( "a#overscan_button" ).addClass( "active" );
+				}
+			})
+			
+			setPropertyCallback("MmtcamDevice.OVERSCAN", function(map)
+			{
+				if(map.ON == "On")
+				{
+					$("a#overscan_button").addClass("active");
+				}
+				else
+				{
+					$("a#overscan_button").removeClass("active");
+				}
+						
+			})
+
+			setPropertyCallback("MmtcamDevice.OVERSCAN", function(map)
+			{
+				if(map.ON == "On")
+				{
+					$("a#overscan_button").addClass("active");
+				}
+				else
+				{
+					$("a#overscan_button").removeClass("active");
+				}
+						
+			})
+
+			setPropertyCallback("MmtcamDevice.ROI", function(map)
+			{
+				const indi2id = {
+					START_ROW:"startx_show",
+					START_COL:"starty_show",
+					NROWS:"rows_show",
+					NCOLS:"cols_show"
+				}
+				for(idx in map.values)
+				{
+					const nm = map.values[idx].name;
+					const newval = map.values[idx].value;
+
+					const foo = $("div#"+indi2id[nm]).text(newval);
+
+				}
+
+				
+
+			})
+
+			$("button#setroi").on("click", function(event)
+			{		const id2indi = {
+					startx_input:"START_ROW",
+					starty_input:"START_COL",
+					rows_input:"NROWS",
+					cols_input:"NCOLS"
+				}
+				let name_vals = [];
+				let success = true;
+				$( ".roi-input" ).each(function(ii, inp)
+				{
+					
+					const valstr = $(inp).val();
+					const vid = $(inp).attr("id");
+					const value = parseInt( valstr );
+					if(value >= 0 && value <= 2048)
+					{
+						name_vals.push(id2indi[vid]);
+						name_vals.push(value);
+						$(inp).removeClass("bad-input");
+					}
+					else
+					{
+						success=false;
+						$(inp).addClass("bad-input");
+					}
+					if(success)
+					{
+						
+					}
+					
+
+					
+				});
+
+				if(success)
+				{
+					$('.roi-input').val("")
+
+					setindi("Number", "MmtcamDevice.ROI", ...name_vals);
+
+
+				}
+					
+			})
+
+			setPropertyCallback("MmtcamDevice.BINNING", function(map)
+			{
+				const indi2id = {
+					BINX:"binx_show",
+					BINY:"biny_show",
+				}
+				for(idx in map.values)
+				{
+					let id = indi2id[map.values[idx].name];
+					let val = map.values[idx].value;
+					$("div#"+id).text(val);
+				}
+
+			})
+
+
+
+			$("button#setbins").on("click", function(event)
+			{
+				const name2indi = {
+					binx_input:"BINX",
+					biny_input:"BINY"
+				};
+				let name_vals = [];
+				let success = true;
+				$("input.bin-input").each(function(ii, tag)
+				{
+					let id = $(tag).attr("id");
+					let value = $(tag).val();
+					value = parseInt(value)
+
+					if( value >=0 && value <= 6)
+					{
+						name_vals.push(name2indi[id]);
+						name_vals.push(value);
+						$(tag).removeClass("bad-input");
+
+					}
+					else
+					{
+						$(tag).addClass("bad-input");
+						success = false;
+					}
+				});
+				if(success)
+				{
+					$("input.bin-input").val("");
+					setindi("Number", "MmtcamDevice.BINNING", ...name_vals);
+				}
+
+
+			});
+
+
+			setPropertyCallback("MmtcamDevice.IMTYPE", function(map)
+			{
+				const indi2id = {
+					DARK:"dark_button",
+					OBJECT:"object_button",
+					FLAT:"flat_button"
+				};
+
+				for(idx in map.values)
+				{
+					let name = map.values[idx].name
+					let value = map.values[idx].value
+					if( value == "On")
+					{
+						$("a#"+indi2id[name]).addClass("active");
+					}
+					else
+					{
+						$("a#"+indi2id[name]).removeClass("active");
+					}
+				}
+			});
+
+			$("a.imtype").on("click", function(event)
+			{
+				const id2indi = {
+					dark_button: "DARK",
+					object_button: "OBJECT",
+					flat_button:	"FLAT"
+				}
+				let id = $(event.target).attr("id");
+				let name = id2indi[$(event.target).attr("id")];
+				let name_vals = [];
+				for(idx in id2indi)
+				{
+					name_vals.push(id2indi[idx]);
+					if( idx == id)
+					{
+						name_vals.push("On");
+					}
+					else
+					{
+						name_vals.push("Off");
+					}
+				}
+				setindi("Switch", "MmtcamDevice.IMTYPE", ...name_vals)
+
+
+			});
+
+			$("a#expose_button").on("click", function()
+			{
+				if(GLOBALS['is_exposing'])
+					return;
+				let exptime = $("input#exptime").val()
+				exptime = parseFloat(exptime)
+				if( isNaN(exptime))
+				{
+					return;
+				}
+				else if(exptime < 0)
+				{
+					return;
+				}
+
+				GLOBALS["exptime"] = exptime;
+				GLOBALS["exp_starttime"] = new Date();
+				GLOBALS["is_exposing"] = true;
+				
+				setindi("Number", "MmtcamDevice.EXPTIME", "EXPTIME", exptime);
+				setindi("Switch", "MmtcamDevice.EXPOSE", "EXPOSE", "On");
+
+				setTimeout(expose_status, 100);
+
+			})
+
+			function expose_status()
+			{
+				let now = new Date();
+				let overhead = 3.0
+				let secs_left = (now-GLOBALS["exp_starttime"])/1000.0;
+				let percent = 100*(secs_left/(GLOBALS["exptime"] + overhead) );
+				let red = percent;
+				let green = percent+10;
+				if (green > 100)
+				{
+					green=100;
+				}
+
+
+				if(percent < 100)
+				{
+					$("div#expose_container").css("background-image", "linear-gradient(to right, rgba(255, 0, 0, 0) "+red+"%, green "+green+"%)")
+					setTimeout(expose_status, 75);
+				}
+				
+			}
+
+			setPropertyCallback("MmtcamDevice.EXPTIMELEFT", function(map)
+			{
+				if(GLOBALS['is_exposing'])
+					return;
+				if(map.EXPTIMELEFT > 0.0)
+				{
+					GLOBALS['exptime'] = map.EXPTIMELEFT;
+					GLOBALS['is_exposing'] = true;
+					GLOBALS["exp_starttime"] = new Date();
+				}
+				expose_status()
+			});
+
+			setPropertyCallback("MmtcamDevice.FANMODE", function(map)
+			{
+
+				const indi2id = {
+					FanMode_Off:	"fanoff",
+					FanMode_Low:	"fanlow",
+					FanMode_Medium:	"fanmedium",
+					FanMode_High:	"fanhigh"
+				}
+				for(idx in map.values)
+				{
+					let nm = map.values[idx].name;
+					let val = map.values[idx].value;
+
+					
+					if(val == "On")
+						$("a#"+indi2id[nm]).addClass("active");
+					else
+						$("a#"+indi2id[nm]).removeClass("active");
+				}
+			});
+
+
+
+			$("a.fanmode").on("click", function(event)
+			{
+				const id2indi = {
+					"fanoff":"FanMode_Off",
+					"fanlow": "FanMode_Low",
+					"fanmedium": "FanMode_Medium",
+					"fanhigh": "FanMode_High"
+				};
+				let name_vals = [];
+				for(tagid in id2indi)
+				{
+					let indiname = id2indi[tagid];
+					name_vals.push(indiname);
+
+					if(tagid == $(event.target).attr("id"))
+						name_vals.push("On")
+					else
+						name_vals.push("Off")
+
+				}
+
+				setindi("Switch", "MmtcamDevice.FANMODE", ...name_vals);
+
+
+			});
+
+			setPropertyCallback("MmtcamDevice.COOLER", function(map)
+			{
+				if(map.ON == "On")
+				{
+					$("a#coolerbutton").addClass("active");
+				}
+				else
+				{
+					$("a#coolerbutton").removeClass("active");
+				}
+				
+			});
+
+			$("a#coolerbutton").on("click", function(event)
+			{
+				if($(event.target).hasClass("active"))
+				{
+					setindi("Switch", "MmtcamDevice.COOLER", "ON", "Off", "OFF", "On");
+				}
+				else
+				{
+					setindi("Switch", "MmtcamDevice.COOLER", "ON", "On", "OFF", "Off");
+				}
+			});
+
+
+			setPropertyCallback("MmtcamDevice.CCDTEMP", function(map)
+			{
+				console.log("Temp")		
+				var x = (new Date()).getTime(), // current time
+					y = map.CCDTEMP;
+
+				GLOBALS['chart'].series[0].addPoint([x, y], true, false)
+
+			});
+
+
+			setPropertyCallback("MmtcamDevice.*", function(map) 
+			{
+				/*
+				This function will be called whenever an INDI property
+				with the device {{ device_name }} is received. 
+				*/
+				switch( map.metainfo )
+				{
+					case "nvp":
+						ele = newNumber(map);
+					break;
+					case "svp":
+						ele = newSwitch(map);
+					break;	
+					case "tvp":
+						ele = newText(map);
+					break;
+					case "lvp":
+						ele = newLight(map);
+					break;
+				}
+				if( typeof ele != 'string')
+				{	
+
+					vpele = $('span.INDIvp'+'[indiname="'+map.name+'"][indidevice="'+map.device+'"]')
+					if(vpele.length > 0)
+						ele.appendTo(vpele)
+					else
+						ele.appendTo($("body"))
+				}
+				
+				if(map.metainfo == "svp" || map.metainfo == "tvp" || map.metainfo == "nvp" || map.metainfo == "lvp")
+					var prop="background-color";
+				else
+					var prop="color";
+		
+				$(ele).find("legend").css( prop, indistate2css( map.state ) )
+
+			});
+
+
+			/*BLOB's have to be dealt with individually*/
+			setPropertyCallback("MmtcamDevice.IMAGE", function(map) 
+			{
+					//var b64 = btoa(map.IMAGE);
+					$("div#expose_container").css("background-image", "none");
+					GLOBALS["is_exposing"] = false;
+
+					JS9.Load(map.IMAGE);
+					
+					
+					//$("img").attr("src", "data:image/png;base64,"+map.b1);
+					
+			})
+
+		GLOBALS['chart'] = Highcharts.stockChart('chart', {
+		chart: {
+
+		},
+
+		time: {
+			useUTC: false
+		},
+
+		rangeSelector: {
+			buttons: [{
+				count: 1,
+				type: 'minute',
+				text: '1M'
+			}, {
+				count: 5,
+				type: 'minute',
+				text: '5M'
+			}, {
+				type: 'all',
+				text: 'All'
+			}],
+			inputEnabled: false,
+			selected: 0
+		},
+
+		title: {
+			text: 'CCD Temperature'
+		},
+
+		exporting: {
+			enabled: false
+		},
+
+		series: [{
+			name: 'Random data',
+			data: (function () {
+				// generate an array of random data
+				var data = [],
+					time = (new Date()).getTime(),
+					i;
+
+				for (i = -2; i <= 0; i += 1) {
+					data.push([
+						null,
+						Math.round(Math.random() * 100)
+					]);
+				}
+				return data;
+			}())
+		}]
+	});
+
+		}
+	function showMapMessage(map)
+	{
+		if(map.msg != undefined)
+			showMessage(map.msg, map.timestamp);
+
+	}
+
+	function showMessage(msg, timestamp)
+	{
+		ALLMESSAGES.push({msg:msg, timestamp:timestamp})
+		while(ALLMESSAGES.length > 100)
+		{
+			ALLMESSAGES.shift();
+		}
+		
+		$("textarea#indimsg").val("");
+		for(let ii=ALLMESSAGES.length-1; ii !=0; ii--)
+		{
+			const content = $("textarea#indimsg").val();
+			const {timestamp, msg} = ALLMESSAGES[ii]
+			const newline =  timestamp +': '+msg + '\n'
+			$("textarea#indimsg").val( content+newline );
+		}
+	
+		
+	}
+
+
+	</script>
+	<style>
+		:root
+		{
+			--indistate-busy: #aa0
+		}
+		.INumberspan
+		{
+			display:inline-block;
+			width:250px;
+
+		}
+		body
+		{
+			background:#0A0A0A;
+			color: #A0A0A0;
+			padding-top:10px;
+		}
+		.value
+		{
+			color:white
+		}
+
+		legend
+		{
+			text-shadow: 0px 0px 5px white !important;
+		}
+		span#num
+		{
+			display:inline;
+			float:left;
+		}
+		fieldset.INDIvp
+		{
+			display:inline;
+		}
+		div#msgdiv
+		{
+			position:fixed;
+			right:20px;
+			bottom:20px;
+
+		}
+
+		div#container
+		{
+			display:grid;
+			row-gap:50px;
+			margin:auto;
+			width:80%;
+		}
+		span#connection
+		{		
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:1;
+			grid-row-end:1;
+
+		}
+		div#imcontrol
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:2;
+			grid-row-end:2;
+		}
+		div#tempcontrol
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:3;
+			grid-row-end:3;
+		}
+		div#js9div
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:2;
+			grid-row-end:4;
+		}
+
+		a.indi-svp-button
+		{
+			background: rgba(0, 64, 0, 1.0);
+			color: #0b0;
+			padding: 10px;
+			margin: 5px;
+			border-radius: 10px;
+			border:1px solid #080;
+			text-decoration: none;
+
+		}
+		a.indi-svp-button:hover 
+		{
+			background: rgba(0, 128, 0, 1.0);
+			text-shadow: 0px 0px 5px white;
+			color: #fff
+		}
+		
+		a.indi-svp-button.active
+		{
+			background: rgba(0, 128, 0, 1.0);
+			text-shadow: 0px 0px 5px white;
+			color: #fff
+		}
+
+		div#ROI, div#binning
+		{
+			display:inline-grid;
+			max-width:150px;
+			min-width:100px;
+			column-gap:10px;
+			border:1px solid #080;
+			padding:5px;
+			border-radius:5px;
+			row-gap:20px;
+
+		}
+
+		div#startx
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:2;
+			grid-row-end:2
+		}
+
+		div#starty
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:2;
+			grid-row-end:2;
+		}
+				
+		div#camrows
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:3;
+			grid-row-end:3;
+		}
+
+		div#camcols
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:3;
+			grid-row-end:4;
+		}
+
+		button#setroi
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:4;
+			grid-row-end:4;
+			border-radius:5px;
+			
+
+		}
+
+		.roi-input, .bin-input, .exptime-input
+		{
+			font-size:12pt;
+			background-color:#004400;
+			border:none;
+			color:white;
+			border-radius:5px;
+		}
+		.bad-input
+		{
+			background-color:#880000;
+		}
+
+		.roi-input:hover, .roi-input:focus, .bin-input:hover, .bin-input:focus, .exptime-input:focus, .exptime-input:hover
+		{
+			background-color:#008800;
+		}
+
+		div.value
+		{
+			
+			font-size:16pt;
+			text-align:center;
+			
+
+		}
+		
+		button#setbins
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:3;
+			grid-row-end:3;
+			border-radius:5px;
+
+		}
+		div#binx
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:2;
+			grid-row-end:2;
+		}
+		div#biny
+		{
+			grid-column-start:2;
+			grid-column-end:2;
+			grid-row-start:2;
+			grid-row-end:2;
+		}
+
+		div#imtype
+		{
+			display:inline-grid;
+			border-radius:5px;
+			row-gap:10px;
+			margin-right:30px;
+		}
+		a.imtype
+		{
+			padding:5px;
+			margin:0px;
+		}
+		a#dark_button
+		{
+			grid-row-start:1;
+			grid-row-end:1;
+		}
+
+		a#object_button
+		{
+			grid-row-start:2;
+			grid-row-end:2;
+		}
+
+		a#flat_button
+		{
+			grid-row-start:3;
+			grid-row-end:3;
+		}
+
+		div#expose_container
+		{
+			display:inline-block;
+			border:1px solid white;
+			border-radius:5px;
+			padding:5px;
+		}
+		div#expose_div
+		{
+			display:inline-grid;
+		}
+
+		label#exptime_label
+		{
+			grid-row-start:1;
+			grid-row-end:1;
+
+		}
+		input#exptime
+		{
+			grid-row-start:2;
+			grid-row-end:2;
+
+		}
+
+		a#expose_button
+		{
+			grid-row-start:3;
+			grid-row-end:3;
+
+		}
+
+		.hidden
+		{
+			display:none;
+		}
+
+		a#resetbutton
+		{
+			margin-left:30px;
+			padding:3px 3px 3px 3px;
+			border-radius:7px;
+		}
+
+		a#coolerbutton
+		{
+			display:inline-block;
+		}
+
+		
+		h3#roi_header
+		{
+			grid-column-start:1;
+			grid-column-end:1;
+			grid-row-start:1;
+			grid-row-end:1;
+			margin:0;
+			margin-top:-20px;
+		}
+
+		h3#bin_header
+		{
+			grid-column-start:1;
+			grid-row-start:1;
+			grid-row-end:1;
+			margin:0;
+			margin-top:-20px;
+		}
+
+		.header
+		{
+			color:black;
+			font-size:18pt;
+			background-color:#0A0A0A;
+			text-shadow: 0px 0px 5px #00ff00;
+			display:inline;
+			text-align:center;
+
+		}
+
+		
+		div#fanmode_div
+		{
+			display:inline-grid;
+			border:solid 1px #008800;
+			margin-top:10px;
+			border-radius:5px;
+		}
+		label#fan_header
+		{
+			grid-column-start:1;
+			grid-row-start:1;
+			margin-top:-15px;
+
+		}
+		a#fanoff
+		{
+			grid-column-start:1;
+			grid-row-start:2;
+		}
+
+		a#fanlow
+		{
+			grid-column-start:2;
+			grid-row-start:2;
+		}
+		a#fanmedium
+		{
+			grid-column-start:3;
+			grid-row-start:2;
+		}
+		a#fanhigh
+		{
+			grid-column-start:4;
+			grid-row-start:2;
+		}
+
+
+		
+	</style>
+	</head>
+	<body onload=main()>
+	<div id="container">
+		<div id="CONNECTION" class="connection">
+			<a id="connbutton" href="#" class="indi-svp-button">Connect</a>
+			<a id="simbutton" href="#" class="indi-svp-button">Simulation</a>
+			<a id="resetbutton" href="#" class="indi-svp-button">Reset Camera</a>
+
+		</div>
+		<!--<span id="connection" indiname="CONNECTION" indidevice="MmtcamDevice" class="INDIvp"></span>-->
+		<div id="imcontrol">
+
+			<div style="margin:10px;">
+				<div id="ROI" >
+					<h3 id="roi_header" class="header">ROI</h3>
+					<div id="startx">
+						<label class="roi-label">First Row</label>
+						<div id="startx_show" class="value"></div>
+						<input type="text" id="startx_input" size="5" class="roi-input"></input>
+					</div>
+					<div id="starty">
+						<label class="roi-label">First Col</label>
+						<div id="starty_show" class="value"></div>
+						<input type="text" id="starty_input" size="5" class="roi-input"></input>
+					</div>
+					<div id="camrows">
+						<label class="roi-label">Rows</label>
+						<div id="rows_show" class="value"></div>
+						<input type="text" id="rows_input" size="5" class="roi-input"></input>
+					</div>
+					<div id="camcols">
+						<label class="roi-label">Columns</label>
+						<div id="cols_show" class="value"></div>
+						<input type="text" id="cols_input" size="5" class="roi-input"></input>
+					</div>
+					<button id="setroi">Set</button>
+				</div>
+				<div id="binning">
+					<h3 id="bin_header" class="header">BINS</h3>
+					<div id="binx">
+						<label class="bin-label">Bin X</label>
+						<div id="binx_show" class="value"></div>
+						<input type="text" id="binx_input" size="5" class="bin-input"></input>
+					</div>
+					<div id="biny">
+						<label class="bin-label">Bin Y</label>
+						<div id="biny_show" class="value"></div>
+						<input type="text" id="biny_input" size="5" class="bin-input"></input>
+					</div>
+					<button id="setbins">Set</button>
+				</div>
+				<a id="overscan_button" href="#" class="indi-svp-button">Overscan</a>
+				<div id="expose_container">
+					<div id="imtype">
+						<a id="dark_button" href="#" class="indi-svp-button imtype">Dark</a>
+						<a id="object_button" href="#" class="indi-svp-button imtype">Object</a>
+						<a id="flat_button" href="#" class="indi-svp-button imtype" >Flat</a>
+					</div>
+					<div id="expose_div">
+						<label for="exptime" id="exptime_label">Exposure Time</label>
+						<input id="exptime" type="text" class="exptime-input" size="6"></input>
+						<a href="#" id="expose_button" class="indi-svp-button">Expose</a>
+					</div>
+				</div>
+
+			</div>
+
+			<span indiname="EXPOSE" indidevice="MmtcamDevice" class="INDIvp hidden"></span>
+			<span indiname="EXPTIME" indidevice="MmtcamDevice" class="INDIvp hidden"></span>
+			<span indiname="EXPTIMELEFT" indidevice="MmtcamDevice" class="INDIvp hidden"></span>
+			<span indiname="EXPSTATUS" indidevice="MmtcamDevice" class="INDIvp hidden"></span>
+			<span indiname="RESET" indidevice="MmtcamDevice" class="INDIvp hidden"></span>
+		</div>
+		<div id="tempcontrol">
+				
+			<a id="coolerbutton" href="#" class="indi-svp-button">Cooler</a>
+
+			<div id="fanmode_div">
+		
+				<label id="fan_header" class="header">FAN</label>
+				<a id="fanoff" href="#" class="indi-svp-button fanmode">Off</a>
+				<a id="fanlow" href="#" class="indi-svp-button fanmode">Low</a>
+				<a id="fanmedium" href="#" class="indi-svp-button fanmode">Medium</a>
+				<a id="fanhigh" href="#" class="indi-svp-button fanmode">High</a>
+			</div>
+			<div id="chart" style="height: 300px; width: 400px"></div>	
+			<!-- Highcharts -->
+			<script src="https://code.highcharts.com/stock/highstock.js"></script>
+			<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+			<script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+
+
+
+		</div>
+		<div id="js9div">
+			<div class="JS9Menubar"></div>
+			<div class="JS9Toolbar"></div>
+			<div class="JS9"></div>
+			<div style="margin-top: 2px;"><div class="JS9Statusbar"></div></div>
+			<script type="text/javascript">
+			$(document).ready(function(){
+			  $("#div").draggable({
+				handle: "#JS9Menubar",
+				opacity: 0.35
+			  });
+			});
+			</script>
+
+		</div>
+
+
+		<div id="msgdiv">
+			<label for="indimsg">Camera Messages</label>
+			<textarea id="indimsg" rows="5" cols="75" ></textarea>
+		</div>
+
+
+	</div>
+	</body>
+
+</html>
+
