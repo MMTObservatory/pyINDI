@@ -1086,7 +1086,7 @@ class device(ABC):
         """"""
         pass
 
-    async def asyncInitProperties(self):
+    async def asyncInitProperties(self, device=None):
         """This function is called after the getProperties tags is 
         recieved at the same time as initProperties. Override it
         to start async tasks to be run in the event loop."""
