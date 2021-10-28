@@ -1,0 +1,51 @@
+#!/bin/sh
+
+LC_NUMERIC=en_US.ISO8859-1
+export LC_NUMERIC
+
+awk '
+BEGIN{
+  mode=1
+  npts=0
+  xlabel="unknown"
+  ylabel="unknown"
+}
+mode==1{
+  if( $1 == "#" && $2 == "radii:" ){
+      xlabel = $3
+  }
+  else if( $1 == "#" && $2 == "surf_bri:" ){
+      ylabel = $3
+  }
+  else if( $1 == "----" ){
+    printf "{\042color\042: \042green\042, \042label\042 : \042surface brightness(%s) vs. radius(%s)\042, \042points\042 : {\042errorbars\042 : \042y\042, \042yerr\042 : {\042show\042 : \042true\042, \042color\042 : \042red\042}}, ", ylabel, xlabel
+    mode = 2
+    next
+  }
+}
+mode==2{
+  if( NF == 12 ){
+    if( npts == 0 ){
+      printf "\042data\042 : ["
+    } else {
+      printf ","
+    }
+    npts = npts + 1
+    if( $9 != "NA" ){
+      printf "[%.2f, %s, %s]", ($9+$10)/2, $7, $8
+    }
+    else{
+       print "ERROR: annulus and circle regions only" > "/dev/stderr"
+       exit 1
+    }
+  }
+  else{
+    mode = 3
+  }
+  next
+}
+END{
+  printf "]}"
+}
+'
+exit 0

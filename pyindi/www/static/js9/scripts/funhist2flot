@@ -1,0 +1,63 @@
+#!/bin/sh
+# set -x
+
+LC_NUMERIC=en_US.ISO8859-1
+export LC_NUMERIC
+
+annotations=""
+title="Histogram Plot"
+while [ x"$1" != x ]; do
+    case $1 in
+	-a) shift
+	    annotations="$1"
+	    shift
+	    continue;;
+	-t) shift
+	    title="$1"
+	    shift
+	    continue;;
+	*)  
+            break;;
+    esac
+done
+
+awk -v title="${title}" -v annotations="${annotations}" '
+BEGIN{
+  mode=1
+  npts=0
+}
+mode==1{
+  if( $1 == "#" && $2 == "column:" ){
+    column = $3
+  }
+  else if( $1 == "------" ){
+    printf "{\042color\042: \042blue\042, \042label\042 : \042%s\042, ", title
+    if( annotations != "" ){
+        printf "\042annotations\042 : {\042data\042 : [%s]}, ", annotations
+    }
+    mode = 2
+    next
+  }
+}
+mode==2{
+  if( NF == 4 ){
+    if( npts == 0 ){
+      printf "\042data\042 : ["
+    } else {
+      printf ","
+    }
+    npts = npts + 1
+    printf "[%.2f, %s]", ($3+$4)/2, $2
+  }
+  else{
+    mode = 3
+  }
+  next
+}
+END{
+  if( mode > 1 ){
+    printf "]}"
+  }
+}
+'
+exit 0

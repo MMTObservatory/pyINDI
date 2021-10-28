@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>JS9 Known Issues</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>JS9 Known Issues</h3></center>
+
+<b>Unresolved Issues:</b>
+
+<ol>
+
+<li><b>Desktop app (July 9, 2019 : unresolved)</b>
+<p>
+The <a href="https://electronjs.org/" target="_blank">Electron.js</a>-based
+JS9 desktop app has some limitations when a second instance is started up.
+The most obvious concerns the <b>Preferences</b> plugin, which uses
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage"
+target="_blank">localStorage</a> to save parameters between sessions.
+Unfortunately, <a href="https://electronjs.org/" target="_blank">
+Electron.js</a> apps do not properly return localStorage values for
+the second (and subsequent) instance. We therefore have disabled the ability
+to load and store preferences via localStorage in all but the first
+running instance of the JS9 app.
+
+<li><b>Chrome (January 20, 2019 : unresolved)</b>
+<p>
+Chrome's memory restrictions remain more stringent than those of
+Firefox or Safari. On a Macbook Pro, it is possible to reproject a
+4096x4096 32-bit image in Firefox and Safari, whereas Chrome gets the
+"snap" error for 32-bit images larger than approximately 3800x3800.
+We will continue to try to reduce memory usage, while hoping for less
+restrictive limits (or even full support for unlimited memory via mmap()).
+
+<li><b>Linux platforms using Firefox (February 20, 2018 : unresolved)</b>
+<p>
+One of the simplest ways to use JS9 locally is by means of the file://
+URL scheme, e.g., point your browser to file:///home/me/js9/js9basics.html.
+<p>
+On Linux, although this works in Firefox for files in the web page's
+domain, it does not work for files outside the domain:
+<pre>
+    JS9.Load("foo.fits")         # works
+    JS9.Load("fits/foo.fits")    # works
+    JS9.Load("../foo.fits")      # does not work
+</pre>
+Firefox does appear to load files outside the web domain properly on a Mac.
+<p>
+
+<li><b>Webkit (Safari and Chrome) (December 3, 2015 : unresolved)</b>
+<p>
+Webkit browsers such as Safari and Chrome implement resizeable divs in
+an unintuitive way, which required several hacks in order to allow us
+to resize the JS9 display on the fly.  The resizeable (enclosing) div
+must be larger than the JS9 display canvas, or else the resize handle
+cannot be seen. As a result, the resize handle juts out from the
+JS9 display in an unappealing way.  Also, the resize operation can only
+increase the size of the display, not decrease it. To work around this,
+you can first decrease the display size using the View menu, which
+sets a new minimum size for GUI-based resize.  Finally, the cursor is
+not changed to a resize cursor. I couldn't figure out how to work
+around this in a fool-proof way.  We hope Webkit will implement more
+intuitive behavior in the near future.
+
+<li><b>All platforms (June 13, 2014 : unresolved)</b>
+<p>
+When resizing a box region in one direction only (i.e., width or
+height), the width of the region's border will be different in each
+direction.  This is due to the underlying graphics algorithm used to
+resize the region, which changes the scale factor in each direction
+individually and ties the border width to that scale factor. We will
+fix this in a future release.
+
+<li><b>Safari Mobile platforms (April 9, 2015 : unresolved)</b>
+<p>
+A maximum image size is enforced by Apple on Safari mobile devices.
+(See https://discussions.apple.com/thread/4975106 for a discussion.)
+If you want your JS9 PNG representation files to display on iPhones
+and iPads, they should be restricted to a size of less than
+approximately 1900x1900, depending on the size of the FITS header. So
+a PNG file of size 1024x1024 should be fine, while a file of size
+2048x2048 certainly will be too large.
+
+</ol>
+
+<p>
+<b>Resolved Issues:</b>
+
+<ol>
+<li><b>Safari (October 4, 2016 : resolved)</b>
+<p>
+On Mac OSX, if the Terminal running the js9 messaging script is
+located in a different Space (i.e. desktop) from the Safari browser
+with which it is communicating, the transfer of results from the
+browser to the script can be delayed up to several seconds. It does
+not happen all the time and it does not happen if the two applications
+share the same Space. The data transfer also will resume immediately
+if you switch to the Space containing the browser. The obvious
+work-around is to make sure that the Terminal and browser share the
+same Space.
+<p>
+The problems appears to have gone away with MacOS 10.14 (Mojave).
+
+<li><b>All platforms, especially Chrome (June 21, 2014 : resolved)</b>
+<p>
+Available memory can be a problem when loading very large gzip'ed FITS
+files, especially in 32-bit Chrome. JS9 currently reads the entire
+FITS file or gzip'ed file and inflates parts as needed. It can process
+files up to approx. 200Mb in size before Chrome runs out of heap
+space.  Note that Chrome often will load an ungzip'ed FITS file in
+cases where the gzip'ed file fails (though there still are upper
+limits on the total space available).  We hope that the 64-bit version
+of Chrome (in early Canary release as of 7/1/2014) will alleviate
+these problems. Otherwise, we will take a more drastic approach to
+memory management within JS9 (at the expense of speed).
+<p>
+The 64-bit Chrome can make use of 2Gb of memory.
+
+<li><b>All platforms using Chrome and Firefox (April 23, 2020 : resolved)</b>
+<p>
+One of the simplest ways to use JS9 locally is by means of the file://
+URL scheme, e.g., point your browser to file:///home/me/js9/js9basics.html.
+<p>
+This does not work in Google Chrome because Chrome does not permit a
+local HTML file to read other local files. You can read a relatively
+emotional argument about this restriction at:
+<pre>
+    https://code.google.com/p/chromium/issues/detail?id=37586
+</pre>
+<p>
+The workaround is to start Chrome with the 
+--allow-file-access-from-files switch. On Linux:
+<pre>
+    chrome --allow-file-access-from-files
+</pre>
+On a Mac:
+<pre>
+    open /Applications/Google\ Chrome.app --args --allow-file-access-from-files
+</pre>
+It also does not work on Firefox starting with version 68. See:
+<pre>
+https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS/Errors/CORSRequestNotHttp
+</pre>
+for details. The workaround (as discussed in that security page) is to
+turn off the <b>privacy.file_unique_origin</b> preference in
+<b>about:config</b>.
+<p>
+
+<li><b>All platforms (May 20, 2013: resolved)</b>
+<p>
+If the "load image" command is part of a group of commands passed to
+the js9 script, a race condition can occur when subsequent commands
+are executed before the image is fully loaded. To avoid this problem,
+images should be loaded in a separate js9 command and the load status
+checked for completion before proceeding to manipulate the image.  See
+the <b>js9load</b> script for details (or just use the script itself
+to load images). (Technical details: images are loaded asynchronously,
+so that other parts of the web page are available during the load
+process. A synchronous load could freeze the web page while
+loading. To avoid this situation, external processes should use the
+"status load" command to check for a completed load before sending
+further processing commands).
+
+</ol>
+
+<h5>Last updated: April 23, 2020</h5>
+</div>
+
+</body>
+</html>

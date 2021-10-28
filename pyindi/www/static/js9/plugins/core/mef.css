@@ -1,0 +1,42 @@
+.JS9MefContainer {
+    padding: 10px;
+    overflow: auto;
+}
+
+.JS9MefExtension {
+    margin: 5px;
+    background: #E9E9E9;
+    overflow: auto;
+    font-size: 10pt;
+}
+
+.JS9MefHeader {
+    margin: 5px;
+    background: #E9E9E9;
+}
+
+.JS9MefInput {
+    margin: 5px;
+    background: #E9E9E9;
+}
+
+.JS9MefExtensionInactive {
+    padding: 0px;
+    border: 1px solid black;
+}
+
+.JS9MefExtensionActive {
+    padding: 0px;
+    border: 2px solid #00F000;
+}
+
+span.JS9MefStrike{
+    font-weight:bold; /*set line weight here*/
+    color:red;
+    text-decoration:line-through;
+}
+
+span.JS9MefStrike>span {
+    font-weight:normal;
+    color: black;
+}

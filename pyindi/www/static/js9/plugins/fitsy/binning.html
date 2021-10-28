@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head> 
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../../js9.css">
+<title>Plugin: FITSBinning</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<p>
+<h3>FITS Image Sections, with Binning and Filtering</h3>
+
+The rows in a FITS binary table must be binned before being displayed
+as an image.  By default, JS9 uses a bin factor of 1 to extract the
+central 2048 x 2048 section of the data for display. This default is
+controlled by the JS9.globalOpts.table object properties, which can be
+set in your js9Prefs.js file.
+
+<p>
+Also by default, the central 2048 x 2048 section of a FITS image is displayed
+at bin 1. This default is controlled by the JS9.globalOpts.image object
+properties, which can be set in your js9Prefs.js file.
+
+<p>
+The <b>Bin/Filter/Section</b> plugin allows you to extract sections
+from FITS binary tables and images, with options to choose the image
+center, image dimensions, and bin factor.  For tables, the plugin also
+allows you to filter rows of the table by means of arithmetic and
+boolean operations on the table columns.
+
+<p>
+The <b>Bin/Filter/Section</b> plugin works with both FITS representation
+files and with ordinary in-memory FITS files. If the displayed FITS
+file is a representation file (i.e., it has a parent file, a JS9
+helper is connected, etc.), the plugin will ask the JS9 helper to
+extract the image section from the parent.  Otherwise, it extracts the
+section from the in-memory FITS file. This behavior is meant to be
+transparent to the user.
+
+<p>
+When extracting an image section, you can set one or more of the
+following options:
+<ul>
+<li><b>center:</b> the file (physical) coordinates around which to
+perform the section extraction (0,0 can be used to specify the file center).
+<li><b>size:</b> the size of the image to extract (before binning (or blocking) is
+performed).
+<li><b>bin (tables) or block (images):</b> determines how table events are binned or how physical pixels are combined into
+a single image pixel, after the section is extracted.
+<li><b>mode:</b>summing or averging of the binned (blocked) pixels
+<li><b>filter:</b>for tables only: row/event filter to apply when extracting the section.
+<li><b>separate:</b> if true, display as a separate image (default is to update the current image).
+</ul>
+<p>
+For example, if a table has FITS (tlmin, tlmax) dimensions 4096 x 4096, then:
+<ul>
+<li> <b>center: 2048, 2048; dimensions: 4096, 4096; bin: 4</b> will bin the entire file by 4 to produce a 1024 x 1024 image.
+<li> <b>center: 1024, 1024; dimensions: 1024, 1024, bin: 2</b> will bin the upper left 1024 x 1024 section of the image by 2 to produce a 512 x 512 image.
+</ul> 
+Specifying 0,0 for the center will cause the section to be extracted from the
+center of the image.
+
+<p>
+Although the binning parameter is usually input as an real value, there are
+other options available:
+<ul>
+<li><b>x[n]|X[n]|*[n]</b>: multiply the current bin by n (e.g., "x2")
+<li><b>/[n]</b>: divide the current bin by n (e.g., "/2")
+<li><b>+[n]</b>: add n to the current bin (e.g., "+2")
+<li><b>-[n]</b>: subtract n from the current bin (e.g., "-2")
+<li><b>in|In</b>: multiply the current bin by 2
+<li><b>out|Out</b>: divide the current bin by 2
+<li><b>[n]a</b>: bin by n, averaging the binned pixels
+<li><b>[n]s</b>: bin by n, summing the binned pixels
+</ul>
+Note that the <b>JS9.globalOpts.binMode</b> property specifies the
+default action for whether the binned pixels are summed together (if
+binMode is "s") or averaged (if binMode is "a"). This action is overridden
+by the last two bin directives listed above or by the <b>mode<b> input option.
+
+<p>
+Table filtering allows you to select rows from an FITS binary table
+(e.g., an X-ray event list) by checking each row against an expression
+involving the columns in the table. When a table is filtered, only
+valid rows satisfying these expressions are used to make the image.
+
+<p>
+A filter expression consists of an arithmetic or logical operation
+involving one or more column values from a table. Columns can be
+compared to other columns or to numeric constants. Standard JavaScript
+math functions can be applied to columns. JavaScript (or C) semantics
+are used when constructing expressions, with the usual precedence and
+associativity rules holding sway:
+<pre>
+  Operator                                Associativity
+  --------                                -------------
+  ()                                      left to right
+  !  (bitwise not) - (unary minus)        right to left
+  *  /                                    left to right
+  +  -                                    left to right
+  &lt; &lt;= &gt; &gt;=                               left to right
+  == !=                                   left to right
+  &  (bitwise and)                        left to right
+  ^  (bitwise exclusive or)               left to right
+  |  (bitwise inclusive or)               left to right
+  && (logical and)                        left to right
+  || (logical or)                         left to right
+  =                                       right to left
+</pre>
+For example, if energy and pha are columns in a table, 
+then the following are valid expressions:
+<pre>
+  pha &gt; 1
+  energy == pha
+  pha &gt; 1 && energy &le; 2
+  max(pha,energy)&ge;2.5
+</pre>
+
+<p>
+NB: when using cfitsio (the default, instead of the deprecated
+fitsy.js), table filtering follows cfitsio conventions, which is
+documented
+<a href="https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node97.html">here</a>.
+
+<p>
+Once the desired parameters have been set, pressing the <b>Run</b>
+button will filter, bin and display the data.
+
+</div>
+</body>
+</html>
+

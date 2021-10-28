@@ -1,0 +1,73 @@
+.JS9FiltersContainer {
+    padding: 5px;
+}
+
+.JS9FiltersLineheader {
+}
+
+.JS9FiltersLinegroup {
+    float: left;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 95%;
+    height: 20px;
+    padding: 0px;
+    margin: 1px;
+}
+
+.JS9FiltersHeader {
+    padding-left: 12px;
+    padding-top: 5px;
+    padding-bottom: 0px;
+    padding-right: 5px;
+}
+
+.JS9FiltersText {
+    float: right;
+}
+
+.JS9FiltersButton {
+    padding: 0px;
+    margin: 2px;
+    width: 80px;
+    float: left;
+    outline: none;
+}
+
+.JS9FiltersUndoButton {
+    padding: 0px;
+    margin-top: 15px;
+    margin-right: 2px;
+    margin-bottom: 2px;
+    margin-left: 2px;
+    width: 80px;
+    float: left;
+    outline: none;
+}
+
+.JS9FiltersValue {
+    padding: 1px;
+    text-align: right; 
+}
+
+.JS9FiltersCol1 {
+    position: absolute;
+    float: right;
+    top: 0;
+    left: 5;
+    width: 80px;
+}
+
+.JS9FiltersCol2 {
+    position: absolute;
+    top: 0;
+    left: 100px;
+}
+
+.JS9FiltersCol3 {
+    position: absolute;
+    top: 0;
+    left:  250px;
+    width: 40px;
+}

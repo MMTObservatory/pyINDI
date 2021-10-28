@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Load a shared URL</title>
+</head>
+
+<body>
+
+<form id="proxyURLForm" name="proxyURLForm" class="js9AnalysisForm js9Form" action="">
+<b>
+Links which do not support
+<a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">Cross-Origin Resource Sharing</a> cannot be displayed directly by JS9. 
+However, the JS9 back-end server can act as a proxy, retrieving and
+storing the file temporarily, so that JS9 can display it. Enter a link to a
+FITS file below:
+</b>
+<p>
+<input type="text" class="js9LargeInputText" id="proxyURL" name="proxyURL" size="80" autocapitalize="off" autocorrect="off">
+<p>
+<input id="run" name="run" type="button" class="button" value="Load"
+onclick="
+const arr = $('#proxyURLForm').serializeArray();
+const form = $(this).closest('form');
+const win = form.closest(JS9.lightOpts[JS9.LIGHTWIN].top)[0];
+const dispid = $(win).data('dispid');
+const url = arr[0].value;
+JS9.LoadProxy(url, null, {display: dispid});
+win.close();
+return false;
+">
+<input id="close" name="Close" type="button" class="button" value="Close" 
+onclick="
+const form = $(this).closest('form');
+const win = form.closest(JS9.lightOpts[JS9.LIGHTWIN].top)[0];
+win.close();
+return false;" style="float: right;">
+</form>
+
+</body>
+</html>

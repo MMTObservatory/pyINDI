@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>Installing JS9</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>Installing JS9</h3></center>
+
+<h3>Summary for the Impatient</h3>
+<ul>
+<li> retrieve and unpack the source code tar file or clone the js9 repository
+<li> JS9 is now ready for drag-and-drop image files using the file:// URI
+<li> run "./mkjs9 -q" to set up the js9 command-line script in its simplest form
+<li> to install JS9 into a web server tree, run configure with this switch:
+<pre>
+  # location to install the JS9 web files:
+  ./configure --with-webdir=[path_to_web_install]
+</pre>
+<li> to add large file support, build the helper with these switches:
+<pre>
+  # where to find cfitsio and install binaries, what sort of helper to build:
+  ./configure  --with-cfitsio=[path_to_cfitsio] --prefix=[path_to_prog_install] --with-helper=nodejs
+</pre>
+<li> edit the js9prefs.js to set up your site-specific JS9 parameters
+<li> build, install, clean up: <b>make; make install; make clean</b>
+</ul>
+
+<h3>Retrieve and Unpack the Source Code Tar File</h3>
+<p>
+The current release of the JS9 source tar file is available at:
+<pre>
+    https://js9.si.edu
+</pre>
+The source tar file will unpack into a js9-[version] directory with
+the usual tar command, e.g:
+<pre>
+    tar xfz js9-[version].tar.gz
+</pre>
+The most up to date version of JS9 is available on GitHub:
+<pre>
+    git clone https://github.com/ericmandel/js9
+</pre>
+The GitHub version will contain the latest bug fixes and improvements.
+Once you have cloned JS9, you can retrieve the latest update:
+<pre>
+    git pull
+</pre>
+Note that the main JS9 web site runs the latest software from GitHub.
+
+<h3>Run JS9 using the file:// URI</h3>
+After the source code is retrieved, you should be able to load any of the
+js9*.html web pages into your browser using the file:// URI. For
+example, if you unpacked the tar file into /Users/me on a Mac, then
+you can point your browser to:
+<pre>
+    file:///Users/me/js9-[version]/js9basics.html
+</pre>
+to see the basic JS9 demo page. You then can drag any FITS image file onto
+the JS9 display and view it, change contrast/bias, colormaps,
+scale, create regions, etc. Furthermore, if you load the imexam web page:
+<pre>
+    file:///Users/me/js9-[version]/js9imexam.html
+</pre>
+you can move a region around and run browser-based analysis as
+the region changes.
+<p>
+NB: The file://URI does not work in Google Chrome: Chrome doesn't
+permit a local HTML file to read other local files. The workaround is
+to start Chrome with the --allow-file-access-from-files switch:
+<pre>
+    # Linux:
+    chrome --allow-file-access-from-files
+    # Mac:
+    open /Applications/Google\ Chrome.app --args --allow-file-access-from-files
+</pre>
+Firefox and Safari do not have this restriction.
+<p>
+If you just want to run JS9 in this simple way, you are done. However,
+you might want to edit the js9prefs.js file to set up default values
+for colormaps, scaling, etc. See:
+<a href="./preferences.html">JS9 Site Preferences</a> for a
+description of the available parameters.
+
+<h3>Do You Want to Run JS9 as a Desktop Program from the Command Line?</h3>
+JS9 can be used as a desktop replacement for SAOimage DS9: you can
+load images into the app's (Chrome) web page (or your own custom web
+page) instead of a browser, and use the full power of JS9, including
+external messaging.
+
+<p>
+Running JS9 on the desktop simply requires that you install
+<a href="http://electron.atom.io">Electron.js</a>, an app building
+platform that combines Node.js and the Chrome libraries.  To install
+Electron, go to the release page:
+<a href="http://electron.atom.io/releases/">
+http://electron.atom.io/releases</a>, choose the latest available
+stable release, and download the zip file for your platform.  On a
+Mac, Electron.app should be installed in the /Applications or
+~/Applications folder. On Linux, the electron program should be placed
+in your PATH. Note that Electron requires a relatively recent version
+of Linux: Ubuntu 12.04, Fedora 21, Debian 8, CentOS 7 (not CentOS 6).
+
+<p>
+Once the Electron app is installed, generate the JS9 quick-start files:
+<pre>
+  ./mkjs9 -q
+  Editing js9Prefs.json for Node.js helper ...
+  Editing js9prefs.js for Node.js helper ...
+  Generating js9 script for JS9 messaging and desktop use ...
+
+  If you plan to use Electron.app with JS9, consider codesign'ing it:
+
+  sudo codesign --force --deep --sign - /Applications/Electron.app/Contents/MacOS/Electron/
+
+  This will avoid repeated requests to allow incoming connections.
+</pre>
+The mkjs9 script will create a js9prefs.js file (for the browser) and
+a js9Prefs.json file (for the JS9 helper), which you can edit to add
+preferred JS9 properties, as well as a js9 script to start the JS9
+app. On a Mac, you probably will want to codesign the Electron.app
+application to avoid repeated requests about incoming connections (see
+example above).
+
+<p>
+Run the js9 script to start the app and load data files:
+<pre>
+  # the -a switch tells the script to bring up the desktop js9 app
+  js9 -a ~/data/casa.fits &
+</pre>
+and then use the same script to interact with the JS9 page (or any
+other JS9-enabled web page):
+<pre>
+  # without -a, the script sends commands to the JS9 display
+  js9 cmap cool
+  js9 regions circle
+</pre>
+
+<p>
+For more details, see: <a href="desktop.html">Desktop JS9</a>.
+
+<h3>Do You Want to Install JS9 in a Web Server?</h3>  
+If you want to run JS9 in a "real" web server, build and install
+the JS9 tools and files using the standard GNU procedure:
+<pre>
+  ./configure <b>--with-webdir=[path]</b> ... other switches ...
+  make
+  make install
+</pre>
+At a minimum, you should run configure with the <b>--with-webdir=[path]</b>
+switch, which specifies the directory into which the JS9 web files
+(JavaScript, CSS, etc.) will be installed.  We recommend that this
+directory only contain the installed JS9 files, i.e. that you install
+JS9 into its own self-contained directory. This will make upgrading to
+new versions much easier.
+
+<p>
+Furthermore, we recommend that you not split up the JS9 files or
+install them outside the JS9 install directory. Not only is this
+difficult to update, but it actually will break JS9: at runtime, it is
+assumed that js9.css is located in the JS9 install directory, and its
+actual location is used to determine the JS9 install location relative
+to the main web page. If you must move the js9.css file, you will also
+need to add the <b>installDir</b> property to the <b>globalOpts</b>
+object within js9prefs.js, specifying the relative path from the web
+page to the JS9 install directory. Failure to do this correctly will
+cause a host of problems, starting with JS9 not loading astroem.js and
+js9worker.js.  Please contact us if you have problems (the first
+indication of which probably will be JavaScript error messages when
+failing to load astroem.js and js9worker.js.)
+
+<p>
+As described in <a href="./webpage.html">Creating a JS9 Web Page</a>,
+a few JavaScript and CSS files must be loaded into a JS9-enabled web page.
+Ordinarily this is done in the page's header, which typically will
+look something like this:
+<pre>
+  &lt;head&gt;
+  &lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+  &lt;meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" &gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1" &gt;
+  &lt;link type="image/x-icon" rel="shortcut icon" href="./favicon.ico"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="js9support.css"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="js9.css"&gt;
+  &lt;script type="text/javascript" src="js9prefs.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9support.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9plugins.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+</pre>
+Also during startup, JS9 will asynchronously load
+the <b>js9worker.js</b> file in order to create a worker process and
+will load either the <b>astroem.js</b> file or the <b>astroemw.js</b>
+and <b>astroemw.wasm</b> files, depending on whether
+<a href="http://webassembly.org/">WebAssembly</a> is supported on your browser.
+
+<p>
+Although none of these files are large, it always is worthwhile making
+downloaded files smaller to shorten the web page load time.  One
+straight-forward way to do this, if you have control of the Apache web
+server, is to use the Apache rewrite capability to serve gzip'ed files
+in place of requested (uncompressed) files, if the former exist. Using
+this technique, your header can remain as shown above, but the Apache
+server will send gzip'ed versions when available. To do this, you can
+add code such as the following to the Apache httpd.conf:
+<pre>
+  &lt;IfModule mod_headers.c&gt;
+    # turn on rewrite
+    RewriteEngine on
+
+    # Serve gzip compressed CSS files if they exist
+    # and the client accepts gzip.
+    RewriteCond "%{HTTP:Accept-encoding}" "gzip"
+    RewriteCond "%{REQUEST_FILENAME}\.gz" -s
+    RewriteRule "^(.*)\.css" "$1\.css\.gz" [QSA]
+
+    # Serve gzip compressed JS files if they exist
+    # and the client accepts gzip.
+    RewriteCond "%{HTTP:Accept-encoding}" "gzip"
+    RewriteCond "%{REQUEST_FILENAME}\.gz" -s
+    RewriteRule "^(.*)\.js" "$1\.js\.gz" [QSA]
+
+    # Serve gzip compressed wasm files if they exist
+    # and the client accepts gzip.
+    RewriteCond "%{HTTP:Accept-encoding}" "gzip"
+    RewriteCond "%{REQUEST_FILENAME}\.gz" -s
+    RewriteRule "^(.*)\.wasm" "$1\.wasm\.gz" [QSA]
+
+    # Serve correct content types, and prevent mod_deflate double gzip.
+    RewriteRule "\.css\.gz$" "-" [T=text/css,E=no-gzip:1]
+    RewriteRule "\.js\.gz$" "-" [T=text/javascript,E=no-gzip:1]
+    RewriteRule "\.wasm\.gz$" "-" [T=application/octet-stream,E=no-gzip:1]
+
+    &lt;FilesMatch "(\.js\.gz|\.css\.gz|\.wasm\.gz)$"&gt;
+    # Serve correct encoding type.
+    Header append Content-Encoding gzip
+    # Force proxies to cache gzipped &
+    # non-gzipped css/js files separately.
+    Header append Vary Accept-Encoding
+    &lt;/FilesMatch&gt;
+  &lt;/IfModule&gt;
+</pre>
+
+<p>
+Note that the JS9 Makefile contains a rule called <b>install-gzip</b> which
+will install gzip'ed copies of several JS9 files along side the uncompressed
+versions:
+<pre>
+  ./configure ...
+  make
+  make install
+  make install-gzip
+</pre>
+
+<h3>Do You Want to Configure Server-side Analysis or External Messaging?</h3>
+<p>
+JS9 supports server-side ("back-end") analysis on FITS data using a
+server-side helper. This capability allows you to execute virtually
+any command-line analysis program from JS9. The analysis command is
+run on the back-end server and results viewed on your web page.  You can
+utilize your own web server as the JS9 back-end helper using CGI
+calls, or you can run a separate Node.js-based server to process JS9
+back-end requests.  The server-side analysis capability is especially
+useful for archive centers, but also can be attractive to individual
+users who want to integrate their own data analysis programs into JS9.
+<p>
+In addition, JS9 supports
+<a href="./extmsg.html">command-line messaging</a>
+between the shell and JS9,
+<a href="./python.html">pyjs9 Python messaging</a>
+between the Python and JS9,
+and also has large-file support via the use of 
+<a href="./repfile.html">representation files</a>.
+These capabilities requires the configuration of a
+Node.js-based server-side helper.
+<p>
+You configure a JS9 helper by adding additional switches to
+the configure command, e.g.:
+<pre>
+  # where to find cfitsio and install binaries, what sort of helper to build:
+  ./configure  --with-cfitsio=[path_to_cfitsio] --prefix=$HOME --with-helper=nod
+  make
+  make install
+</pre>
+See:
+<a href="./helper.html">Installing a Server-side Helper</a>
+for details.
+
+<h3>Build the JS9 System</h3>
+Once you have decided on the configuration of your JS9 system, run
+<b>configure</b> to generate various build files:
+<pre>
+  ./configure [your JS9 switches]
+</pre>
+<p>
+and then build the JS9 system using the <b>make</b> command:
+<pre>
+   make
+</pre>
+Minor note: the cloned js9 script will be modified by the build to
+include knowledge of the source and install directories. This change
+allows you to run using the installed code instead of the source code.
+But since this modification will prevent subsequent "git pull"
+calls from completing, it will be reset by install or clean.
+
+<h3>Finalize Your Site Preferences</h3>
+<p>
+The js9prefs.js file and js9Prefs.json file contain various default
+settings for JS9, e.g. default colormap and scale for image display.
+Feel free to edit this file to set up your own site-specific
+parameters. See
+<a href="./preferences.html">JS9 Site Preferences</a> for a
+description of the available parameters.
+
+<h3>Install the JS9 System</h3>
+<p> When the build is completed, you can install the JS9 into your web tree:
+<pre>
+    make install
+</pre>
+<p>
+The first time you install JS9, your preference files will also be
+installed. After that, the install command will not install these
+files in order to avoid overwriting custom files. You can explicitly
+re-install preference files using:
+<pre>
+    make install-prefs
+</pre>
+or simply copy them into the install directory.
+
+Clean up the build directory using the command:
+<pre>
+    make clean
+</pre>
+<h3>Optionally Install the JS9 Test Data Files</h3>
+<p> 
+If you want to display our test data files in the JS9 demo pages, 
+you must retrieve the JS9 data file tar file from the JS9 web site:
+<pre>
+    https://js9.si.edu
+</pre>
+and untar it into the JS9 web install directory. This will create
+sub-directories containing the image data. These data files also are
+available on GitHub:
+<pre>
+    https://github.com/ericmandel/js9data
+</pre>
+
+
+<h5>Last updated: April 22, 2019</h5>
+</div>
+
+</body>
+</html>

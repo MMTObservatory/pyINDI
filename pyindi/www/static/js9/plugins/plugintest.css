@@ -1,0 +1,14 @@
+div.PLUGINtest{
+    /* relative pos top/left for container, Flanagan's JavaScript, p 357 */
+    position: relative;
+    top:  0px;
+    left: 0px;
+    display: block;
+    border-width: 0px;
+    background: lightblue;
+}
+
+div.PLUGINmessage{
+    height: 30px;
+    padding: 10px;
+}

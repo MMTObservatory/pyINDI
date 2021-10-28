@@ -1,0 +1,308 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>Adding a JS9 Server-side Helper</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>Adding a JS9 Server-side Helper</h3></center>
+
+<h3>Do You Need a Server-side Helper? Which One?</h3>  
+
+<p>
+JS9 supports server-side analysis on FITS data, allowing you to
+execute virtually any command-line analysis program from JS9, run that
+analysis command on the server, and view results on your web page. It
+also can support external communication with JS9 (via the shell and
+Python) and handle the display of large files.
+
+<p>
+The server-side analysis capability is useful for archive centers and
+individual users who want to integrate their own data analysis
+programs into JS9. You configure a JS9 server-side helper by adding
+additional switches to the configure command described in
+<a href="./install.html">Installing JS9</a>.
+
+<p>
+JS9 supports two mechanisms for server-side analysis: you can run a
+separate Node.js-based server to process requests using WebSockets, or
+use CGI calls to your own web server.  The Node.js server-side helper
+is the recommended method: it is faster and more flexible than the CGI
+helper: in addition to analysis tasks, Node-js-based helper also supports:
+<ul>
+<li><a href="./extmsg.html">command-line messaging</a> between the shell and JS9
+<li><a href="./python.html">pyjs9 messaging</a> between the Python and JS9
+<li>large-file support via the use of <a href="./repfile.html">representation files</a>
+</ul>
+Note that Node v6.4.0 (released 2016-08-16, and no longer actually
+supported by the Node team) or later is required, since the JS9 helper
+uses standard ES6 features.
+
+<h3>Add Switches to Configure the Server-side Helper</h3>
+<p>
+JS9 is built using the standard GNU <b>./configure; make; make
+install</b> method. To configure server-side analysis, you
+add switches to the configure command line. The most important switches are:
+<pre>
+--with-helper=[type]    type of helper: nodejs (for Node.js) , get (for CGI)
+--prefix=[path]         location to install the non-web programs and scripts
+--with-cfitsio=[path]   cfitsio location for building js9helper, e.g., /usr/local
+</pre>
+Other less-used switches are:
+<pre>
+--with-cgidir=[path]     cgi install directory e.g., /var/www/public_html/cgi-bin
+--with-cgiurl=[url]      cgi url relative to the web root, e.g.. ./cgi-bin/js9
+--with-cgixpath=[dirs]   directories to add to cgi path
+--with-png=[path]        directory containing lib/png to build tpos, e.g., /usr/local
+</pre>
+
+<p>
+Both the Node.js and CGI helpers make use of a C program called
+<b>js9helper</b> to handle certain types of JS9 requests.  To support
+extraction of FITS representation files from large FITS files,
+js9helper must be linked against the cfitsio library (version 3.39 or
+later is preferred).  Cfitsio is the de facto standard FITS library
+and is available from NASA/HEASARC at the Goddard Space Flight Center:
+<pre>
+    https://heasarc.gsfc.nasa.gov/fitsio/fitsio.html
+</pre>
+To tell configure where cfitsio libraries are located, use the
+--with-cfitsio=[dir] switch, e.g., --with-cfitsio=/usr/local will find
+the cfitsio libraries in /usr/local/lib and include files in
+/usr/local/include.  If cfitsio is not used in the build, the js9helper will
+still support server-side analysis, but will not support representation files.
+
+<p>
+Note that the non-web files, programs, and scripts (e.g., js9helper)
+will be installed in accordance with the standard GNU
+<b>--prefix=[dir]</b> switch. The default is /usr/local.
+
+<p>
+Example configure commands are shown below for a typical Linux Apache setup
+(using CGI) and for a personal Mac setup (using Node.js):
+<pre>
+  linux-cgi)
+  ./configure 	--prefix=/soft/saord					\
+		--with-helper=get					\
+		--with-webdir=/var/www/htdocs/js9			\
+		--with-cgidir=/var/www/cgi-bin/js9			\
+		--with-cgiurl=./cgi-bin/js9				\
+		--with-cgixpath=/soft/saord/bin				\
+		--with-cfitsio=/soft/saord				\
+  		CC=gcc $*
+
+  mac-nodejs)
+  ./configure 	--prefix=$HOME						\
+		--with-helper=nodejs					\
+		--with-webdir=/Users/me/Sites/js9			\
+		--with-cfitsio=/Users/me/soft				\
+		CC=gcc $*
+
+</pre>
+In these examples, the JS9 web files (JavaScript, CSS etc.) will be
+installed in a js9 sub-directory of htdocs in the /var/www directory
+or in the Mac user's personal Sites directory.  JS9 CGI files will be
+installed in a subdirectory of the cgi-bin directory. C programs and
+shell scripts will be installed in sub-directories of the user's home
+directory or the system-wide /soft/saord directory.
+
+<h3>Build the JS9 System</h3>
+<p> Once the configure arguments are set up, you run configure, etc.
+as described in the basic install instructions at:
+<a href="./install.html">Installing JS9</a>.
+<p>
+Some additional notes on getting the server-side helpers working are
+added below.
+
+<h3>Adding Analysis Tasks</h3>
+<p>
+When configuring server-side analysis, you add server-side analysis tasks
+to JS9 (or change the default analysis tasks) by adding or modifying
+json files in the <b>analysis-plugins</b> directory (and optionally,
+by adding wrapper files to the <b>analysis-wrappers</b> directory.)
+See <a href="serverside.html">Server-based Tasks</a> for a description of
+how to configure server-side analysis tasks for your site.
+
+<h3>Notes on Installing the Node.js-based Server-side helper</h3>
+<p>
+The Node.js server-side helper is noticeably faster than CGI. It also
+offers more power and flexibility, e.g., the node server supports
+external control of the browser from the command line via the
+<b>js9 script</b> and it's underlying <b>js9Msg</b> facility
+(see <a href="./extmsg.html">External Messaging with JS9</a> for
+more information). However, Node.js requires that you open another
+internet port to the outside world.
+
+Node is available at:
+<pre>
+    http://nodejs.org/
+</pre>
+Please install Node.js version 6 or above (some versions of Linux
+come with version 4, which will not work). Once installed, you must
+start the server-side helper from the JS9 web install directory,
+i.e. the location where you installed (among other things) js9.js and
+the node_modules directory:
+<pre>
+    # in the bash shell:
+    node js9Helper.js 1>~/logs/js9node.log 2>&1 &
+    # or, in the tcsh shell:
+    node js9Helper.js >& ~/logs/js9node.log &
+</pre>
+Unlike CGI, Node can be run as any user: it does not have to be run as
+the http daemon user. It certainly should not be run as root! We run
+it as a non-privileged user with sufficient permissions to run
+analysis programs. In any case, it should be run with its Unix PATH
+set to include the directory containing the JS9 helper program, as
+well as any analysis programs that will be executed by the JS9
+server-side helper when requested by the client. The PATH also should
+include the directories housing standard Unix tools such as awk, sed,
+grep, and echo.
+
+<p>
+For security reasons, the log file should be created outside the web
+server directory structure.
+
+<p>
+If you are running in a secure environment (i.e. your web pages use
+<b>https</b> protocol instead of <b>http</b>), then node server also
+must be run securely.  This is because modern browsers block "active
+mixed content".  To run the Node.js helper using https protocol
+instead of http, create a js9Secure.json file containing path names to
+your private key, certificate, and certificate authority files:
+<pre>
+  {
+      "key":  "/path/to/private.key",
+      "cert": "/path/to/server.certificate",
+      "ca":   "/path/to//certifcate.authority"
+  }
+</pre>
+This file will reside in the directory in which the Node.js helper is started.
+<p>
+<b>It is imperative that you keep your private key file secure!</b> If
+this key is accessed by unauthorized parties, they can masquerade as
+your site. The standard recommendation is to change files permission so
+that only the Node.js user can read it:
+<pre>
+   chmod 400 private.key
+</pre>
+and keep that user's password safe!
+
+<h3>Setting up a proxy for the Node.js-based  helper</h3>
+
+<p>
+Clients will automatically connect to the Node.js helper when an image
+is loaded into JS9. The server-side helper listens on a port specified
+in the js9Prefs.json file by the <b>globalOpts.helperPort</b> value. The
+default is 2718, but you can change this to any open port.
+
+<p>
+For example, some institutions do not allow non-standard ports to be
+open on public-facing hosts.  In such a case, the Node.js-based helper
+can change its port to a standard port allowed by that institution
+(e.g., 8080 or 8000). This can be done by simply changing
+the <b>helperPort</b> property in js9prefs.js (for the client) and
+js9Prefs.json (for the helper).
+
+<p>
+But sometimes even this is not permitted: instead, the Node.js helper is
+required to run as a non-public server.  For this situation, you can
+set up a proxy to pass TCP packets from a public-facing host to the
+helper running on a non-public host. The issues surrounding
+proxying the helper's underlying <a href="https://socket.io/">socket.io</a>
+library are discussed in detail in this
+<a href="https://github.com/socketio/socket.io/issues/1696">issue</a>
+and in this
+<a href="https://stackoverflow.com/questions/36472920/apache-proxy-configuration-for-socket-io-project-not-in-root">stackoverflow discussion</a>.
+
+<p>
+tl;dnr: a variation of the following httpd.conf configuration should
+work for most Apache web servers:
+<pre>
+RewriteEngine On
+RewriteCond %{REQUEST_URI}  ^/socket.io            [NC]
+RewriteCond %{QUERY_STRING} transport=websocket    [NC]
+RewriteRule /(.*)           ws://otherhost:2718/$1 [P,L]
+
+ProxyPass        /socket.io http://otherhost:2718/socket.io
+ProxyPassReverse /socket.io http://otherhost:2718/socket.io
+</pre>
+<p>
+NB: when configuring a proxy, you should set the "helperPort" in
+js9prefs.js to 80 (or whatever port your web server listens on) so
+that the browser connects to the helper via the public-facing web
+server. Set the "helperPort" in js9Prefs.json to 2718 (or whatever
+port you choose), so that the helper listens on its own port. This is
+a special situation where the ports will be different for the client
+and the helper.
+
+<h3>Notes on the CGI-based Server-side helper</h3>
+
+<p>
+If you want to utilize a CGI-based
+helper, you <b>must</b> specify the <b>--with-cgidir</b>
+and <b>--with-cgiurl</b> switches on the configure command
+line. Optionally, you also can specify the
+<b>--with-cgixpath</b> switch if you want to add directories to the CGI path:
+
+<ul>
+<li>The <b>--with-cgidir</b> switch specifies the directory into which to
+install the js9Helper.cgi wrapper script. That script is generated by
+the build. All CGI requests are processed through this js9Helper.cgi wrapper.
+
+<li>The <b>--with-cgiurl</b> switch specifies the URL of the
+js9Helper.cgi script <b>relative</b> to your web document root. The
+value of this switch is combined with the CGI wrapper filename and the
+result stored in the js9Prefs.json file, telling JS9 how to call the
+CGI helper script.
+
+<li>The <b>--with-cgxpath</b> switch specifies a semi-colon delimited
+list of directories to add to the CGI path. You can use this switch to
+make accessible the executables that will be used in your CGI
+processing. Of course, setting up the CGI path also can be done in
+many ways, e.g., inside your analysis wrapper scripts or even in the
+web server itself.
+</ul>
+
+<p>
+After the build is complete, the <b>globalOpts.helperType</b> variable
+in the <b>js9Prefs.json</b> file should have a value of "get" and JS9
+will send messages via the specified CGI command, utilizing the
+js9Helper.cgi script.
+
+<p>
+Of course, you must now ensure that your web server can run the
+js9Helper.cgi script successfully to execute JS9 CGI commands. Normal
+web debugging techniques come into play here: check the CGI section of
+your web server's configuration file and review the web access and
+error logs. If you continue to have problems, please let us know and
+we will try to help.
+
+<h3>Miscellaneous Notes</h3>
+
+<p>
+<b>DEPRECATED:</b> For <b>fits2png</b> processing, the build of the
+JS9 server-side tpos program (which converts FITS files to the PNG
+representation file) requires the libpng library. If libpng is not
+already installed on your system, it is available at:
+<pre>
+    http://www.libpng.org/pub/png/libpng.html
+</pre>
+Of course, Linux users can install libpng in the "usual way", e.g., for CentOS:
+<pre>
+    sudo yum install libpng-devel
+</pre>
+Any relatively modern version of the png library should suffice
+(subject to security fixes, etc.) 
+<p>
+In any case, to build tpos, you must tell configure where to look for
+the png libraries and include files using the <b>--with-png=[dir]</b> switch.]
+
+<h5>Last updated: August 3, 2018</h5>
+</div>
+
+</body>
+</html>

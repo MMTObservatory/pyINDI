@@ -1,0 +1,878 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>The JS9 Help Facility</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center>
+<h3>JS9: astronomical image display everywhere</h3>
+Eric Mandel, Alexey Vikhlinin
+<br>
+Center for Astrophysics | Harvard & Smithsonian
+<br>
+Cambridge, MA 02138
+</center>
+
+<p>
+<h3>Introduction to JS9</h3>
+<p>
+
+JS9 is the latest in the SAOimage line of astronomical image display
+programs developed at
+the <a href="https://www.cfa.harvard.edu/">Center for Astrophysics |
+Harvard & Smithsonian (CfA.)</a> Our previous effort,
+<a href="http://ds9.si.edu" target="_blank">SAOimage DS9</a>, has been
+the de facto standard desktop image display for more than 30
+years. Now, with JS9, you can view and manipulate astronomical image
+data in your browser as well as on the desktop.
+<p>
+Please choose from the following topics:
+<ul> 
+<li><a href="#start">Getting Started with JS9</a>
+<li><a href="#menus">JS9 Menus</a>
+<li><a href="#mouse">JS9 Mouse Interaction</a>
+<li><a href="#regions">JS9 Regions</a>
+<li><a href="#meta">Meta Key Accelerator</a>
+<li><a href="#dragdrop">Drag and Drop Images</a>
+<li><a href="#resize">Resizing the Display</a>
+</ul>
+
+<p>
+<a name="start"></a> 
+<h3>Getting Started with JS9</h3>
+<p>
+JS9 provides astronomical image display capabilities both on the
+desktop and in your browser.  JS9 takes its name as well as its core
+functionality from the de facto standard
+<a href="http://ds9.si.edu" target="_blank">DS9</a> image display
+program for desktop use.  JS9, on the other hand, can be run either on
+the desktop or in a browser. It also can be used without any
+installation at all by dragging/dropping a FITS file onto the
+<a href="https://js9.si.edu" target="_blank">JS9 website</a>. In all
+three cases, the JS9 display consists of one or more HTML components
+that are added to a web page.  At a minimum, the JS9 display will
+contain an image display canvas. It usually also will display a
+menubar containing several pull-down menus and a
+colorbar. Traditionally, the menubar is placed on top of the image
+canvas and the colorbar below, but web page designers (as well as
+individual users) have complete control over component placement. JS9
+also can display an info box, a command-line window, a pan window, a
+zoom window, as well as other plugins. All of these plugin windows can
+be brought up dynamically from the View menu.
+
+<p>
+Astronomical image data usually is offered on a JS9 web page as one or more
+clickable URLs. When you click on a data URL, it is displayed on the JS9 image
+canvas. Multiple images can be loaded into a single JS9 display. The <b>File</b>
+menu allows you to switch between these images.
+
+<p>
+Once an image is loaded, you can move the mouse (or a single finger on
+a touch screen) to display position and pixel value information.
+Pressing the left mouse button and moving the mouse (or using two
+fingers on a touch screen) will change the contrast/bias of the
+displayed image, bringing image features into relief.
+
+<p>
+These mouse/touch actions are configurable, both by web page
+developers and by users. See
+the <a href="../plugins/help/mousetouch.html">Mouse Touch plugin</a> for
+more information.
+
+<p>
+Menu options allow you to change the scaling algorithm and/or color
+map, add geometric regions of interest, change world coordinate system
+(WCS) parameters, and run site-specific astronomical analysis tasks on
+the original FITS data.
+
+<p>
+<a name="menus"></a> 
+<h3>JS9 Menus</h3>
+<p>
+The following menus are in the default JS9 menu bar. Of course, web
+designers have control over which menus are displayed (or even whether
+the menu bar itself is displayed.) Thus, not all of the menus listed below
+will be found on all JS9-enabled web pages.
+
+<p>
+Some menu options have keystroke accelerators and these are shown on
+the right-hand side of the menu option. Thus, for example, to open a
+local file, you can select the <b>File:open...:local file</b> menu
+option, or press the <b>Meta-o</b> key combination when the mouse is
+inside the JS9 display.
+
+<p>
+Note that the default menubar has a style in which all of the
+major menus are shown at the top-level of the menubar. This is
+the <b>classic</b> style. JS9 also supports a <b>mac</b> style
+menubar, in which the <b>File</b>, <b>Edit</b> and <b>View</b> menus
+are placed on the left side of the menubar and the <b>Help</b> menu on the
+right. The other main menus are displayed as submenus within
+the <b>View</b> menu.
+
+<p>
+The default top-level JS9 menus are:
+<ul>
+<li><p><b>File:</b> The File menu displays the currently loaded images,
+either directly in the menu, or, if there "too many" images (as
+defined by the JS9.globalOpts.imagesFileSubmenu variable), using
+an <b>images</b> submenu. The displayed image is marked with a
+starburst.  To display a different image, simply choose it from the
+menu. The File menu also contains the following submenus and options:
+<ul>
+<li><b>open ...</b>: images and urls:
+<ul>
+<li><b>local file ...</b> bring up a file browser dialog box to choose a FITS,PNG, or JPEG file for display
+<li><b>url via proxy ...</b> enter a link to a FITS, PNG, or JPG file that will be downloaded onto the web-page server host and displayed (if configured)
+<li><b>url via CORS ...</b> enter a shared Dropbox link to display a FITS file
+</ul>
+
+<li><b>display ...</b>: components and sections:
+<ul>
+<li><b>FITS header</b> display FITS header of the current image
+<li><b>FITS HDUs</b> display a list of HDUs in a multi-extension FITS file
+<li><b>refreshed image</b> an advanced option that will call the
+internal redisplay routine for the displayed image (useful, for
+example, if you are reprocessing the image on disk and want to view
+the new data)
+<li><b>full image</b> an advanced option that tries to
+load and display the entire image (might cause the page to crash if
+the image is too large)
+<li><b>selected cutouts</b> selected region(s) are used to define the center and size of new image section(s); note that image sections are always rectangles and region angles are ignored
+<li><b>display pageid</b>, a unique ID for this page that can be used to communicate externally with a JS9 instance when multiple JS9 instances are running (js9 --pageid [pageid])
+</ul>
+<li><b>move ...</b> move the current image to an existing displays or
+a new display. (The new display will either be a in a light window or
+a CSS grid, depending on how the web page is constructed.)
+
+<li><b>save ...</b>the currently displayed image data. You can save
+the currently loaded image (or the currently loaded image section, if
+an image section was extracted) in standard FITS image format.  Or you
+can save only the currently displayed image section in any of the
+following formats:
+<ul>
+<li><b>FITS</b> (standard astronomical image file, without 2D graphics)
+<li><b>JPEG</b> (also includes 2D graphics, such as regions)
+<li><b>PNG</b>  (also includes 2D graphics, such as regions)
+</ul>
+
+<li><b>separate ...</b> separate/gather two or more images
+<ul>
+<li><b>separate these images</b> move each image in this display to a
+new display.  (The new display will either be a in a light window or a
+CSS grid, depending on how the web page is constructed.)
+<li><b>gather all images here</b> move all images from other displays to this display
+</ul>
+
+<li><b>sync ...</b> synchronize/unsynchronize two or more images
+<ul>
+<li><b>sync images ...</b> synchronize two or more images, so that when an operation (change of colormap, contrast/bias, pan, regions, scale, wcs, zoom)
+is performed on one image, it also is performed on the other(s)
+<li><b>unsync images ...</b> unsynchronize previously sync'ed images
+</ul>
+
+<li><b>close ...</b> one or more images (or internal image memory)
+<ul>
+<li><b>this image</b> to clear the current image and release browser resources
+<li><b>all images</b> to clear all images and release browser resources
+<li><b>free image's memory</b> free up memory used to store the FITS file internally (which is needed for WCS reprojections, viewing FITS extensions and data cubes)
+<li><b>proxy file</b> to clear a server proxy file and release browser resources
+</ul>
+
+<li><b>catalog ...</b> load or save catalogs
+<ul>
+<li><b>load ...</b> load a tab-delimited catalog file into the display
+<li><b>save active</b> save the currently active catalog (Shape Layers plugin has more general support)
+</ul>
+
+<li><b>mosaic ...</b> create a mosaic image using:
+<ul>
+<li><b>images in the current file</b>
+<li><b>images in this display</b>
+</ul>
+
+<li><b>session ...</b> load or save sessions
+<ul>
+<li><b>load ...</b> load a previously saved local session file into the display
+<li><b>save ...</b> save information about the current image or all images loaded into this display: filename, scaling, colormap, contrast/bias, zoom, regions, catalogs, etc. are stored in a json file
+</ul>
+
+<li><b>window ...</b> create a new JS9 display window:
+<ul>
+<li><b>light window</b> create a light window containing a JS9 instance
+<li><b>separate window</b> create a separate window containing a JS9 instance
+</ul>
+
+<li><b>remove this display</b> close images and remove this display. This
+option is available for displays contained in light windows and for displays
+contained in JS9 Grid Containers (although the latter requires that at least
+one display to remain in a container.) The display is removed immediately
+and without a confirmation dialog box (unlike a light window being closed
+via its <b>close</b> button.)
+
+<li><b>print ...</b> print the current image display window (including 2D graphics)
+</ul>
+
+<li><p><b>Edit:</b> allows you to copy and paste regions, positions,
+and pixel values to/from the clipboard:
+<ul>
+<li><b>edit</b> if a single region is selected, display its edit window;
+if multiple regions or no regions are selected, display the multi-region window;
+<li><b>copy</b> copy selected region(s) (or all regions, of none are
+selected) to the system clipboard, so that you can transfer to other
+JS9 displays or to programs outside of JS9
+<li><b>paste to current pos</b> paste previously copied region(s) to
+the current mouse (or arrow key) position in a JS9 display. Usually
+you would use the keyboard shortcut (currently 'p') for this
+sort of pasting, but you also can use the meta key to freeze the mouse
+position and then use this menu option
+<li><b>paste to original pos</b> paste previously copied region(s) to
+their original region position(s), usually in another JS9 display.
+<li><b>undo remove</b> restore the last removed region (or set of removed regions, if more than one was removed in a single operation)
+<li><b>copy wcs pos</b> copy the current WCS position to the system clipboard
+<li><b>copy value/pos</b> copy the current pixel value and WCS position to the system clipboard
+</ul>
+
+<li><p><b>View:</b> displays a list of available plugin, including the following core options:
+<ul>
+<li><b>Archive and Catalogs</b>: allows you to display image data retrieved from various archives and overlay catalog information.
+<li><b>Bin/Filter/Section</b>: supports binning and column filtering on FITS binary tables.
+<li><b>Blending</b>: combine selected images using a specified blend
+mode and optional opacity.
+<li><b>Colormaps</b>: create compatible colormaps from a specified color
+<li><b>Console</b>: will bring up a movable, light-weight
+console window into which JS9 commands can be entered.
+<li><b>Contours</b>: generate contour maps
+<li><b>Data Cube</b>: display slices of a 3D FITS
+data cube.
+<li><b>Extensions</b>: display images from a FITS multi-extension file.
+<li><b>Imarith</b>: simple image arithmetic between images
+<li><b>InfoBox</b>: allows you to display value and position
+information in a separate light-weight window.
+<li><b>Keyboard Actions</b>: view the current mapping between keys and actions
+<li><b>Magnifier</b>: will bring up a movable,
+light-weight window showing a blocked image of the data in an area
+surrounding the mouse as it moves. The default magnification of four
+can be changed using command buttons on the magnifier window.
+<li><b>Mouse/Touch</b>: allows you to change the
+actions performed when you move the mouse over an image with zero,
+one, or two buttons pressed.  It also configures touch actions using
+one, two, or three fingers.
+<li><b>Panner</b>: will bring up a movable,
+light-weight panner window that displays the full image along with a
+viewport rectangle showing the currently displayed image section in
+the primary image window. The viewport can be moved around in order to pan
+to different locations in the primary image. The panner also has
+command button options to zoom the viewport itself. (This makes
+the viewport rectangle larger at the expense of displaying only a
+section of the full image. It is useful for panning in a very large
+image.)
+<li><b>Pixel Table</b>: displays an array of pixel values around the current mouse position.
+<li><b>Preferences</b>: set preferences for this session (and/or save for future sessions)
+<li><b>Separate/Gather</b>: separate images in this display or gather images into this display
+<li><b>Shape Layers</b>: displays the layers defined for the current
+image and allows you to turn on and off the display of any layer.
+<li><b>Show/Hide Plugins</b>: displays the currently active plugins and allows
+you to hide plugins defined statically on the web page.
+</ul>
+
+<p>
+The <b>View</b> menu also contains the following <b>Display
+Options</b> submenus:
+<ul>
+<li><b>show ...</b>: various options on the display:
+<ul>
+<li><b>display value/position</b>: specifies whether image position
+and image pixel value is displayed as the mouse (or finger) moves over
+the image. By default, this information is displayed in the upper left
+of the image. The display can be moved anywhere inside the JS9 window by
+clicking on it with the mouse and moving.  You also can redirect the
+display to a movable, light-weight window by choosing the
+<b>InfoBox</b> menu option.
+<li><b>display coords in val/pos</b>: specifies whether display coordinates
+are shown in the value/position display when the WCS sys is set to "image".
+<li><b>active shape layers</b>: toggles display of shape layers
+<li><b>crosshair for this image</b>: displays a
+crosshair at the mouse position when the Shift key is held down
+(without the Shift key on iOS devices.) It is turned off by default.
+<li><b>match wcs crosshairs</b>: displays a crosshair in
+other JS9 displays, matching the WCS position of the mouse in this display
+(assuming the other image has its own crosshair enabled.)
+<li><b>toolbar tooltips</b>: specifies whether tooltips
+are displayed as the mouse hovers over an icon in the <b>Toolbar</b>
+plugin. (For mobile devices, a single tap will display the tooltip,
+requiring a second tap to execute the toolbar action.)
+<li><b>new image inherits current params</b>: specifies whether
+a new image grabs the image params (e.g., colormap, scale, zoom, etc.)
+from the currently displayed image. If false, these params are taken
+from the default JS9.imageOpts object.
+</ul>
+<li><b>resize</b>: the display:
+<ul>
+<li><b>change width/height</b> specify a new width and height for the
+JS9 display.
+<li><b>set to image size</b>: set display to current image size
+<li><b>set size to full window</b>: set display to browser window size
+<li><b>reset to original size</b>: set display to its original size
+</ul>
+</ul>
+
+<li><p><b>Zoom:</b> The <b>zoomIn</b> and <b>zoomOut</b> menu options
+zoom the primary image in or out by a factor of
+two. The <b>zoomToFit</b> options calculates a zoom factor that fits
+the entire image into the JS9 display.  You also can set the zoom
+factor to a pre-specified value using menu options or you can specify
+a floating point zoom factor in the <b>other zoom</b> text
+box. The <b>pan to center</b> option pans to the center of the image,
+while the <b>reset pan/zoom</b> sets the zoom to 1 and centers the
+display.
+
+<p>
+The <b>align pan/zoom ...</b> submenu allows you to change the pan and
+zoom of the current image to match a target image, assuming both have
+WCS info available. Pixel size (i.e. as specified by the FITS CDELT1
+parameter) will be taken into account when zooming, but not image
+rotation or flip (from the WCS params.) This is quicker than
+the <b>wcs reproject</b> algorithm for aligning images that are
+similar.
+
+<p>
+The Zoom menu also supports <b>image flip</b> around the x or y axes,
+<b>image rotation</b> by +/- 90 degrees or by an arbitrary
+angle. There also is an option to rotate the image so that north is up
+in the current coordinate system. Flipping and rotation are performed
+on the displayed pixels (so no change is made to the WCS). The
+rotation is much faster than the more general WCS-based
+rotation/reprojection in the <b>WCS</b> menu. Note that arbitrary
+rotation is performed in terms of an absolute angle: if you rotate by
+20 degrees and then do it again, there is no change. Also, setting the
+rotation to 0 sets the angle to 0.  Flipping and rot90, however, are
+relative to the current state of the display. This differs from DS9,
+where the actions are linked to the x and y axes. Thus, flipping by x
+twice will return you to the original orientation, whereas flipping a
+second time does nothing in DS9.
+
+<li><p><b>Scale:</b> Each scale option specifies a different scaling
+algorithm to use when converting image pixel values to RGB
+values. (The procedure for doing this conversion is detailed in the
+DS9 documentation titled <a href="http://ds9.si.edu/doc/ref/how.html"
+target="_blank">"How It Works"</a>.) The log scale, for example, is
+especially useful with X-ray data. Histogram equalization (histeq)
+tries to maximize contrast across the range of data values and is
+useful in a wide variety of cases. The current scale is marked with a
+starburst.
+
+<p>
+You also can change the low and high values used to clip the image
+data before scaling by changing the <b>low</b> and/or <b>high</b>
+values in the text boxes of the <b>Data Limits</b> section. These values are
+set initially with the data's min and max values or the z1,z2 values
+calculated by the <b>IRAF zscale</b> algorithm (depending on the value
+of the web site's <b>JS9.imageOpts.scaleclipping</b> parameter. The
+default usually is "dataminmax".) Finally, you can use the
+<b>Scale Controls</b> plugin to set the clipping values
+to data min/max, zscale z1/z2 or zscale z1/max, or set the clipping
+values using the pixel distribution plot.
+
+<li><p><b>Colormap:</b> Each colormap option specifies a different
+distribution of RGB values to use when converting image pixel values to RGB.
+(The procedure for doing this conversion is detailed in the
+DS9 documentation titled "How It Works".) Choose the colormap you like best,
+or try different ones to see how data features can be brought to the fore
+by color and contrast/bias.
+
+<p>
+The <b>image filters</b> menu option displays the <b>JS9Filters</b>
+plugin, which offers a number of well-known image processing functions
+that act directly on the displayed RGB image data (not the underlying
+raw astronomical data, as with the <b>Gaussian blur</b> in the <b>Analysis</b>
+menu.) Thus, when you can run one of these routines on an image, its
+effect will be undone if you redraw the image by changing the
+contrast/bias, colormap, etc. Also, since these functions act on the
+current RGB image, their effect is cumulative.  See the
+<b>JS9.FilterRGBImage()</b> section in
+the <a href="publicapi.html">JS9 Public API</a> for more information
+about the individual functions. Note that not all functions in the
+public API call are implemented here: some of them seemed pretty
+useless for our data (they can be added easily.)
+
+<p>
+You can enter a floating point value into the <b>contrast</b> and 
+<b>bias</b> text boxes to set the contrast/bias. Note that the
+contrast value ranges from 0 to 10 and the bias ranges from 0 to 1
+(following DS9 conventions.)
+
+<p>
+The <b>reset contrast/bias</b> option restores the original
+contrast/bias value (which is especially useful if you changed the
+contrast/bias or scale and now can't see any features at all!)
+
+<p>
+The <b>opacity</b> option allows you to set the overall opacity for all
+pixels in the image. Values range from 0 (transparent) to 1 (opaque.) More
+opacity options can be found in <b>Color Controls</b> (see below.)
+
+<p>
+The <b>load</b> option brings up a File menu from which you
+can choose a user-defined colormap to load.
+
+<p>
+The <b>save</b> option saves the active colormap definition
+for the currently displayed image to a file (useful for editing to
+make a new colormap.)
+
+<p>
+The <b>invert</b> option inverts the colormap (e.g., in the gray map,
+this will change white to black and vice versa.) 
+
+<p>
+If you have three images of the same size, scale, and pointing
+direction (e.g., three energy cuts of a Chandra data set), you can
+display each one separately and assign to them one of the <b>red,
+green, or blue</b> colormaps. If you then select the <b>rgb mode</b>
+menu option, they will be displayed as one RGB composite image. The
+current image (as shown in the <b>File</b> menu) determines which of
+the three independent colormaps is changed by the contrast/bias
+manipulation. To remove an image from the RGB composite, give it a
+different colormap. Re-join (or add a new image) by assigning one of
+the RGB colormaps. Simply turn off RGB mode to display the images
+separately.
+
+<li><p><b>Regions:</b> Astronomical regions format is described
+<a href="https://js9.si.edu/regions/regions.html" target="_blank">here</a>.
+Choose the appropriate menu option to create a
+region of type <b>annulus</b>, <b>box</b>, <b>circle</b>, <b>ellipse</b>,
+<b>line</b>, <b>point</b>, <b>polygon</b>, <b>text</b>.
+(see below for details on how to use regions.) One or more regions can
+be created and manipulated on a single image.
+
+<p>
+By default, a region is created in the center of the image when it is
+selected in the Regions menu.  You can turn off auto-creation by
+deselecting the <b>menu adds region @ center</b> option. With
+auto-creation turned off, the 'a' key will add the last selected
+region at the current mouse position.
+
+<p>
+The <b>list</b> menu option will display all regions.
+
+<p>
+The <b>load ...</b> menu option will load a file of regions and
+display them on the current image. Regions can be specified using the
+a dialect of the widely-used DS9/Funtools regions format, as described 
+<a href="regions.html">here</a>.
+
+<p>
+The <b>save ...</b> display a dialog box allowing you to save selected
+or all regions in one of these formats:
+<ul>
+<li><b>regions</b> text file in astronomical regions format
+<li><b>csv</b> comma-separated values
+<li><b>SVG</b> text file in SVG/XML format (useful for importing into
+programs such as Photoshop for further processing)
+</ul>
+NB: The file will be saved in the folder where your other browser
+downloads are stored.
+
+<p>
+The <b>copy to ...</b> menu option will copy regions from the
+current image to a specified image (or to all images.) If one or more
+regions are actively selected in the current image, they alone will be
+copied. Otherwise, all regions will be copied.
+
+<p>
+The <b>remove</b> menu option will delete all regions.
+
+<p>
+The <b>selected regions ...</b> submenu contains options that apply to
+the selected region(s), including the ability to edit, list, save,
+remove, or copy the selected region(s).  The submenu also allows you
+to change the following properties of selected regions by entering text values:
+<ul>
+<li><b>color</b>: the color of the region, using either a name
+("wheat") or #rrggbb syntax ("#f5deb3".)
+<li><b>width</b>: the numeric width of a region
+<li><b>dash</b>: two comma or space-delimited numeric values specifying the
+numeric width of a filled segment, followed by the width of a blank segment
+<li><b>tags</b>: replacement tags for this region
+</ul>
+<p>
+The selected regions submenu also supports the ability to toggle the
+"source"/"background" or "include"/"exclude" tags (which is heavily
+used in X-ray astronomy.)
+
+<p>
+The <b>onchange</b> submenu contains the following options:
+<ul>
+<li><b>list on change</b>: all regions are listed whenever one changes
+<li><b>xeq on change</b>: toggle whether region onchange callbacks are called
+</ul>
+
+<li><p><b>WCS:</b> Use this menu option to select a world coordinate
+system when displaying pixel positions and regions (assuming
+the data file supports WCS.) Available systems are: <b>FK4</b>, <b>FK5</b>,
+<b>ICRS</b>, <b>galactic</b>, or <b>ecliptic</b>. The <b>native</b>
+option chooses the system stored in the data file. The <b>image</b>
+and <b>physical</b> systems will display only image coordinates (not
+WCS coordinates.) <b>Physical</b> coordinates are tied to the original
+(block 1) file coordinates while <b>image</b> coordinates are tied to
+the current image data being displayed. Server-side X-ray analysis
+routines operating on the original file generally want physical coords
+rather than image coords. Browser-based plugin routines generally use
+image coordinates to operate on the in-memory image data.
+
+<p>
+You also can choose the units in which WCS information is displayed:
+<b>degrees</b>, <b>radians</b>, or <b>sexagesimal</b>. Image and
+physical coordinates are displayed in units of pixels.
+
+<p>
+The <b>alternate wcs</b> menu option allows you to choose an alternate
+world coordinate system, if one or more are defined in the current
+FITS file.  The submenu lists the WCS version (i.e. the letter "A" -
+"Z", or "default") and, if present, the WCSNAME header parameter
+associated with this WCS.
+
+<p>
+The <b>reproject</b> menu option allows you to reproject the
+image using the WCS associated with another displayed image. The
+reprojected data is placed in a new <b>raw data layer</b> called
+"reproject". You can switch between layers using the <b>View->raw data
+layers</b> option. If the <b>display wcs-aligned</b> option is set,
+the reprojected image will be aligned with the wcs reference image. If
+you change the pan/zoom of the latter, the former will be re-aligned.
+(The converse is not true: changing the reprojected image does not
+change the wcs reference image.) You can also reproject other images
+in this display using the WCS info from the currently displayed image.
+
+<li><p><b>Analysis:</b>
+JS9 supports both client-side analysis (i.e.,
+analysis in the browser) and server-side analysis (where requests are
+made to a back-end server, and returned results are displayed in the
+browser.)
+
+<p>
+Client-side analysis tasks can be written using the JS9
+<a href="localtasks.html">Plugin</a> capability, and
+the <b>Analysis</b> menu lists the currently loaded <b>Analysis
+Plugins</b>. For example, JS9 supplies the
+<b>Imexam</b> plugin, which offers the following tasks:
+<ul>
+<li> 3dPlot
+<li> Encircled Energy
+<li> Histogram
+<li> Radial Proj
+<li> Region Stats
+<li> X Proj
+<li> Y Proj
+</ul>
+
+<p>
+JS9 supplies a few other client-side analysis tasks:
+<ul>
+<li><b>Coordinate Grid:</b> display a WCS-based coordinate grid. The
+coordinate grid parameters can be changed using the <b>Preferences</b>
+plugin in the <b>View</b> menu.
+<li><b>Counts in Regions:</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program (compiled into the browser using
+<a href="https://kripken.github.io/emscripten-site/" target="_blank">
+Emscripten</a>) on the specified
+source and background regions and return a text display.  This is the
+same task as the server-side task, but running on the internal FITS file.
+(Currently disabled for iOS.)
+<li><b>Radial Profile:</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program (compiled into the browser using
+<a href="https://kripken.github.io/emscripten-site/" target="_blank">
+Emscripten</a>) on the specified
+source and background regions and return a plot display. The source
+regions consist of circles.  This is the same task as the server-side
+task, but running on the internal FITS file.
+(Currently disabled for iOS.)
+<li><b>3D Counts in Regions:</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program (compiled into the browser using
+<a href="https://kripken.github.io/emscripten-site/" target="_blank">
+Emscripten</a>) on the specified
+source and background regions for each slice in a 3D data cube and return a
+text display.
+(Currently disabled for iOS.)
+<li><b>3D Plot using Regions :</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program (compiled into the browser using
+<a href="https://kripken.github.io/emscripten-site/" target="_blank">
+Emscripten</a>) on the specified source and background regions for
+each slice in a 3D data cube and plot the background-subtracted results.
+(Currently disabled for iOS.)
+<li><b>Gaussian Blur:</b> enter a sigma (radius) to create a new raw
+data layer called "gaussBlur", in which the image pixel values are
+blurred using a Gaussian function with the specified sigma. The
+routine uses the fast Gaussian blur algorithm (approximating a full
+Gaussian blur with three passes of a box blur) described <a href="
+http://blog.ivank.net/fastest-gaussian-blur.html" target="_blank">
+here</a>.
+</ul>
+
+<p>
+In addition, each JS9 site can define server-side analysis
+tasks to be run from the Analysis menu. Server-side tasks are of two types:
+<ul>
+<li><b>immediate tasks:</b> These tasks are executed directly and
+immediately from the Analysis menu. No parameter setup is needed.
+<li><b>parameter tasks:</b> These tasks bring up a lightweight
+parameter window allowing various parameters to be set before
+executing the task. Parameter tasks are identified by the presence of
+an ellipsis (...) after the task name.
+</ul>
+<p>
+For example, the JS9 web page at
+<a href="https://js9.si.edu" target="_blank">https://js9.si.edu</a>
+offers the following tasks:
+<ul>
+<li><b>FITS Header(s):</b> Display all FITS headers for this FITS file.
+<li><b>Counts in Regions:</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program on the specified
+source and background regions and return a text display (immediate task.)
+<li><b>Radial Profile:</b> Run the
+<a href="https://js9.si.edu/regions/regcnts.html" target="_blank">regcnts</a>
+program on the specified
+source and background regions and return a plot display. The source regions
+consist of circles or annuli (immediate task.)
+<li><b>Energy Plot:</b> Create a histogram of the pi column (or energy
+column for Chandra data) of a binary table and return a plot display
+(immediate task.) The column must exist in the data file (e.g.,
+Chandra ACIS data but not Chandra HRC data.)
+<li><b>Light Curve:</b>Create a histogram of the time column of a binary table
+and return a plot display (immediate task.) The time column
+must exist in the data file.
+<li><b>Histogram Plot:</b> Create a histogram of the user-specified
+column of a binary table and return a plot display (parameter
+task.) Parameters include: histogram column name, number of bins, use
+bin width instead of bin size, and an option to normalize by bin
+width. A help file is appended to the parameter display.
+<li><b>Event Filter:</b> filter the events of a binary table and return
+an image representation of the filtered events. Note that when a FITS file
+is loaded directly into JS9, you can use the <b>Binning/Filtering</b> plugin
+to filter events instead.
+</ul>
+<p>
+If you drag and drop a FITS file onto a JS9 web page connected to a
+remove server (such as <a href="https://js9.si.edu" target="_blank">
+https://js9.si.edu</a>),
+the FITS file will, of course, not be accessible on the server (it's only
+stored in the browser.) As a result, no server-side analysis tasks will
+be available. But if the remote server supports <b>proxy loading</b>
+of FITS data, the Analysis menu will display an option to <b>upload FITS to
+make tasks available</b>. Select this option and your FITS file will
+be sent to the server so that server-side analysis can be performed.
+
+<p>
+The <b>server-side params</b> submenu contains the following options:
+<ul>
+<li><b>set data analysis path ...</b>: specify a colon-separated list
+of directories for JS9 to search when looking for FITS data files that
+have been dropped onto the display. This is used by JS9 when
+performing server-side data analysis on local drag-and-drop FITS
+files. It is necessary to specify data paths explicitly since web
+pages are not allowed to determine the pathname of such files
+automatically (for obvious security reasons.)
+<li><b>set this image file's path</b>: for local servers only, set the
+path (absolute or relative to the displayed web page) of an image file
+loaded via <i>Drag and Drop</i> or <i>Open Local File</i>.  For
+security reasons, browsers do not expose the path of files loaded in
+these two ways. However, for a local web page, you can safely specify
+the image path in order to refresh the image or run server-based
+analysis.
+</ul>
+
+<li><p><b>Help:</b> Show this and other JS9 help pages. The <b>Help</b> menu
+also contains help for <b>Plugins</b>, including the <b>Imexam</b> plugins
+listed above.
+</ul>
+
+<p>
+<a name="mouse"></a> 
+<h3>JS9 Mouse Interaction</h3>
+<p>
+In keeping with the needs of mobile devices, JS9 utilizes a single
+mouse button for user interaction. Keyboard input also is minimized.
+Moving the mouse (or a single finger on a tablet) over the image will
+display the position/value of individual pixels.  Pressing and moving
+the mouse (or two fingers) will change the contrast and bias of the
+image. A double-click (or double-tap) inside a region will bring up
+the configuration menu for that region.
+
+<p>
+<a name="regions"></a> 
+<h3>JS9 Regions</h3>
+<p>
+Regions are geometric shapes that can be used to mark part of an image
+for analysis. JS9 allows you to create the following region
+types: <b>annulus, box, circle, ellipse, line, point, polygon</b>.
+A <b>text</b> region also can be created to annotate an image.  When one
+of these options is selected, the region is created in the center of
+the image. It then can be dragged to the desired location. Arrow keys
+also will move the region one screen pixel in the specified direction.
+A selected region can be deleted by pressing the <b>Delete</b> key (where
+available. On a tablet, use the delete option in the configuration menu.)
+
+<p>
+Click inside a region to select it and display the resize/rotate
+controls around its perimeter. Grabbing a handle allows the size of
+the region to be adjusted or rotated. In the case of the box and
+ellipse regions, the width and height are controlled separately. Click
+outside the region to de-select (or click another region to select
+that one.)
+
+<p>
+For a line region, the end-points serve as both resize controls (arrow
+icon) and stretch points (hand icon.) You might have to move the mouse
+around a bit to switch from one to another. The control action is to
+resize the region in both directions (i.e., the same as other regions.)
+The stretch action allows you to move this end-point while the other one
+remains fixed.
+
+<p>
+A double-click inside a region brings up a configuration menu. You can
+change various values associated with a region by entering new values
+in the appropriate text boxes and the clicking <b>Apply</b>.
+
+<p>
+The configuration menu has the following standard options:
+<ul>
+<li><b>id:</b> the id of this region, which can be used programmatically to select it for processing (read-only)
+<li><b>type:</b> the type of region (read-only)
+<li><b>image center:</b> new image pixel values can be entered to change the region position
+<li><b>WCS center:</b> new WCS position values can be entered to change the region position (where WCS is available)
+<li><b>Text:</b> create a child text region with the specified text
+<li><b>Color:</b> change the color of the region (color name or #RRGGBB syntax)
+<li><b>Tags:</b> the default tags (<b>source, background, include, exclude</b>)
+are used in X-ray astronomy but you can enter any string to tag this region and then select programmatically using tags
+<li><b>WCS Region:</b> the WCS representation of this region, where applicable (read-only)
+<li><b>Image Region:</b> the image representation of this region, where applicable (read-only)
+<li><b>Misc Properties:</b>use JSON format to specify shape properties not listed above (e.g., {"transparentCorners": true}, see <a href="http://fabricjs.com/docs/fabric.Object.html" target="_blank">Fabric.js</a> for more info on shape properties.)
+<li><b>Options:</b>
+<ul>
+<li><b>Changeable:</b> enable/disable move and resize capability
+<li><b>List On Change:</b> list this region when it's moved or resized
+<li><b>Remove:</b> remove this region. On an iPad, this currently is
+the only way to delete a region.
+</ul>
+</ul>
+<p>
+In addition, regions of different type support specific configuration
+parameters in this menu.
+<br>
+The <b>annulus</b> region supports:
+<ul>
+<li><b>Radii:</b> change the radii of the region (in pixels)
+</ul>
+The <b>box</b> region supports:
+<ul>
+<li><b>Width:</b> change the width of the region (in pixels)
+<li><b>Height:</b> change the height of the region (in pixels)
+<li><b>Angle:</b> change the angle of the region (in degrees, counter-clockwise)
+</ul>
+The <b>circle</b> region supports:
+<ul>
+<li><b>Radius:</b> change the radius of the region (in pixels)
+</ul>
+The <b>ellipse</b> region supports:
+<ul>
+<li><b>Radii:</b> change the r1 and r2 radii of the region (in pixels)
+<li><b>Angle:</b> change the angle of the region (in degrees, counter-clockwise)
+</ul>
+The <b>polygon</b> and line regions support:
+<ul>
+<li><b>Points:</b> change the image points of the region (in pixels)
+<li><b>Angle:</b> change the angle of the region (in degrees, counter-clockwise)
+</ul>
+The <b>text</b> region supports:
+<ul>
+<li><b>Text:</b> change the text of the region
+<li><b>Angle:</b> change the angle of the region (in degrees, counter-clockwise)
+</ul>
+A discussion of how JS9 implements DS9/Funtools regions syntax can be found
+<a href="regions.html">here</a>.
+
+<p>
+<a name="meta"></a> 
+<h3>Meta Key Accelerator</h3>
+<p>
+The <b>meta</b> key is the <b>Command</b> key on a Mac and the <b>Control</b>
+key everywhere else.
+
+<p>
+Pressing the <b>meta</b> key disables the value/position display.
+It also disables execution of plugin callbacks on
+all mouse events. See <a href="localtasks.html">Local Tasks</a> for
+more information about plugins and browser-based analysis.
+
+<p>
+When a keyboard is available, pressing the <b>meta</b> key while
+clicking in the primary image window will pan the image so that the
+mouse location is in the center of the display (this panning is
+disabled inside a region.)
+
+<p>
+Within a polygon or a line, if you press <b>meta</b> and click the
+mouse on the polygon or line border, a new point will be added at that
+point. If you press the <b>meta</b> key and click on an existing
+point, it will be deleted.
+
+<p>
+<a name="dragdrop"></a> 
+<h3>Drag and Drop Images</h3>
+<p>
+You can drag and drop FITS images and binary tables, PNG images, and
+JPEG images onto JS9 to display the image data. All browser-based
+functions (scaling, colormap, pan, zoom, regions, WCS) should work as
+expected. You can execute server-side analysis tasks on the FITS files
+if the back-end server is running on your local host machine. In this
+case, you probably will need to set your DataPath variable in the
+Analysis menu to help JS9 locate the original data file.
+
+<p>
+<a name="resize"></a> 
+<h3>Resizing the JS9 Display</h3>
+<p>
+The JS9 Display can be resized using the the <b>View:resize:change
+width/height</b> menu option (or the JS9.ResizeDisplay() JavaScript
+routine.)  The View menu's resize parameter can be two values (width
+and height) or a single value representing both.  In addition, if an
+image containing wcs info is being displayed, you can append a single
+quote to specify a size in arc minutes (e.g., 5') or a double quote to
+specify a size in arc seconds (e.g., 300&#34;.)
+<p>
+The <b>View:resize:set to image size</b> option will set the display size to
+the size of the current image. The <b>View:resize:set size to full
+window</b> option will resize the JS9 display to the size of the
+browser window's window.innerWidth and window.innerHeight properties,
+and will scroll the display to the center of the window.  (Note that
+the rest of the web page is still available via scrolling, including
+the menubar.)  The <b>View:resize:reset to original size</b> option will set
+the display size back to the original size.  Display resize can be
+turned off by setting the JS9.globalOpts.resize variable
+to <b>false</b> in the js9Prefs.json file.
+<p>
+Also by default, the JS9 Display can be resized using a grab handle in
+the lower right-hand corner of the display.  This feature can be
+turned off setting the JS9.globalOpts.resizeHandle variable
+to <b>false</b> in the js9Prefs.json file.
+<p>
+See <a href="knownissues.html">Known Issues</a>
+for a discussion of limitations imposed on resize by Webkit
+browsers such as Chrome and Safari.
+
+<h5>Last updated: February 3, 2020</h5>
+</div>
+
+</body>
+</html>
