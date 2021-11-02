@@ -41,11 +41,18 @@
 				-------
 				None
 				*/
-				CUSTOM_GUI && console.log('Custom gui selected')
-				start = new Date()
-				imgs = []
+				CUSTOM_GUI && console.log('Custom gui selected');
+				start = new Date();
+				imgs = [];
+				document.documentElement.setAttribute("data-theme", "light");
 
-				setPropertyCallback( "{{ device_name }}.*", handleProperty );
+				var devices = {% raw json_encode(device_name) %};
+				console.log(`Found ${devices.length} devices`);
+						
+				for (let device of devices) {
+					console.log(`Configuring device ${device}`);
+					setPropertyCallback(`${device}.*`, handleProperty);
+				}
 			}
 
 			const updateAvailable = (INDIvp, omit=false) => {

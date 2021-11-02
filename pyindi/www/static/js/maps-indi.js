@@ -169,7 +169,6 @@ const setindi = (...theArgs) => {
   None
   */
   // Sanity check
-  console.log(theArgs);
   if (theArgs.length < 4 || (theArgs.length % 2) != 0) {
     alert(`Error! Malformed setindi(${theArgs})\nPlease contact support.`);
     return;
@@ -263,7 +262,6 @@ const setPropertyCallback = (property, callback) => {
   }
 
   getprop += `/>\n`;
-  console.log(getprop)
   // Send over ws
   wsSend(getprop);
 
@@ -299,9 +297,9 @@ function flattenIndiLess(xml) {
 
   Returns
   -------
-  INDIvp : object with indi properties
+  INDI : object with indi properties
   */
-  var INDIvp = {};
+  var INDI = {};
 
   // firefox breaks content into 4096 byte chunks. this collapes them all again. see:
   // https://bugzilla.mozilla.org/show_bug.cgi?id=423442
@@ -313,29 +311,29 @@ function flattenIndiLess(xml) {
 
   if (xml.nodeName.includes("Number")) {
     isnum = true;
-    INDIvp.metainfo = "nvp"; 
+    INDI.metainfo = "nvp"; 
   }
   else if (xml.nodeName.includes("Blob")) {
     isblob = true;
-    INDIvp.metainfo = "bvp";
+    INDI.metainfo = "bvp";
   }
   else if (xml.nodeName.includes("Text")) {
-    INDIvp.metainfo = "tvp";	
+    INDI.metainfo = "tvp";	
   }
   else if (xml.nodeName.includes("Light")) {
-    INDIvp.metainfo = "lvp";
+    INDI.metainfo = "lvp";
   }
   else if (xml.nodeName.includes("Switch")) {
-    INDIvp.metainfo = "svp";
+    INDI.metainfo = "svp";
   }
 
   // Slice nodeName to init new, set, or def
-  INDIvp.op = xml.nodeName.substring(0,3);
+  INDI.op = xml.nodeName.substring(0,3);
 
-  // Build INDIvp
+  // Build INDI
   for (var i = 0; i < xml.attributes.length; i++) {
     var attr = xml.attributes[i];
-    INDIvp[attr.name] = attr.value;	
+    INDI[attr.name] = attr.value;	
   }
 
 	children = []
@@ -349,17 +347,17 @@ function flattenIndiLess(xml) {
     if (name != undefined) {
       children[i] = {};
 
-      // Go through child attributes and build INDIvp
+      // Go through child attributes and build INDI
       for (var k=0; k<child.attributes.length; k++) {
         var attr = child.attributes[k];
 
         if (isnum && (attr.name == "step" || attr.name == "min" || attr.name=="max")) {
           children[i][attr.name] = parseFloat(attr.value);
-          INDIvp[`${name}.${attr.name}`] = parseFloat(attr.value);
+          INDI[`${name}.${attr.name}`] = parseFloat(attr.value);
         }
         else {
           children[i][attr.name] = attr.value;
-          INDIvp[`${name}.${attr.name}`] = attr.value;
+          INDI[`${name}.${attr.name}`] = attr.value;
         }
       }
 
@@ -367,27 +365,27 @@ function flattenIndiLess(xml) {
       if (child.firstChild ) {
         var val = child.firstChild.nodeValue;
         if (isnum) {
-          INDIvp[name] = parseFloat(val.trim());
-          children[i].value = INDIvp[name];
+          INDI[name] = parseFloat(val.trim());
+          children[i].value = INDI[name];
         }
         else if (isblob) {
           // Clean base64
-          INDIvp[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); 
+          INDI[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); 
         }
         else {
-          INDIvp[name] = val.trim();
-          children[i].value = INDIvp[name];
+          INDI[name] = val.trim();
+          children[i].value = INDI[name];
         }
       }
     }
     else {
-      INDIvp[name] = "";
+      INDI[name] = "";
     }
-    INDIvp.values = children;
+    INDI.values = children;
     i++;
   }
 
-  return INDIvp;
+  return INDI;
 }
 
 const updateProperties = (xml_text) => {
@@ -467,10 +465,11 @@ const updateProperties = (xml_text) => {
       The rest of this was in a jquery each function and I don't know why because only one xml payload is delivered at a time. Maybe it was designed for multiple in the beginning then converted. For example, if there were more than one root node then this would only go over the first one. Keep this in mind if an error occurs during this part. That could be the fix.
       */
       var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`];
-
+      
+      
       if (callback) {
-        var INDIvp = flattenIndiLess(root_node);
-        callback(INDIvp);
+        var INDI = flattenIndiLess(root_node);
+        callback(INDI);
       }
     }
     catch (e) {
