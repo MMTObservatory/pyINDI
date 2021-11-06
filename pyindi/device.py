@@ -30,18 +30,6 @@ http://www.indilib.org/api/index.html
 now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
 
-if Path("/src").exists():
-    """
-    TODO: The logging path should be a
-    configureable or an environment variable.
-    """
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'/src/{timestr}.log',
-                        level=logging.ERROR)
-else:
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'{timestr}.log',
-                        level=logging.ERROR)
 
 
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
