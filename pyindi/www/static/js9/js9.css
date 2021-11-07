@@ -1,0 +1,900 @@
+/*
+ *
+ * JS9 CSS specifications
+ *
+ */
+
+/* high-level divs used by Web designers */
+div.JS9 {
+    /* relative pos top/left for container, Flanagan's JavaScript, p 357 */
+    position: relative;
+    top:  0px;
+    left: 0px;
+    display: block;
+    padding: 0px;
+}
+
+/* plugin divs */
+div.JS9Panner, div.JS9Magnifier, div.JS9Menubar, div.JS9Console, div.JS9Info {
+    /* relative pos top/left for container, Flanagan's JavaScript, p 357 */
+    position: relative;
+    top:  0px;
+    left: 0px;
+    display: block;
+    padding: 0px;
+}
+
+/* grid container used in separateDisplay() */
+div.JS9GridContainer {
+    display: grid;
+    /* NB: these grid parameters should be overridden by web page designers! */
+    /* see js9super.html for an example */
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+}
+
+/* containers used internally to place content inside high-level divs */
+div.JS9Container {
+    /* absolute pos top/left for positioning, Flanagan's JavaScript, p 357 */
+    position: absolute;
+    top:  0px;
+    left: 0px;
+    outline: none;
+    background-color: transparent;
+}
+
+/* containers used internally to wrap around div plugin content */
+div.JS9PluginContainer {
+    /* background: #E9E9E9; */
+    background: transparent;
+    position: relative;
+    display: block;
+    outline: none;
+}
+
+/* this is the plugin div itself */
+div.JS9Plugin {
+    background: #E9E9E9;
+}
+
+/* tell plugin div to scroll on overflow */
+div.JS9PluginScrolling {
+    overflow: auto;
+}
+
+/* commands and buttons on top of plugins */
+div.JS9PluginToolbar-div {
+    /* absolute positioning places the toolbar on the dhtml title bar */
+    position:absolute;
+    display:inline-block;
+    top: 0px;
+    overflow: auto;
+    cursor: default;
+    text-align: center;
+    left: 10px;
+}
+
+div.JS9PluginToolbar-light {
+    /* absolute positioning places the toolbar on the dhtml title bar */
+    position:absolute;
+    display:inline-block;
+    top: 0px;
+    right: 48px;
+    overflow: auto;
+    text-align: center;
+}
+
+div.JS9MenubarContainer, div.JS9MenubarContainer-classic {
+    /* absolute pos top/left for positioning, Flanagan's JavaScript, p 357 */
+    /* why is this relative?? absolute positions the menu under the canvas!! */
+    position: relative;
+    /* sigh ... why does this make the menubar too short?? */
+    display: block;
+    top: 0px;
+    left: 0px;
+    /* height: 25px; */
+    text-align: left;
+    padding: 2px 6px;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #ebebeb, color-stop(1.0, #d5d5d5)));
+    background: -webkit-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -moz-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -ms-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -o-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: linear-gradient(top, #ebebeb, #d5d5d5);
+    color: #4d494d;
+}
+
+div.JS9MenubarContainer-flat, div.JS9MenubarContainer-border {
+    /* absolute pos top/left for positioning, Flanagan's JavaScript, p 357 */
+    /* why is this relative?? absolute positions the menu under the canvas!! */
+    position: relative;
+    /* sigh ... why does this make the menubar too short?? */
+    display: block;
+    top: 0px;
+    left: 0px;
+    /* height: 25px; */
+    text-align: left;
+    padding: 2px 10px;
+    background-color: lightblue;
+}
+
+div.JS9Hidden {
+    visibility: hidden;
+    position: relative;
+    top: -50;
+    left: -50;
+}
+
+div.JS9Logo {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+}
+
+img.JS9Logo {
+    width: 80;
+    height: 40;
+    border: none;
+}
+
+/* CSS for images loaded as part of the menubar */
+div.JS9MenubarImage {
+    white-space:nowrap;
+}
+
+img.JS9MenubarImage {
+    vertical-align: middle;
+    padding: 0px;
+    margin:  0px;
+    width:  40px;
+    height: 12px;
+}
+
+/* CSS for images loaded as part of the user-defined menubar */
+div.JS9MenubarUserImage {
+    white-space:nowrap;
+}
+
+img.JS9MenubarUserImage {
+    vertical-align: middle;
+    padding: 0px;
+    margin:  0px;
+    height: 12px;
+}
+
+/* image associated with the colormap title */
+img.JS9MenubarUserImageTitle[name="colormap"]{
+    width:  60px;
+}
+
+/* all menu option images in the colormap menu */
+img.JS9MenubarUserImageOption[name^="colormap"]{
+    width:  60px;
+}
+
+/* image associated with the region title */
+img.JS9MenubarUserImageTitle[name="regions"]{
+    width:  30px;
+}
+
+/* all menu option images in the regions menu */
+img.JS9MenubarUserImageOption[name^="regions"]{
+    width:  20px;
+}
+
+/* menu option hint for key-press action */
+span.JS9MenubarKeyAction{
+    float: right;
+    font: bold 9pt Courier;
+}
+
+div.JS9ConsoleContainer {
+    /* absolute pos top/left for positioning, Flanagan's JavaScript, p 357 */
+    /* why is this relative?? absolute positions make it tiny!! */
+    position: relative;
+    display: block;
+    top: 0px;
+    left: 0px;
+    background: #E9E9E9;
+    text-align: left;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    overflow-x: hidden;
+}
+
+/* canvas elements */
+canvas.JS9Image, canvas.JS9Panner, canvas.JS9Magnifier, canvas.JS9Info {
+    /* absolute positioning of canvas is required to overlay/align with 
+       graphics canvas (which is positioned relative) */
+    position:absolute;
+    top:  0px;
+    left: 0px;
+    background: #E9E9E9;
+}
+
+/* canvas element for transparent layers */
+canvas.JS9Layer {
+    /* absolute positioning of canvas is required to overlay/align with 
+       graphics canvas (which is positioned relative) */
+    position:absolute;
+    top:  0px;
+    left: 0px;
+    background-color: transparent;
+}
+
+/* message display */
+div.JS9Message {
+    width: 100%;
+    padding-top: 10px;
+    padding-left: 10px;
+    font-family: Helvetica, sans-serif;
+    font-size: 10pt;
+    font-weight: 300;
+}
+
+/* div enclosing progress bar in message area */
+div.JS9Progress {
+    display: none;
+}
+
+/* used by menubar, panner, magnifier */
+.JS9Button, .JS9Button-classic {
+    font: normal 12px Arial;
+    background: #F6F6F6;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 6px 3px 6px;
+    /* back off left margin or else Linux menubar Help button wraps ... */
+    margin: 6px 4px 6px 3px;
+    outline: none;
+}
+
+.JS9Button:hover, .JS9Button-classic:hover {
+    background-color: #C0C0C0;
+}
+
+/* prevent firefox from adding extra button padding */
+.JS9Button::-moz-focus-inner, .JS9Button-classic::-moz-focus-inner {
+    padding: 0;
+    border: 0;
+}
+
+.JS9Button-flat {
+  color: #fff;
+  background-color: #6496c8;
+  text-shadow: -1px 1px #417cb8;
+  border: none;
+  padding-top: 4px;
+  padding-right: 6px;
+  padding-bottom: 4px;
+  padding-left: 6px;
+  margin:  4px;
+  outline: none;
+}
+
+.JS9Button-flat:hover, .JS9Button-flat.hover {
+  background-color: #346392;
+  text-shadow: -1px 1px #27496d;
+}
+
+.JS9Button-flat:active, .JS9Button-flat.active {
+  background-color: #27496d;
+  text-shadow: -1px 1px #193047;
+}
+
+.JS9Button-flat::-moz-focus-inner {
+    padding: 0;
+    border: 0;
+}
+
+.JS9Button-border {
+  color: #6496c8;
+  background: #fff;
+  border: 2px solid #6496c8;
+  padding: 3px 6px 3px 6px;
+  margin: 6px 4px 6px 4px;
+  outline: none;
+}
+
+.JS9Button-border:hover, .JS9Button-border.hover {
+  border-color: #346392;
+  color: #346392;
+}
+
+.JS9Button-border:active, .JS9Button-border.active {
+  border-color: #27496d;
+  color: #27496d;
+}/* the commands inside a console */
+
+/* for buttons inside dialog boxes and plugins */
+.JS9Button2 {
+    font: normal 12px Arial;
+    color: black;
+    background: white;
+    border: 2px solid #d5d5d5;
+    border-radius: 4px;
+    padding: 2px 4px 2px 4px;
+    margin: 0px;
+    outline: none;
+}
+
+.JS9Button2:hover {
+    background-color: #d5d5d5;
+}
+
+.JS9Button2:active{
+    background-color: #ebebeb;
+}
+
+.JS9RunButton {
+    font: normal 12px Arial;
+    color: white;
+    background-color: #3188fb;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 4px 2px 4px;
+    margin: 0px;
+    outline: none;
+}
+
+.JS9RunButton:hover {
+    /* darkened using https://pinetools.com/darken-color */
+    background-color: #0468eb;
+}
+
+.JS9RunButton:active {
+    background-color: #034db0;
+}
+
+/* for menus inside dialog boxes and plugins */
+.JS9Select {
+    font: normal 12px Arial;
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: #d5d5d5;
+    border-style: solid;
+    outline: none;
+}
+
+.JS9Select:hover {
+    background-color:rgba(0, 0, 0, 0.1);
+}
+
+.JS9Highlight {
+  border-top: solid 0px #00FF00;
+  border-right: solid 2px #00FF00;
+  border-bottom: solid 2px #00FF00;
+  border-left: solid 0px #00FF00;
+}
+
+.JS9CmdTable {
+    vertical-align:top;
+    width: 100%;
+}
+
+.JS9CmdTd  {
+    width: 100%;
+}
+
+.JS9CmdIn, .JS9CmdOut {
+    border: none;
+    padding-top: 0px;
+    padding-left: 4px;
+    margin-left: 2px;
+    font-size: 14px;
+    font-family: monospace;
+    width:97%;
+    background: #E9E9E9;
+    overflow: auto;
+}
+
+/* get rid of blue border for input in Safari, Chrome */
+input:focus.JS9CmdIn {
+    outline: none;
+}
+
+.JS9CmdError {
+    border: none;
+    padding-top: 2px;
+    padding-left: 4px;
+    margin-left: 2px;
+    font-size: 14px;
+    font-family: monospace;
+    width: 100%;
+    color: red;
+}
+
+.JS9CmdWarning {
+    border: none;
+    padding-top: 2px;
+    padding-left: 4px;
+    margin-left: 2px;
+    font-size: 14px;
+    font-family: monospace;
+    width: 100%;
+    color: yellow;
+}
+
+.JS9CmdInfo {
+    border: none;
+    padding-top: 2px;
+    padding-left: 4px;
+    margin-left: 4px;
+    font-size: 14px;
+    font-family: monospace;
+    width: 100%;
+    color: #3333FF;
+}
+
+.JS9CmdHelp {
+    border: none;
+    padding-top: 2px;
+    padding-left: 4px;
+    margin-left: 4px;
+    font-size: 12px;
+    font-family: monospace;
+    width: 100%;
+    height: 100%;
+    color: #3333FF;
+}
+
+.JS9CmdPrompt { 
+    color: #777;
+    font-size: 14px;
+    font-family: monospace;
+    white-space:nowrap;
+}
+
+.JS9AnalysisText {
+    padding-left: 10px;
+}
+
+/* NB: dimensions are tied to JS9.lightOpts.dhtml.plotWin in js9.js */
+.JS9Plot {
+    width:  800px;
+    height: 400px;
+    margin: 10px;
+}
+
+/* placement of the gear image relative to the plot */
+.JS9PlotGear {
+    position:absolute;
+    bottom: -10px;
+    right:  -20px;
+}
+
+/* searchbar see: https://markjs.io/ */
+.JS9Searchbar{
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    background: #E9E9E9;
+    padding: 8px;
+    outline: none;
+    display: none;
+}
+
+.JS9SearchInput{
+    width: 132px;
+    margin-left: 4px;
+}
+
+.JS9SearchButton{
+    font: normal 12px Arial;
+    border: 2px solid black;
+    border-radius: 4px;
+    padding: 3px 6px 3px 6px;
+    margin-left: 8px;
+    outline: none;
+}
+
+.JS9SearchButton-true{
+    background-color: #D5D5D5;
+    outline: false;
+}
+
+.JS9SearchButton-false{
+    background-color: white;
+    outline: false;
+}
+
+/* searchbar marks, see: https://jsfiddle.net/julmot/973gdh8g/ */
+mark {
+  background: yellow;
+}
+
+mark.current {
+  background: mediumspringgreen;
+}
+
+.JS9Tooltip{
+    position: relative;
+    z-index: 999;
+    background: #E9E9E9;
+    padding: 10px;
+    border: none;
+    font-family: Helvetica, sans-serif;
+    font-size: 10pt;
+    display: none;
+}
+
+/* context menu overrides */
+.context-menu-list  {
+    border: 1px solid black;
+    font-family: Helvetica, sans-serif;
+    font-size: 12px;
+    background-color: #E9E9E9;
+}
+
+/* jqueryContextMenu v2.2 */
+.context-menu-icon-sun:before {
+   content: url(images/sun.png);
+}
+
+/* jqueryContextMenu v2.2 */
+.context-menu-icon-check:before {
+/* content: url(images/checkmark.svg); */
+   content: url(data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNzMuMDUgMTYyLjQ4Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6bm9uZTt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPmNoZWNrbWFyazwvdGl0bGU+PHJlY3QgY2xhc3M9ImNscy0xIiB5PSIyNC4xOCIgd2lkdGg9IjE3My4wNSIgaGVpZ2h0PSIxMzguMyIvPjx0ZXh0IHk9IjI0LjE4Ii8+PHJlY3QgY2xhc3M9ImNscy0xIiB4PSIxNC45OSIgeT0iMzYuNSIgd2lkdGg9IjEzOS4yMiIgaGVpZ2h0PSIxMTAuMzgiLz48dGV4dCB5PSIyNC4xOCIvPjxwYXRoIGQ9Ik02MC40NCw2OC4yNGw0LjI4LTRMNzgsODAuNDRsMjUuOTQtNDgsNC44MiwzTDc4LjgyLDkwLjYzWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMCAyNC4xOCkiLz48L3N2Zz4=);
+}
+
+.context-menu-item {
+    background-color: #E9E9E9;
+    padding: .2em 2em;
+}
+
+.context-menu-item.context-menu-disabled {
+    color: #AAA;
+    cursor: default; 
+    background-color: #E9E9E9;
+}
+
+.context-menu-separator {
+    border-bottom: 1px solid #AAA;
+}
+
+.context-menu-input > label {
+   margin-left: 18px;
+}
+
+.context-menu-input > label > input[type="text"] {
+   width: 80%;
+   padding: 2px;
+}
+
+.context-menu-input > label > textarea {
+  width: 85%;
+  height: 3em;
+}
+
+/* dhtml window overrides */
+.dhtmlwindow {
+    border: 1px solid grey;
+    padding: 0px;
+}
+
+.drag-controls {
+    padding: 6px 2px 2px 2px;
+}
+
+.drag-handle {
+    /* height: 25px; */
+    height: 25px;
+    padding-top: 10px;
+    padding-left: 8px;
+    text-align: left;
+    color: black;
+    font-size: 14px;
+    font-weight: normal;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #ebebeb, color-stop(1.0, #d5d5d5)));
+    background: -webkit-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -moz-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -ms-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -o-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: linear-gradient(top, #ebebeb, #d5d5d5);
+    color: #4d494d;
+}
+
+.drag-contentarea {
+    background: #E9E9E9;
+    border-width: 0px;
+    padding: 0px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+}
+
+.indentmenu{
+    font: normal 11px Arial;
+    margin-left: 4px;
+}
+
+.indentmenu ul{
+    border-top: 0px;
+    background: #A9A9A9;
+}
+
+.indentmenu ul li a{
+    border-top: 0px;
+    border-bottom: 0px;
+    border-left: 0px;
+    border-right: 6px solid #E9E9E9;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.indentmenu ul li a:hover,
+.indentmenu ul li a.hover {
+    background-color: #808080;
+}
+
+.indentmenu ul li a.selected {
+    padding-top: 5px; /* don't shift text down 1px */
+    padding-bottom: 5px;
+    background: #696969;
+}
+
+/* spectrum colorpicker */
+.sp-replacer {
+    padding: 2px;
+    border: solid 0px transparent;
+}
+
+/* 3d surface plot bug */
+canvas.surfacePlotCanvas {
+    position: absolute;
+}
+
+/* js9 info */
+.js9InfoTable {
+    margin: 0px;
+    padding: 8px;
+    font: normal 12px Arial;
+    border-collapse: separate;
+    border-spacing: 2px 4px;
+}
+
+.js9InfoTable input{
+    overflow-x: hidden;
+    padding: 2px 0px 1px 2px;
+    margin: 0px;
+}
+
+.js9InfoTable .column0{
+    background: transparent;
+    width: 50px;
+    border: none;
+}
+
+.js9InfoTable .input1{
+    width: 115px;
+    border: none;
+}
+
+.js9InfoTable .input2{
+    width: 240px;
+    font-size: 12px;
+    font-family: monospace;
+    border: none;
+}
+
+.js9InfoTable textarea{
+    overflow-x: hidden;
+    padding: 2px 0px 1px 2px;
+    margin: 0px;
+    border: none;
+}
+
+.js9InfoTable .text2{
+    width: 242px;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.js9InfoTable td{
+    padding: 2px 0px 1px 2px;
+    margin: 0px;
+}
+
+/* binning plugin */
+.js9BinningForm {
+    margin: 0px;
+    padding: 8px;
+    width: 100%;
+    height: 100%
+}
+
+/* regularize textarea and input text (e.g. binning.js, contour.js) */
+.JS9Text, .JS9TextArea, .js9Form textarea, .js9Form input[type=text]{
+    display: block;
+    margin: 0px;
+    box-sizing: border-box;
+    border: none;
+    padding: 2px;
+}
+
+.JS9Text:read-only {
+    border: 1px solid white;
+}
+
+/* read-only reportedly fixed in FF 78, but until then ... */
+.JS9Text:-moz-read-only {
+    border: 1px solid white;
+}
+
+.JS9Text::placeholder {
+    opacity: 0.4;
+}
+
+/* js9Analysis forms (e.g. parameter dialog boxes) */
+.js9AnalysisForm {
+    border: 1px solid grey;
+    margin: 8px;
+    padding: 8px;
+    background: #E9E9E9;
+}
+
+/* larger text for some analysis dialog boxes (loadproxy, loadcors) */
+.js9LargeInputText {
+    font-size: 11pt;
+}
+
+.JS9Archive-form {
+    background: #E9E9E9;
+    padding: 8px;
+}
+
+.linegroup {
+    float: left;
+    position: relative;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 24px;
+    padding: 0;
+    margin: 0 0 1.25em 0;
+}
+
+.column_A {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+}
+
+.column_B {
+    position: absolute;
+    top: 0;
+    left: 300px;
+    width: 100px;
+}
+
+.text_B {
+    width: 100px;
+}
+
+.column_C {
+    position: absolute;
+    top: 0;
+    left: 450px;
+    width: 340px;
+}
+
+.column_R1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 140px;
+}
+
+.column_R2 {
+    position: absolute;
+    top: 0;
+    left: 150px;
+    width: 100px;
+}
+
+.column_R2l {
+    position: absolute;
+    top: 0;
+    left: 150px;
+    width: 250px;
+}
+
+.column_R2L {
+    position: absolute;
+    top: 0;
+    left: 150px;
+    width: 400px;
+}
+
+.column_R3 {
+    position: absolute;
+    top: 0;
+    left: 300px;
+    width: 100px;
+}
+
+.column_R3l {
+    position: absolute;
+    top: 0;
+    left: 300px;
+    width: 150px;
+}
+
+.column_R3L {
+    position: absolute;
+    top: 0;
+    left: 300px;
+    width: 300px;
+}
+
+.column_R4 {
+    position: absolute;
+    top: 0;
+    left: 450px;
+    width: 100px;
+}
+
+.column_R4l {
+    position: absolute;
+    top: 0;
+    left: 450px;
+    width: 250px;
+}
+
+.column_R5 {
+    position: absolute;
+    top: 0;
+    left: 600px;
+    width: 200px;
+}
+
+.text_R {
+    width: 100%;
+    font: normal 12px Arial
+}
+
+.nodisplay {
+  display: none;
+}
+
+.hline0 {
+    display: block;
+    height: 1px;
+    border: none;
+    border-top: 1px solid black;
+    margin: 0;
+    padding: 0;
+}
+
+.js9archive-control {
+    border: none;
+    padding: 2px;
+} 
+
+.js9HelpText {
+    border: 1px solid grey;
+    margin: 8px;
+    padding: 8px;
+    background: #E9E9E9;
+}
+
+ul.js9demo {
+    margin-top: 0;
+}
+
+.helpLogo{
+  position: absolute;
+  top:   15px;
+  right: 15px;
+}
+
+.helpContainer{
+  padding: 10px;
+}
+
+/* to make wait cursor override other element cursors (e.g. fabric.js canvas) */
+body.waiting, body.waiting * { 
+    cursor: wait !important;
+}

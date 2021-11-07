@@ -1,0 +1,76 @@
+.JS9ToolbarContainer{
+    border-style: solid;
+    border-color: black;
+    border-width: 0px;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.0, #ebebeb, color-stop(1.0, #d5d5d5)));
+    background: -webkit-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -moz-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -ms-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: -o-linear-gradient(top, #ebebeb, #d5d5d5);
+    background: linear-gradient(top, #ebebeb, #d5d5d5);
+}
+
+.JS9ToolbarDiv{
+    overflow: auto;
+    border-style: solid;
+    border-color: black;
+    border-width: 0px;
+    margin: 0px 0px 2px 0px;
+    padding: 0px;
+}
+
+.JS9ToolbarButtonDiv{
+    margin:  2px 0px 0px 4px;
+    padding: 2px 2px 0px 0px;;
+    display: inline;
+}
+
+.JS9ToolbarImageButton{
+    margin:  2px 2px 0px 0px;
+    padding: 2px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.JS9ToolbarImageButton:focus {
+    outline: 2px dotted grey;
+}
+
+.JS9ToolbarImageButton:hover {
+    border: 1px solid grey;
+}
+
+.JS9ToolbarButtonButton{
+    vertical-align: middle;
+    border: 0px black solid;
+    background-color: transparent;
+    color: black;
+    padding: 2px 4px 2px 4px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 12px;
+    margin: 2px;
+    border-radius: 4px;
+}
+
+.JS9ToolbarButtonButton:hover {
+  border: 1px solid grey;
+}
+
+.JS9ToolbarButtonButton:focus {
+    outline: 2px dotted grey;
+}
+
+.JS9ToolbarTooltip{
+    position: relative;
+    z-index: 999;
+    background: #E9E9E9;
+    padding: 9px;
+    border: 1px solid grey;
+    font-family: Helvetica, sans-serif;
+    font-size: 10pt;
+    display: none;
+}
+
+

@@ -87,6 +87,9 @@ class SkeletonDevice(device):
 
     @device.repeat(1000)
     def do_repeate(self):
+
+        self.IDMessage('Running repeat function')
+
         """
         This function is called after the first get
         properties is initiated and then every 1000ms 
@@ -102,7 +105,6 @@ class SkeletonDevice(device):
 
         for light in lights:
             light.value = random.choice(states)
-
         self.IDSet(lights)
 
 

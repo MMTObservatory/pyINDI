@@ -1,0 +1,21 @@
+/* override usermenu defaults in js9.css */
+
+/* image associated with the colormap title */
+img.JS9MenubarUserImageTitle[name="colormap"]{
+    width:  60px;
+}
+
+/* all menu option images in the colormap menu */
+img.JS9MenubarUserImageOption[name^="colormap"]{
+    width:  60px;
+}
+
+/* image associated with the region title */
+img.JS9MenubarUserImageTitle[name="regions"]{
+    width:  30px;
+}
+
+/* all menu option images in the regions menu */
+img.JS9MenubarUserImageOption[name^="regions"]{
+    width:  20px;
+}

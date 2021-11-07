@@ -1,0 +1,12 @@
+[
+  {"name"   : "fitshead",
+   "title"  : "FITS Header(s)", 
+   "files"  : "fits",
+   "action" : "js9Xeq fitshead $filename",
+   "rtype"  : "text"},
+  {"name"   : "macros",
+   "title"  : "Display Macros", 
+   "action" : "js9Xeq macros $image $filename $filename(this) '$ext' '$imcenter' '$wcscenter' '$id' '$foo' '$sregions' '$bregions' '$regions(wcs)' '$regions(physical)' 'ampersand and backquote: `ls &`'",
+   "hidden" : true,
+   "rtype"  : "text"}
+]

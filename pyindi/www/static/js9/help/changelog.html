@@ -1,0 +1,761 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>JS9 ChangeLog</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>JS9 ChangeLog</h3></center>
+
+<h3> Public Release 3.2 (TBD)</h3>
+<ul>
+<li> update FileSaver.js to 2.0.4
+</ul>
+
+<h3> Public Release 3.1 (September 8, 2020)</h3>
+<ul>
+<li> regions menu: list, remove act on selected or all regions
+<li> edit menu: edit, copy act on selected or all regions
+<li> add GUI inputs to configure style (color, strokewidth, stroke pattern)
+<li> add selection criteria input to multi-selection dialog
+<li> add SelectShapes() and SelectRegions() public routines
+<li> console plugin can now execute public routines
+<li> add ability to turn off auto-create of regions from the Regions menu
+<li> 'a' key creates a region using the last one selected from Regions menu
+<li> set globalOpts.regionsToClipboard to false (breaks copy selected support)
+<li> display (screen) coords can be specified prefixing 'd' to x, y
+<li> display coords can be preserved by specifying preservedcoords property
+<li> view menu option to show display coords in val/pos string in image sys
+<li> add JS9.DisplayNextImage() public access routine
+<li> add 'sticky' property to regions (no change on pan, zoom, rotate, flip)
+<li> refactor dataminmax, mkColorData to avoid Chrome multi-sec delays in for loops
+<li> add support for rotating to North Is Up in current wcssys in SetRotate("northisup")
+<li> add north is up rotation to Zoom menu and zoomcontrols dialog
+<li> rotate/flip panner image as displayed image rotates/flips
+<li> N/E marker now tracks current wcssys, not file's wcssys
+<li> JS9.SetFlip(), JS9.SetRot90() use transform instead of changing image data
+<li> add JS9.SetRotation(), JS9.GetRotation() to rotate image by arbitrary angle
+<li> add JS9.ChangeRegionTags() public routine to add/remove region tags
+<li> reorganize github site (new build directory, src in src, demos in demos)
+<li> make install does not load demos, use make install-demos explicitly
+<li> remove deprecated fitsy code from top level
+<li> add JS9.ListRegions(), JS9.EditRegions() public routines
+<li> regions menu: options to save regions using different wcs, also save csv
+<li> separate: add ability to use a CSS Grid instead of light windows
+<li> sync: add GUI for plugin and change menu GUI to match
+<li> desktop: add searchbar to analysis light windows (ctl-f or cmd-f)
+<li> inline voyager images (remove dax versions from js9inline.js)
+<li> JS9Titlebar plugin adds image id to title (uses globalOpts.updateTitlebar)
+<li> add onregionsmove callback to Magnifier plugin (if intensivePlugins)
+<li> add CopyShapes() to copy shape layers to another image (cf CopyRegions)
+<li> add CopyParams() routine to copy params from one image to another
+<li> add ColorControls plugin to color menu
+<li> rgb mode is now associated with each display separately (not global)
+<li> move rgb info when moving images between displays
+<li> resort preloaded files into their original order
+<li> update node minimist package to avoid prototype pollution bug
+<li> don't use centered scaling for line and box regions
+<li> add length/angle options to line configuration dialog box
+<li> add statusbar plugin
+<li> globalOpts.menuPosition to set menu position (def: below the menu button)
+<li> add sum/avg option to binning plugin
+<li> add support for fractional binning
+<li> add GetOpacity(), SetOpacity()
+<li> add support for opacity floor: an opacity assigned if pixval <= floorval
+<li> extend opacity in menu to include floor opacity support
+<li> sync images: sync all images to facilitate blinking
+<li> sync images: add syncwcs option to force sync using image coords
+<li> desktop: options can now be passed via --switches (e.g., --scale log)
+<li> Load: add ra,dec, px,py, wcs properties to support panning
+<li> Load: regions property can load a region file or add a region
+<li> syncImages: add rot90, flip, and sync blended images
+<li> CloseDisplay now takes an optional regexp of images to close
+<li> add source, destination in/out/over/atop methods to blend plugin
+<li> static colormaps: specify color/opacity and pixel range
+<li> expand MaskImage to support "overlay" as well as "mask" of image data
+<li> add MaskImage() routine to allow one image to mask another
+<li> remove experimental LoadAuxFile() (too fragile, subsumed elsewhere)
+<li> fix region parser to check for exclude regions
+<li> fix bug when sortable GUI changed the image stack with multiple displays
+<li> fix annulus radii text box in regions config
+<li> update uuid and rimraf modules for js9Helper
+<li> update jquery to v3.5.0
+<li> update emscripten to v1.40.1
+<li> update fabric.js to v3.6.3 and enable strokeUniform
+<li> update cfitsio to v3.48 (via astroem repository)
+<li> update ResizeSensor to v1.2.2
+</ul>
+
+<h3> Public Release 3.0 (January 6, 2020)</h3>
+<ul>
+<li> improve  menu placement for Jupyter support
+<li> replace image filter menu with plugin that supports parameter adjustments
+<li> just redisplay already-loaded slices
+<li> added PanZoom controls to Zoom menu, containing "pan to" support
+<li> wcs menu: don't show wcs options if image has no wcs
+<li> add Google's new turbo colormap
+<li> add analysis plot configuration dialog box to set data range and scale
+<li> improve panner to show display area (not image area)
+<li> infobox: fix bug displaying image coords instead of phys if sys was image
+<li> webworker init: avoid CORS problems when webworker is on a remote location
+<li> add array-based x,y flip and +/- 90 degree rotation to the Zoom menu
+<li> add JS9.SetRot90() and JS9.SetFlip() public access routines
+<li> improve LTM/LTV support, various bug fixes
+<li> avoid weakness in wcslib causing the wrong header length to be used
+<li> fix error handling when called from external message
+<li> update emscripten to v1.39.3 (required several changes to montage)
+<li> upgrade code to use ES6
+</ul>
+
+<h3> Public Release 2.5 (August 30, 2019)</h3>
+<ul>
+<li> re-displaying an image now calls the onload callback
+<li> JS9.BlendDisplay('reset') unsets blended images
+<li> JS9.DisplayExtension('all') loads all image extensions
+<li> JS9.ReprojectData('all') uses the current image to reproject others
+<li> JS9.Load('foo.fits', {allext: true}) loads foo.fits, then all extensions
+<li> add 'Display all images' button to Extensions plugin
+<li> add support for loading all images in a multi-extension FITS file at once
+<li> fix typo that made incorrect sections of non-rectangular images at zoom < 1
+<li> fix bug when zooming image with a selected region
+<li> fix bug when loading multiple annuli at once
+<li> fix regression in DisplaySection: new ext was not added to FITS filename
+</ul>
+
+<h3> Public Release 2.4 (July 15, 2019)</h3>
+<ul>
+<li> fix double tap to close capability on iPhones
+<li> fix internal regcnts tasks using annuli on iOS devices and re-enable them
+<li> wcs grid: fix high limit display coordinates
+<li> analysis menu: only display 3d analysis menu options for 3d images
+<li> refactor LoadWindow so load waits for the lightwin to be fully created
+<li> desktop app: support merging analysis tasks and loading foreign web pages
+<li> add JS9.GetAnalysis() to return analysis task definitions
+<li> add missing routine in internal CountsInRegions() and RadialProfile()
+<li> add support for "All" selection of regions to include text children
+<li> GetRegions: return text child region id
+<li> desktop app: enabling node mounts local file system for direct FITS access
+<li> desktop app: add security checks
+<li> fix overly-aggressive .gitignore and add missing files
+<li> fix typo that broke createMosaic("all")
+<li> fix bugs in imexam plugins using a rotated line to define the image section
+<li> fix spinner when using open local file dialog
+<li> update emscripten to v1.38.37
+<li> update contextMenu to v2.8.0
+</ul>
+
+<h3> Public Release 2.3 (May 1, 2019)</h3>
+<ul>
+<li> support for Mac app, a bit of Windows app: see github/ericmandel/js9app
+<li> Electron desktop app: use internal colorpicker if Electron version >= 5
+<li> add logo support
+<li> add AlignPanZoom() public routine
+<li> add --cmds [cmds] and --cmdfile [file] switches to js9Electron.js
+<li> add --node switch to js9Electron.js, allowing nodeIntegration
+<li> add JS9.globalOpts.onpreload property
+<li> fix wcs alignment of blended images during pan and zoom operations
+<li> fix mosaic code, which needed area mosaic file after all
+<li> redesign Menubar to use more submenus, especially File menu
+<li> fix bug in the supermenu sometimes not displaying the File sub-menus
+<li> work around  invalidation of emscripten heap pointers when memory increases
+<li> add ability to change child text options via the parent shape
+<li> add ability to push selected region to bottom of overlapping stack ('d')
+<li> add ability to select all regions ('S' and Regions menu option)
+<li> add SaveDir public routine (desktop app only) to set the save directory
+<li> SavePNG,SaveJPEG: add option to save image RGB pixels instead of display
+<li> SavePNG,SaveJPEG: add option to skip saving the layers (e.g. regions)
+<li> shape layers (incl. regions) can now be exported in SVG format
+<li> closing a light window that displays images now supports: close, move, ask
+<li> add support for unconstrained panning
+<li> dynamically select a JS9 display (supports one plugin for many displays)
+<li> SaveColormap: allow multiple colormaps to be save at once
+<li> add ability to change color, width, dash lines, tags of selected regions
+<li> fix bug in "north is up" rotation: take CDELT values into account
+<li> add direction vector to panner
+<li> display regions in lightwin instead of on display or in infobox
+<li> add region copyToClipboard capability (so 'p' always pastes last region)
+<li> add ability to specify display opts in a FITS header (IMOPTS param)
+<li> add ability to specify colormaps in a FITS header (IMCMAP param)
+<li> add ability to create image cutouts of selected region(s)
+<li> add ability to rename a JS9 display via JS9.RenameDisplay() api call
+<li> ensure saved order of images after session load
+<li> add --title and --renameid options to desktop app to rename display ids
+<li> parameterize initial blending params
+<li> Preload() loads .cmap files as colormaps
+<li> colormaps: specify m colorwheel slices, from which n colormaps are assigned
+<li> add ability to specify {display: id} param to external api calls
+<li> add ability to unremove previously removed regions
+<li> add ability to select regions based on the file from which they were loaded
+<li> calling LoadRegions() twice removes previous regions loaded from the file
+<li> add globalOpts.quietReturn to silence 'OK' messages
+<li> Desktop (Electron.js) version: add --savedir option to skip save dialog
+<li> JS9.Load(): globalOpts.reloadRefresh property to control reloading an image
+<li> add 'revert' option to wcs reproject submenu
+<li> wcs menu: each wcs system has own current units (based on initial defaults)
+<li> fix region parser to see 'linear' as wcs, not a 'line' region
+<li> cmaps: allow color choice via text input in fallback colorpicker
+<li> fix memory leaks in reproject code
+<li> LoadColormap: support file containing array of colormaps
+<li> Infobox: for long filenames, click to see right hand side
+<li> addColormaps now replaces a cmap with same name
+<li> add 3D plot capabilities for data cubes in Analysis menu
+<li> many improvements to user-defined menus
+<li> turn on wasm in js9's Electron.js Desktop app
+<li> menu: allow load/save of cmaps without a loaded image
+<li> when blending, only sync zoom/pan reprojected images that are wcs aligned
+<li> reproject: use float32 instead of float64 if datatype allows (less memory)
+<li> reproject: correctly align images when wcs ref image is panned or zoomed
+<li> reproject: fix memory leaks, always go back to original image
+<li> js9 helper: increase ping timeout to avoid Chrome disconnects
+<li> improve header generation and FITS card handling
+<li> allow DisplaySection() to display the new section in a different display
+<li> add colormaps plugin to create (complementary) colormaps
+<li> fine-tune positioning: arrow keys display small crosshair cursor
+<li> fine-tune positioning: arrow keys change magnifier display center
+<li> regions menu: listonchange can act on "selected" (default) or "all" regions
+<li> preferences plugin: image parameter for "all" or "selected" listonchange
+<li> Meta (or Ctrl) now used for keyboard shortcuts displaying a light window
+<li> edit, region menus: add option to display region configuration window
+<li> add 'M-e' keyboard shortcut to display region configuration window
+<li> add 'M-o' keyboard shortcut to open a local file
+<li> add 'p' keyboard shortcut to paste regions at current mouse position
+<li> (joining 'P' keyboard shortcut to paste regions at their own position)
+<li> add 's' keyboard shortcut to select region that contains the mouse
+<li> fix bug when saving/copying regions inside a rotated group
+<li> Meta key during mouse move no longer updates internal image position
+<li> update emscripten to v1.38.28
+<li> update fabric.js to v2.7.0
+</ul>
+
+<h3> Public Release 2.2 (October 9, 2018)</h3>
+<ul>
+<li> add sync plugin: synchronize operations between two or more images
+<li> add JS9.SyncImages() and JS9.UnsyncImages() public access routines
+<li> SetParam(): setting a core param calls the core function
+<li> add support for disabling colormap, pan, regions, scale, wcs, or zoom for a given image
+<li> add Scale Clipping Limits plugin (with pixel distribution plot)
+<li> add support for setting up a proxy from Apache to the Node.js helper
+<li> add Separate/Gather Images plugin
+<li> desktop app: add support for printing entire window
+<li> desktop app: add support for saving entire window to a pdf file
+<li> add support for loading all slices of a data cube separately into JS9
+<li> add support for user-defined menus in the Menubar
+<li> add support for averaging pixels when binning (def: summing)
+<li> add support for Mac-style menubars
+<li> add Edit menu to Menubar (copy/paste regions, positions, values)
+<li> add JS9.DisplayCoordGrid() and associated client-side task to Analysis menu
+<li> add JS9.CountsInRegions() and associated client-side task to Analysis menu
+<li> add JS9.RadialProfile(), and associated client-side task to Analysis menu
+<li> reproject will try to bin large images to avoid memory limits
+<li> add support for wcs-based cross-hair tracking of images
+<li> add support for displaying mosaic images
+<li> add CreateMosaic() public routine
+<li> remove .fz suffix in various places where it breaks things
+<li> fix bug where binning an image was not updating the CD matrix
+<li> update emscripten to v1.38.5
+<li> update socket.io to v2.1.1
+</ul>
+
+<h3> Public Release 2.1 (May 10, 2018)</h3>
+<ul>
+<li> allow JS9.SetPan() to accept a single object with x and y properties
+<li> allow JS9.WCSToPix() to accept a single object with ra and dec properties
+<li> allow JS9.PixToWCS() to accept a single object with x and y properties
+<li> add support for Toolbar plugin
+<li> add JS9.SetParam() and JS9.GetParam() public routines
+<li> add JS9.SetToolbar() and JS9.GetToolbar() public routines
+<li> add JS9.SeparateDisplay() public routine to separate images in a display
+<li> add JS9.GatherDisplay() public routine to gather images into a display
+<li> add JS9.LoadColormap() public routine
+<li> add JS9.LightWindow() public routine
+<li> JS9.GetImageData() now returns display size, bin factor
+<li> JS9.RunAnalysis() return types now include "regions" and "catalog"
+<li> include comments and history in display of FITS header 
+<li> iOS 11.2.2,5 disable wasm: github.com/kripken/emscripten/issues/6042
+<li> add refresh property to JS9.Load() to re-retrieve data
+<li> add support for refreshing a file/url in JS9.RefreshImage()
+<li> add support for displaying full image to JS9.DisplaySection()
+<li> add 'f' (full) and 'r' (refresh) keyboard actions
+<li> change 'r' (raise region layer) to '^' in keyboard actions
+<li> add refresh and section commands to Console plugin (and js9 script)
+<li> binning plugin: add button to load full image
+<li> sessions: save/re-run dataLayer routines (e.g. reproject, rotate)
+<li> sessions: save/restore blend mode
+<li> sessions: save/restore wcsim from reprojection
+<li> sessions: save/restore display parameters
+<li> SaveSession saves either current image or all images
+<li> ensure correct extension for Save{Session,PNG,JPEG}
+<li> image blending: update GUI when changes are made via API
+<li> image blending: support sizing of static div
+<li> fix imexam routines needing integer section limits
+<li> update emscripten to v1.37.28
+<li> update fabric.js to v1.7.22
+<li> update contextMenu to v2.6.3
+</ul>
+
+<h3> Minor Patch Release 2.0.2 (December 15, 2017)</h3>
+<ul>
+<li> add zscale, zmax to SetScale()
+<li> improve display-based routines (separate, gather, resize, center, select)
+<li> improve alignment of differently sized images
+<li> allow zoom during image blending
+<li> add menu support for closing all images
+<li> add support for selecting a target display in a supermenu                  
+<li> add support for dispersing images from one display into new displays       
+<li> add support for gathering images from multiple displays into one           
+<li> add support for new image inheriting params from current image             
+<li> fix allinone (don't use wasm)
+<li> fix bug loading wasm file in LoadWindow('new')
+</ul>
+
+<h3> Minor Patch Release 2.0.1 (September 29, 2017)</h3>
+<ul>
+<li> move helper log file outside www directory
+<li> improve fetchURL() error messages
+<li> fix bug in load catalog menu option
+<li> allow json opts in Load* family of routines
+<li> fix bug in JS9.Preload by saving a copy of opts
+</ul>
+
+<h3> Public Release 2.0 (September 27, 2017)</h3>
+<ul>
+<li> add support for emscripten-based WebAssembly
+<li> add support for HPX projection
+<li> add wcs selection menu to regions config dialog
+<li> aesthetic improvements to regions config dialog
+<li> fix race condition in Electron startup if not codesigned
+<li> fix binning when manually specifying parent file
+<li> fix wcs system display in infobox
+<li> fix bug in js9Helper.js where localhost was not upgrading to use ws
+<li> update emscripten to v1.37.20
+<li> update fabric.js to v1.7.19
+<li> update socket.io to v2.0.3
+<li> update jquery to v3.2.1
+<li> update jquery-ui to v1.12.1
+</ul>
+
+<h3> Public Release 1.12 (July 25, 2017)</h3>
+<ul>
+<li> refactor astroem to use astroem repository of emscripten library byte-code
+<li> add DisplaySection() public routine
+<li> add ability to extract a section from images (as well as tables)
+<li> add fits2fits configuration params for large files support
+<li> add large file support in which large files can be handled externally
+<li> allow infoBox to be configured via JS9.globalOpts.infoBox and preferences
+<li> add wcs center and wcs fov display to infoBox
+<li> add js9.app Mac desktops to run js9 script (drag/drop images onto it, etc.)
+<li> add support for specifying URLs on js9 command line (uses proxy load)
+<li> JS9.Preload() will now call JS9.ProxyLoad(), if required
+<li> proxy load now turned on by default (needed for Desktop use)
+<li> add support for drag/drop URLs onto JS9 display (uses proxy load)
+<li> add support for uploading FITS files to a remove server
+<li> add support for displaying bzip2 files
+<li> add support for drag drop of region, catalogs, sessions (by file extension)
+<li> add text, fonts, stroke options to region configuration dialog box
+<li> add support for specifying a text region as a child of a region
+<li> add js9-to-ds9 region conversion to js9 script (-r)
+<li> add support for importing ds9 regions, including properties in comments
+<li> sort overlapping regions so smallest is on top
+<li> fix memory leaks in mef support
+<li> add Divs plugin to show/hide in-page JS9 plugin divs
+<li> allow shape size controls to match shape color at border, corner, or both
+<li> use file extensions when opening local files (fits, regions, catalogs, etc)
+<li> add keyboard action to move selected region in back of other shapes (not a default)
+<li> JS9.RegisterPlugins() will instantiate plugins if scripts load asynchronously
+<li> add JS9.InstantiatePlugins() public routine
+<li> deprecate auto load of js9Prefs.son (load js9prefs.js explicitly instead)
+<li> update emscripten to v1.37.9
+<li> update socket.io to v1.7.3 (big change in module directory structure)
+</ul>
+
+<h3> Public Release 1.11 (January 9, 2017)</h3>
+<ul>
+<li> add support for displaying HEALPix files
+<li> add initial support for memory management of internal FITS files
+<li> add menu support for clearing FITS files from internal memory
+<li> add support for running JS9 on the Desktop using Electron.js
+<li> integrate Desktop Electron support into into js9 script
+<li> add ability to load local catalogs and save catalogs to disk
+<li> add JS9.LoadCatalog() and JS9.SaveCatalog() public routines
+<li> add Shape Layer plugin to turn on/off layers and set the active layer
+<li> remove list of shape layers from View menu in favor of Shape Layer plugin
+<li> add JS9.ActiveShapeLayer() public routine
+<li> improve onimagedisplay processing for mef, cube, imarith plugins
+<li> fix bug in cube plugin blink support
+<li> update fabric.js to v1.6.6
+<li> update socket.io to v1.5.1
+<li> update closure-compiler to v20160911
+</ul>
+
+<h3> Public Release 1.10 (October 11, 2016)</h3>
+<ul>
+<li> add support for full-display mode
+<li> add support for keyboard actions and shortcuts
+<li> add JS9.SetRGBMode(), JS9.GetRGBMode() public routines
+<li> unclutter the position/value display
+<li> don't update value/position if "special key" is pressed
+<li> buttons and menu/titlebars are now beautiful and Mac-like
+<li> buttons can be beautiful and flat (change via class specification)
+<li> add support for copying regions to another image (JS9.CopyRegions())
+<li> add initial support for plotly plotting library
+<li> improvements to energyplot, evfilter, binning plugins
+<li> add support for alternate WCS (including JS9.GetWCS, JS9.SetWCS routines)
+<li> add JS9.LookupImage() public routine
+<li> generalize and extend plugin callback capability
+<li> extend range of FITS files that can be WCS-projected using Montage
+<li> add support in the File menu for saving and loading sessions
+<li> add JS9.LoadSession() and JS9.SaveSession() public routines
+<li> update imexam,fitsy, archive plugins
+<li> update fabric.js to v1.6.3
+<li> update cfitsio to v3.39
+<li> update socket.io to v1.4.5
+</ul>
+
+<h3> Public Release 1.9 (June 8, 2016)</h3>
+<ul>
+<li> add standard RGB image processing functions to the Analysis menu
+<li> add support for gesture-based zoom (scroll wheel and pinch)
+<li> add MouseTouch plugin to change mouse/touch actions
+<li> image id now contains extension name or number for FITS extensions
+<li> add support for histogram equalization scaling
+<li> add support in js9 script for starting up a browser/web page
+<li> add support for displaying slices of a FITS data cube
+<li> add support for image arithmetic (between 2 images or image & constant)
+<li> add support moving images between JS9 displays
+<li> add support for displaying HDUs in multi-extension FITS files
+<li> add 'magma', 'inferno', 'plasma', 'viridis' colormaps from matplotlib
+<li> deprecate the use of funtools when building JS9; please use cfitsio
+</ul>
+
+<h3> Public Release 1.8 (March 21, 2016)</h3>
+<ul>
+<li> add image blending plugin to support blending operations between images
+<li> add ability to blend images using W3C composite/blending modes
+<li> add colorbar plugin to display colormap vs intensity information
+<li> add blink plugin to blink images
+<li> add line region (with support for multiple line segments)
+<li> add raw data layers to allow manipulation of underlying raw data
+<li> add JS9.FilterRGBImage() to support RGB image processing routines
+<li> add JS9.GaussBlurData public routine to perform Gaussian blur on data layer
+<li> add JS9.RawDataLayer() public routine for raw data layer manipulation
+<li> add JS9.ShiftData() public routine to shift raw data in x and y
+<li> add JS9.GetDisplayData(), returning data for all images in a given display
+<li> add JS9.SaveJPEG() public routine to save image and overlays as JPEG
+<li> add JS9.AddColormap() public routine to add a colormap to JS9
+<li> add JS9.SaveColormap(), JS9.OpenColormapMenu() public routines
+<li> JS9.SavePNG() public routine now saves image and graphical overlays
+<li> add support for reprojecting images using Montage/mProjectPP
+<li> add JS9.Reproject() public access routine
+<li> change menu option Color->alpha (0 to 255) to Color->opacity (0.0 to 1.0)
+<li> fix bug when interactively changing panner for non-square images
+<li> fix bug in lut colormap, which truncated the first color
+<li> refactor emscripten astroem package into sub-packages
+<li> update emscripten to v1.35.0
+</ul>
+
+<h3> Public Release 1.7 (January 12, 2016)</h3>
+<ul>
+<li> add Jupyter/IPython support for iframes
+<li> add keyboard focus support for Jupyter/IPython
+<li> add timeouts to avoid back-end connect() hangs
+<li> add support for using rgb file as the display over a data file
+<li> default helper is "none" (for Jupyter, where js9Prefs.json is not loaded) 
+<li> add lower right handle to change width and height of display
+<li> add View menu option to change width and height of display
+<li> add JS9.ResizeDisplay() to change the size of a JS9 display element
+<li> add JS9.DisplayPlugin() public routine for custom menus
+<li> add JS9.GetFITSHeader() (as a string) public routine for custom menus
+<li> add resize handle to display (lower right corner) 
+<li> add View menu option to change the display width and height
+<li> add support for handling group events in shape layers (i.e. catalogs)
+<li> add support for handling mouse events in shape layers (i.e. catalogs)
+<li> add support for tooltips to shape layers (i.e. catalogs)
+<li> add return values to saveFITS() and savePNG()
+<li> add spinner while waiting
+<li> fix OpenFileMenu() and OpenRegionMenu() when using multiple displays
+<li> fix text region printing
+<li> fix bug in panner box when panner image does not fill panner width
+<li> fix region configure to "delete" only itself (not all regions)
+<li> fix one pixel bug in WCS region conversion
+<li> update fabric.js to v1.5.0
+<li> update socket.io to v1.3.7
+<li> updated jquery to v1.11.3
+</ul>
+
+<h3> Public Release 1.6 (November 7, 2015)</h3>
+<ul>
+<li> add support for extracting image/table sections from "parent" files
+<li> add JS9.LoadProxy() public routine to load FITS URLs via proxy server
+<li> add support for loading Dropbox (and other CORS enabled) shared links
+<li> add support for loading links by proxy through the back-end server
+<li> add SetValPos and DisplayMessage public routines
+<li> add options to create new JS9 windows from the file menu
+<li> add experimental support for JS9 in an iframe, using postMessage
+<li> remove starting "_" from SUPERMENU id (not legal syntax)
+<li> fix various iOS foibles (scrolling, double-click to close)
+<li> fix memory leak in cfitsio RefreshImage() support
+<li> fix bug in lut colormap limit check
+<li> fix bug in JS9.RefreshImage() blob handler
+<li> fix overflow bug in cfitsio bscale/bzero support
+<li> fix bug in zscale by properly exposing emscripten methods
+<li> update emscripten to 1.34.1
+<li> update wcs library to 3.9.0
+</ul>
+
+<h3> Public Release 1.5 (July 9, 2015)</h3>
+<ul>
+<li> add support for specifying regions using Funtools/DS9 syntax
+<li> add support for loading Funtools/DS9 region files
+<li> add support for running the Node.js helper using https protocol
+</ul>
+
+<h3> Public Release 1.4 (May 3, 2015)</h3>
+<ul>
+<li> add Preferences plugin to set image and region user prefs
+<li> add ability to save image to FITS and PNG files (limited Safari support)
+<li> add ability to save regions to a text file
+<li> fix bugs in Binning plugin (mainly for cfitsio, but some general bug fixes)
+</ul>
+
+<h3> Public Release 1.3 (March 30, 2015)</h3>
+<ul>
+<li> add cfitsio library support to JS9 (emscripten compile to javascript)
+<li> add data-width and data-height attributes to change the size of JS9 divs
+<li> extend tpos and js9helper to use cfitsio (or funtools)
+<li> update tpos js9Protocol to 1.1 to include header comments in the header
+<li> default WCS is now determined in the browser, not by the back-end server
+<li> ensure that section info is maintained during JS9.RefreshImage()
+<li> prevent preload from happening more than once
+<li> fix broken File->Open menu option
+<li> update emscripten to v1.27, add new optimizations to astroem
+</ul>
+
+<h3> Public Release 1.2 (January 4, 2015)</h3>
+<ul>
+<li> concurrent release of pyjs9 1.0 on github
+<li> update socket.io to the Engine.IO-driven v1.x (specifically v1.2.1)
+<li> add ability to reconnect to node.js server automatically if latter restarts
+<li> add support for specifying a temp work dir for back-end analysis
+<li> add http support to js9Helper.js so messages can be sent via GET, POST
+<li> JS9.Load: accepts FITS files as blobs and base64-encoded strings
+<li> JS9.RefreshImage: accepts blobs (FITS files), js arrays and typed arrays
+<li> JS9.GetImageData(): returned data can be array or base64-encoded string
+<li> fix bug in arguments to public api routines sent via external message
+<li> fix bug in File List: clicking on same file multiple times now redisplays
+</ul>
+
+<h3> Public Release 1.1 (November 15, 2014)</h3>
+<ul>
+<li> NB: api change: added errcode to argument list of RunAnalysis() callback
+<li> new api: AddDivs() to add JS9 displays and/or plugins to the web page
+<li> new api: Send() sends msgs programmatically (useful for 3rd party helpers)
+<li> add support for super-menus that can control multiple JS9 displays
+<li> add support for onload callback when displaying FITS files
+<li> allow xcen, ycen (in image coords), zoom to be passed in obj to JS9.Load()
+<li> re-factor js9Helper.js: each analysis task is its own top-level msg
+<li> allow user-defined msgs to be added to analysis tasks more easily
+<li> ensure correct region size during RefreshImage() and table binning
+<li> add contour plugin to default plugins in js9plugins.js
+<li> add checks for NaN values to imexam plugins
+<li> fix imexam plugins bug when regions are rotated and resized
+<li> fix bug in encircled energy preventing calculation for non-integer radii
+<li> properly handle FITS TFORM cards without a repeat value (XMM data)
+<li> resize regions properly when tables are binned by a block factor
+<li> ensure that datamin and datmamax are updated when a binary table is binned
+<li> don't send image notify events to back-end during contrast/bias changes
+</ul>
+
+<h3> Public Release 1.0 (September 30, 2014)</h3>
+<ul>
+<li> NB: change to the Public API: id is no longer first argument. See API doc.
+<li> infobox plugin upgraded to a tabular display
+<li> node.js server sends unique pageid back to JS9
+<li> JS9 menus now cover light windows (higher zindex)
+<li> improved accuracy of polygon points for contours
+<li> moving a polygon point now calls listRegion
+<li> added missing commas in WCS display of polygon points
+<li> corrected WCS for drag/drop of sections of FITS binary tables
+<li> fixed incorrect region size when binning FITS binary tables
+<li> fixed memory leak in astroem reg2wcs routine
+<li> plugin divs can now set height and width using CSS
+<li> added defensive code to remove bash functions from CGI and node calls
+<li> updated fabric.js to 1.4.11
+</ul>
+
+<h3> Release 1-epsilon (July 28, 2014)</h3>
+<ul>
+<li> JS9.Load() can now load FITS files directly (rather than converting to PNG)
+<li> added support for FITS binary tables, including binning and filtering
+<li> added support for gzip'ed FITS files
+<li> added support for "physical" coordinates (i.e., tied to original data file)
+<li> changed 2D graphics subsystem from Kinetic.js to fabric.js
+<li> added generalized shape layer support for regions, catalogs, contours, etc.
+<li> region context menu is now a light-weight web page with many new features
+<li> added text and point regions
+<li> position of a pixel is now in the center of the pixel
+<li> accelerator key changed from shift key to meta key (command on Mac, control elsewhere)
+<li> reduced number of js9 files to load in a web page
+<li> redesigned and flattened returned region object
+<li> redesigned public API
+<li> changed Public routines JS9.Pix2WCS and JS9.WCS2Pix to be 1-indexed
+<li> added ability to group and move regions
+<li> box rotation is now around the center of the region
+<li> all image coordinate are now 1-indexed throughout
+<li> fixed bug where adding a polygon pt didn't show until region was selected
+<li> changed polygon points to an array of objects {x, y} instead of just x, y
+<li> fixed various layout bugs in plugins
+<li> updated emscripten to latest version
+<li> updated flot to latest version
+<li> updated jquery to 1.11.1
+</ul>
+
+<h3> Beta Release 13 (April 6, 2014)</h3>
+<ul>
+<li> added support for handling NaN values
+</ul>
+
+<h3> Beta Release 12 (March 10, 2014)</h3>
+<ul>
+<li> added support for browser-based analysis via plugins (JS9.RegisterPlugin)
+<li> converted Menubar, Info, Panner, Magnifier to plugins
+<li> initial version of imexam plugin available (in plugins directory)
+<li> initial version of archive/catalog server plugin available
+<li> added support for zscale (IRAF min/max algorithm for scaling)
+<li> added support for user scale limits
+<li> regions can now be moved off the image
+<li> shift key disables mouse plugin callbacks
+<li> zooming a small image will use all of the available display canvas
+<li> added support for sub-pixel zooming
+<li> added ability to process all keys in keypress callback
+<li> added arrow key support for moving regions
+<li> added fractional pixel positions for zoomed images
+<li> fixed bug which reset pan when changing colormaps on a zoomed image
+<li> added strict mode
+<li> update emscripten to 1.8.2
+</ul>
+
+<h3> Beta Release 11 (December 18, 2013)</h3>
+<ul>
+<li> initial port to iPad
+<li> removed notifyHelper message when mouse enters image window
+<li> fixed tpos crash when converting really large images
+<li> updated jquery.contextMenu.js
+</ul>
+
+<h3> Beta Release 10 (December 9, 2013)</h3>
+<ul>
+<li> added support for RGB composite display
+<li> added support for reading in auxiliary files via auxFiles preference
+<li> added support for overlaying FITS image masks
+<li> added support so that drag and drop files can be found by local analysis
+<li> added analOpts.dataPath to specify where to look for drag and drop files
+<li> box regions need to rotate around upper left point to ensure consistency
+<li> changed name of fitshelper to js9helper
+<li> changed JS9.submitAnalysis() to JS9.SubmitAnalysis()
+<li> changed analOpts.datadir to analOpts.dataDir
+<li> removed wcs event processing from node and CGI helper (use browser wcs)
+<li> js9helper not run as a server from js9Helper.js any more (scales better)
+<li> added ability to turn off redraw when creating a large number of regions
+<li> fixed bug in panner display for non-square images
+<li> added work-around for Google Chrome v31 bug (regions not drawn)
+</ul>
+
+<h3> Beta Release 9 (October 23, 2013)</h3>
+<ul>
+<li> added support for client-based WCS using emscripten 1.5.6
+<li> added drag and drop of FITS images (binary tables are coming)
+<li> added support for region callbacks (executed when a region changes)
+<li> added JS9.Regions() public routine to retrieve and modify selected regions
+<li> added Close Image button to File menu
+<li> reduced size of panner when created by View menu
+<li> updated Kinetic.js to v4.7.2
+<li> minor bug fixes (e.g., annuli strokeWidth not resizing properly)
+</ul>
+
+<h3> Beta Release 8 (September 23, 2013)</h3>
+<ul>
+<li> fixed security in node.js support by requiring use of wrapper scripts
+<li> added support for CGI-based back-end helpers
+<li> implemented automatic discovery of analysis definitions
+<li> added timer-based management of WCS update requests
+<li> updated socket.io to 0.9.16
+<li> changed routine name from JS9.preloadImages() back to JS9.Preload()!
+</ul>
+
+<h3> Beta Release 7 (August 19, 2013)</h3>
+<ul>
+<li> fits2png: added support for "%cookie" in odir specification
+<li> js9.js and js9Helper.js both now use js9Prefs.json for setting preferences
+<li> fixed bug in display/manipulation of panner when image is zoomed
+<li> added "none" as an analysis return type to support hidden analysis
+<li> changed routine name JS9.Preload() to JS9.preloadImages()
+<li> added clipping to region manipulation
+<li> fixed region strokewidth problem when zooming image
+<li> fixed magnifier and panner where multiple instances of js9 are present
+<li> numerous changes to pass new JSLint rules
+<li> updated jquery to 1.10.2
+<li> updated jquery.flot to 0.8.2
+<li> removed references to of jquery-ui in demo files (its not used)
+</ul>
+
+<h3> Beta Release 6 (July 22, 2013)</h3>
+<ul>
+<li> added support for panner window, including ability to zoom the panner
+<li> added support for magnifier window, including ability to change magnification
+<li> implemented zoom menu (zoomIn, zoomOut, zoom1, zoom2, zoom4, zoom8)
+<li> added support for all FITS data types (silrd) in js9.js and tpos.c
+<li> png file now contains FITS header in json format
+<li> NB: the format of the PNG representation file has changed substantially!
+<li> raw arrays now implemented as a typed array, using DataView to unpack it
+<li> updated Kinetic.js to v4.5.4 (multiple changes required to code)
+</ul>
+
+<h3> Beta Release 5 (May 20, 2013)</h3>
+<ul> 
+<li> added support for dynamic creation of js9 instances (new or light window)
+<li> added support for pre-loading images into a js9 on page load
+<li> added support for running analysis web page buttons, forms, etc.
+<li> added support for printing the image
+<li> added new demo pages
+<li> changed js9msg script name to js9
+<li> loading javascript files is "generic" (no version numbers in filenames)
+<li> updated Kinetic.js to v4.5.1
+</ul>
+
+<h3> Beta Release 4 (April 26, 2013)</h3>
+<ul>
+<li> added support for polygon regions
+<li> added support for fixing (i.e. freezing) regions in place
+<li> added support for container regions (constrain position of other regions)
+<li> added support for shift key accelerator
+<li> fixed multiple bugs in region listOnChange support
+<li> updated Kinetic.js to v4.4.3
+</ul>
+
+<h3> Beta Release 3 (April 2, 2013)</h3>
+<ul>
+<li> updated Kinetic.js to v4.4.0 to fix new chrome v26.0.1410.43 (whoah!)
+</ul>
+
+<h3> Beta Release 2 (April 1, 2013)</h3>
+<ul>
+<li> added support for executing analysis from console window
+<li> added support for messaging to js9 via Node-based js9Msg.js
+<li> added ability to specify params to region creation
+<li> added server mode and input from stdin to js9Msg.js
+</ul>
+
+<h3> Beta Release 1 (February 27, 2013)</h3>
+<ul>
+<li> initial beta release with support for displaying FITS images, scaling,
+colormaps, external analysis, regions, wcs
+</ul>
+
+</div>
+
+</body>
+</html>

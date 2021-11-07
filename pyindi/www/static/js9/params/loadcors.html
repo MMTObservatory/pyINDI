@@ -1,0 +1,47 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<title>Load a shared URL</title>
+</head>
+
+<body>
+
+<form id="sharedURLForm" name="sharedURLForm" class="js9AnalysisForm js9Form" action="">
+<b>
+Dropbox allows you to share files using public links that can be given to others. These links support <a href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing"> Cross-Origin Resource Sharing</a>, so JS9 can display them directly. Enter a Dropbox shared link to a FITS file below:
+</b>
+<p>
+<input type="text" class="js9LargeInputText" id="sharedURL" name="sharedURL" size="80" autocapitalize="off" autocorrect="off">
+<p>
+<input id="run" name="run" type="button" class="button" value="Load" 
+onclick="
+const arr = $('#sharedURLForm').serializeArray();
+const form = $(this).closest('form');
+const win = form.closest(JS9.lightOpts[JS9.LIGHTWIN].top)[0];
+const dispid = $(win).data('dispid');
+let url = arr[0].value;
+if( url.match(/dropbox\.com/) ){
+  // http://stackoverflow.com/questions/20757891/cross-origin-image-load-from-cross-enabled-site-is-denied
+  url = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+  // https://blogs.dropbox.com/developers/2013/08/programmatically-download-content-from-share-links/
+  url = url.replace('?dl=0', '').trim() + '?raw=1';
+} else if( url.match(/drive\.google\.com/) ){
+  url=url.replace(/\/file\/d\/(\w+)\/\w+\?usp=sharing/, '/uc?export=download&amp;id=$1').trim();
+  JS9.error('Google Drive does not support CORS');
+}
+JS9.Load(url, {display: dispid});
+win.close();
+return false;">
+
+<input id="close" name="Close" type="button" class="button" value="Close" 
+onclick="
+const form = $(this).closest('form');
+const win = form.closest(JS9.lightOpts[JS9.LIGHTWIN].top)[0];
+win.close();
+return false;" style="float: right;">
+</form>
+
+</body>
+</html>

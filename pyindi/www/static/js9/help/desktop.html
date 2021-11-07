@@ -1,0 +1,563 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>JS9 on the Desktop</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>JS9 on the Desktop</h3></center>
+
+<p>
+JS9 can be used as a desktop replacement for
+<a href="http://ds9.si.edu">SAOimage DS9</a>: you can
+load images into the app's web page (or your own custom web page) and
+use the full power of JS9, including external messaging.
+
+<p>
+Advantages of using JS9 on the desktop include:
+<ul>
+<li> built using today's web-based technology
+<li> fully configurable user interface using standard web pages
+<li> support for adding your own browser-based analysis plugins
+<li> complete programming interface via a rich public API
+<li> external messaging with full access to the public API (Python and shell)
+<li> flexibility of having multiple images associated with separate displays
+<li> support for image blending
+<li> support for image reprojection
+</ul>
+
+<p>
+Advantages of using DS9 include:
+<ul>
+<li> the de facto standard astronomical image display for nearly three decades
+<li> full access to virtual memory (no memory limits when loading huge files)
+<li> support for nearly all WCS systems via the AST library
+<li> support for 3D rendering
+<li> advanced access to external catalogs and archives
+<li> XPA-based messaging integrated with CIAO, ftools, and Python
+<li> support for VO/SAMP
+</ul>
+
+<h3>Installing for Desktop Use</h3>
+
+<p>
+Desktop JS9 is based on <a href="http://electron.atom.io">Electron.js</a>,
+a widely-used framework for creating native applications with web
+technologies like JavaScript, HTML, and CSS. Install Electron.js by
+visiting the release page: <a href="http://electron.atom.io/releases/">
+http://electron.atom.io/releases</a> and downloading the latest available
+stable release for your platform. On a Mac, the Electron.app should be
+installed in the /Applications or ~/Applications folder. On Linux, the
+electron program should be placed in your PATH. Note that Electron.js
+for Linux requires a relatively recent version of Linux: Ubuntu 12.04,
+Fedora 21, Debian 8, CentOS 7 (not CentOS 6). Note that Electron.js also
+is available for Windows, so desktop JS9 should also run on that OS,
+although we have not done any work in this direction. If you get desktop JS9
+running under Windows, please let us know!
+
+<p>
+Once the Electron.js is installed, you can build JS9 as usual, taking
+care to configure use of the Node.js helper. Note that there is no need
+to actually install Node.js: desktop JS9 has its helper integrated into
+Electron.js already.
+
+<p>
+Moreover, if you are not planning to utilize server-side analysis tasks
+or large file support, you can skip the standard build and simply generate
+the JS9 quick-start files:
+<pre>
+  ./mkjs9 -q
+  Editing js9Prefs.json for Node.js helper ...
+  Editing js9prefs.js for Node.js helper ...
+  Generating js9 script for JS9 messaging and desktop use ...
+
+  If you plan to use Electron.app with JS9, consider codesign'ing it:
+
+  sudo codesign --force --deep --sign - /Applications/Electron.app/Contents/MacOS/Electron/
+
+  This will avoid repeated requests to allow incoming connections.
+</pre>
+The mkjs9 script will create a js9prefs.js file (for the browser) and
+a js9Prefs.json file (for the JS9 helper), which you can edit to add
+preferred JS9 properties, as well as a js9 script to start the JS9
+app. On a Mac, you probably will want to codesign the Electron.app
+application to avoid repeated requests about incoming connections (see
+example above).
+
+<p>
+NB: if you are running cpu-intensive scripts that communicate with the
+Electron-based JS9 app, we recommend that you install Node.js as well
+as Electron.js, and start up the JS9 helper instead of using the built-in
+helper support in the Electron-based app. The startup will be considerably
+faster when using the Node helper.
+
+<h3>Running JS9 on the Desktop</h3>
+
+<p>
+The js9 script is normally made accessible by adding the JS9 install
+directory (when fully building JS9) or the source directory (for quick
+install) to your user PATH.
+
+<p>
+Run the js9 script with the -a switch to start the desktop app, display
+the default JS9 web page, and load one or more FITS files:
+<pre>
+  # the -a switch tells the script to bring up the desktop js9 app
+  js9 -a ~/data/casa.fits
+
+  # opts can be passed via json format
+  js9 -a fits/casa.fits '{"scale":"log","scalemin":3,"colormap":"cool"}'
+
+  # opts can be passed via switch format
+  js9 -a fits/casa.fits --scale log --scalemin 3 --colormap cool
+
+  # opts can be passed via mixed format
+  js9 -a fits/casa.fits --colormap cool '{"scale":"log","scalemin":3}'
+
+  # multiple files can have different opts
+  js9 -a fits/casa.fits.gz --colormap heat --scale log fits/casa.fits --colormap cool --ra 350.8667 --dec 58.812
+
+  # load a colormap file, then use the newly loaded colormap for the image
+  # also load a regions file
+  js9 -a cmaps/purple.cmap fits/casa.fits --colormap purplish --regions casa/casa.reg
+</pre>
+In the desktop app, all relative paths are relative to current working
+directory, as would be expected with files passed to any desktop
+program.  For consistency, this behavior extends to the case of files
+specified in web pages: relative files are still relative to the
+current directory, not the web page (as would be the case with browsers).
+It is controlled globally by the <b>JS9.globalOpts.currentPath</b>
+property and locally by the <b>fixpath</b> property. For example, if
+the desktop app loads a webpage, then the default call to <b>JS9.Load()</b>:
+<pre>
+&lt;a href='javascript:JS9.Load("fits/casa.fits", {scale:"log", colormap: "cool"});'&gt;CAS-A&lt;/a&gt;
+</pre>
+specifies that the FITS file is relative to the current working directory,
+while use of <b>fixpath:false</b>:
+<pre>
+&lt;a href='javascript:JS9.Load("fits/casa.fits", {scale:"log", colormap: "cool", fixpath:false});'&gt;CAS-A&lt;/a&gt;
+</pre>
+specifies that the FITS file is relative to the web page.
+<p>
+You also can use the <b>${JS9_INSTALLDIR}</b> and <b>${JS9_PAGEDIR}</b> "macros"
+to specify that the path of the FITS file is relative to the JS9 install
+directory or the web page directory, respectively. For example:
+<pre>
+&lt;a href='javascript:JS9.Load("${JS9_PAGEDIR}/fits/casa.fits", {scale:"log", colormap: "cool"});'&gt;CAS-A&lt;/a&gt;
+</pre>
+specifies that the FITS file is relative to the web page (just
+like <b>fixpath</b>), while:
+<pre>
+&lt;a href='javascript:JS9.Load("${JS9_INSTALLDIR}/fits/casa.fits", {scale:"log", colormap: "cool"});'&gt;CAS-A&lt;/a&gt;
+</pre>
+specifies that the FITS file is relative to the JS9 install directory.
+<p>
+Note that path specification using <b>fixpath</b>, <b>${JS9_INSTALLDIR}</b>, or <b>${JS9_PAGEDIR}</b> applies to the "Load" routines:
+<ul>
+<li> JS9.Load()
+<li> JS9.LoadCatalog()
+<li> JS9.LoadColormap()
+<li> JS9.LoadRegions()
+<li> JS9.LoadSession()
+</ul>
+
+<p>
+The same js9 script (without the -a switch) can now be used to interact
+with the JS9 page (or any other JS9-enabled web page):
+<pre>
+  # without -a, the script sends commands to the JS9 display
+  js9 SetColormap cool
+  js9 AddRegions 'ICRS;ellipse(23:23:18.76, +58:47:27.252, 31.8", 15.9", 40)'
+</pre>
+See: <a href="./extmsg.html">External Messaging</a> for more details.
+
+<p>
+You can also load remote images, as the script will call <b>LoadProxy</b> as
+needed:
+<pre>
+  js9 -a http://hea-www.cfa.harvard.edu/~eric/coma.fits.gz
+</pre>
+
+<p>
+A number of desktop-specific switches are available in the js9 script. Perhaps
+the most important is the <b>--webpage</b> switch, which allows you to
+specify a custom web page to display, so that you can tailor the desktop app
+to your specific needs:
+<pre>
+  js9 -a --webpage ~/myjs9/myjs9.html ~/data/casa.fits
+</pre>
+When configuring your own web page, one simple possibility is to create a
+separate directory, parallel to the JS9 source (or install) directory,
+in which you can maintain your custom web page(s) and your customized
+js9prefs.js file. You might also create a myjs9 script that runs the
+js9 script. For example, this myjs9.html file might be stored in a myjs9
+directory parallel to the js9 directory:
+<pre>
+  &lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+     "http://www.w3.org/TR/html4/loose.dtd"&gt;
+  &lt;html&gt;
+  &lt;head&gt;
+    &lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+    &lt;meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" &gt; 
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+    &lt;link type="image/x-icon" rel="shortcut icon" href="../js9/favicon.ico"&gt;
+    &lt;link type="text/css" rel="stylesheet" href="../js9/js9support.css"&gt;
+    &lt;link type="text/css" rel="stylesheet" href="../js9/js9.css"&gt;
+    &lt;script type="text/javascript" src="js9prefs.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="../js9/js9support.min.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="../js9/js9.min.js"&gt;&lt;/script&gt;
+    &lt;script type="text/javascript" src="../js9/js9plugins.js"&gt;&lt;/script&gt;
+    &lt;title&gt;my JS9 app&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+      &lt;div class="JS9Menubar" data-width="100%"&gt;&lt;/div&gt;
+      &lt;p style="margin-top: -14px;"&gt;
+      &lt;table cellspacing="0" style="width:100%;"&gt;
+      &lt;tr valign="top"&gt;
+      &lt;td align="left"&gt;
+      &lt;div class="JS9" data-width="768px" data-height="768px"&gt;&lt;/div&gt;
+      &lt;div style="margin-top: 2px;"&gt;
+      &lt;div class="JS9Colorbar" data-width="768px" id="JS9Colorbar" data-showTicks="false" data-height="10px"&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;/td&gt;
+      &lt;td align="right"&gt;
+      &lt;table cellspacing="0"&gt;
+      &lt;tr valign="top"&gt;
+      &lt;td&gt;
+      &lt;div class="JS9Magnifier" data-width="250px" data-height="250px"&gt;&lt;/div&gt;
+      &lt;/td&gt;
+      &lt;/tr&gt;   
+      &lt;tr valign="top"&gt;
+      &lt;td&gt;
+      &lt;div class="JS9Panner" data-width="250px" data-height="250px"&gt;&lt;/div&gt;
+      &lt;/td&gt;
+      &lt;/tr&gt;   
+      &lt;tr valign="top"&gt;
+      &lt;td&gt;
+      &lt;div class="JS9Info" data-height="250px" style="margin-top: 2px;"&gt;&lt;/div&gt;
+      &lt;/td&gt;
+      &lt;/tr&gt;   
+      &lt;/table&gt;    
+      &lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;/table&gt;
+  &lt;/body&gt;
+  &lt;/html&gt;
+</pre>
+Note that the JavaScript and CSS files are loaded from the js9
+source (or install) directory, but the js9prefs.js is loaded from the
+myjs9 directory. This separation allows you to configure site-wide js9
+parameters without changing the any of the files in the source
+directory, and allows you to update the source directory very easily
+by executing "git pull".
+
+<p>
+A script such as the following can then be used to use this web page
+in the JS9 desktop:
+<pre>
+  #!/bin/bash
+
+  WEBPAGE="$HOME/myjs9/myjs9.html";
+
+  WIDTH=1130;
+  HEIGHT=860;
+
+  if [ x${JS9_WEBPAGE} != x ]; then
+    WEBPAGE=${JS9_WEBPAGE}
+  fi
+
+  if [ x${JS9_WEBPAGE_WIDTH} != x ]; then
+    WIDTH=${JS9_WEBPAGE_WIDTH}
+  fi
+
+  if [ x${JS9_WEBPAGE_HEIGHT} != x ]; then
+    HEIGHT=${JS9_WEBPAGE_HEIGHT}
+  fi
+
+  exec $HOME/js9/js9 -a --width $WIDTH --height $HEIGHT --webpage $WEBPAGE $*
+</pre>
+As shown above, the <b>--width</b> and <b>--height</b> switches are available
+to set the width and height of the Electron.js window which will contain the
+web page.
+
+<p>
+Another important switch is <b>--title</b> (and its generalized
+cousin, <b>--renameid</b>). This switch will rename the main JS9
+display id in the web page (whose default is "JS9") to the specified
+id. It is useful in cases where you want to start up multiple desktops
+using the same web page, and communicate with each one separately. In
+such cases, the <b>--title</b> switch will change the id of the JS9
+display element and its auxiliary elements (e.g. menubar, colorbar,
+etc) to the specified title:
+<pre>
+  js9 -a --title foo1 ~/data/casa.fits
+</pre>
+You will then be able to communicate with this web page using the specified id:
+<pre>
+  js9 --id foo1 GetColormap
+  {"colormap":"heat","contrast":1,"bias":0.5}
+</pre>
+The <b>--renameid</b> switch allows you to specify multiple JS9
+displays to rename, in cases where more than one JS9 display is part of a 
+web page:
+<pre>
+  js9 -a --renameid "JS9:foo1,myJS9:foo2" ~/data/casa.fits
+</pre>
+will rename the default "JS9" element to "foo1" and the "myJS9"
+element to "foo2".
+
+<p>
+The <b>--savedir</b> switch will set the directory into which files
+are saved, avoiding the display of an interactive dialog box when
+saving images:
+<pre>
+  js9 -a --savedir /Users/eric/Desktop ~/data/casa.fits
+  ...
+  js9 --id foo1 SavePNG casa.png
+</pre>
+will save the casa.png file on the desktop without a dialog box. This is
+especially useful in automatic scripting.
+
+<p>
+You can use the <b>--cmds [cmds]</b> and/or <b>--cmdfile [file]</b> switches
+to pass Javascript commands that will be executed when JS9 is ready
+and all files have been loaded. The former takes a string of commands
+as an argument:
+<pre>
+  # load a file and set the colormap and scale
+  js9 -a --cmds 'JS9.SetColormap("cool");JS9.SetScale("log")' ~/data/casa.fits
+</pre>
+The latter takes a file containing commands, allowing you to perform
+more sophisticated processing. For example, the following script
+will load the Chandra image of the Kes 75 supernova remnant, display
+three energy cuts as separate images, assign red, green, and blue
+colormaps to the three energy cuts, and then blend them into a single display:
+<pre>
+  # run the script in the command file 
+  js9 -a --cmdfile eband.js
+
+  // where eband.js contains the following Javascript:
+  JS9.Load("kes75/kes75_evt2.fits.gz", {onload: function(im){
+      var i;
+      // colormaps
+      var c = ["red", "green", "blue"];
+      // energy filters
+      var f = ["energy=500:1500", "energy=1500:2500", "energy=2500:8000"];
+      // set final configuration after each image is loaded
+      var mkdo = function(i){
+  	return function(xim){
+  	    JS9.SetScale("log",   {display: xim});
+  	    if( c[i] ){ JS9.SetColormap(c[i], {display: xim}); }
+  	};
+      };
+      // turn blending off on the main image
+      JS9.BlendImage(false);
+      // process each of the event filters to make a separate image
+      for(i=0; i&lt;f.length; i++){
+  	// display filtered image in a separate displayed
+  	JS9.DisplaySection({filter:f[i], separate:true,
+  			    ondisplaysection: mkdo(i)}, {display: im});
+      }
+      //  blend the filtered images
+      JS9.BlendDisplay(true);
+  }});
+</pre>
+<p>
+The <b>--merge</b> switch allows you to utilize another user's setup,
+including their JS9 web page and analysis routines. Say, for example,
+a colleague has used Dropbox to share her JS9-enabled zhjs9 directory,
+containing the following files and sub-directories:
+<pre>
+  zhjs9.html js9prefs.js js9addons.js
+
+  analysis-plugins:
+  zhtools.json
+
+  analysis-wrappers:
+  zhjs9
+
+  params:
+  adapt.html	imexam.html	mexhat.html
+  atrous.html	imsmo.html	refinepos.html
+</pre>
+where zhjs9.html has a header in which the paths to JS9's files are matched to
+your colleague's setup, but not your own:
+<pre>
+  &lt;head&gt;
+  &lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+  &lt;meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" &gt; 
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;link type="image/x-icon" rel="shortcut icon" href="../../js9/favicon.ico"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="../../js9/js9support.css"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="../../js9/js9.css"&gt;
+  &lt;link rel="apple-touch-icon" href="../../js9/images/js9-apple-touch-icon.png"&gt;
+  &lt;script type="text/javascript" src="js9prefs.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="../../js9/js9support.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="../../js9/js9.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="../../js9/js9plugins.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9addons.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+</pre>
+Also note the presence of analysis tool definitions and scripts in the
+analysis-plugins, analysis-wrappers, and params sub-directories. Normally,
+in order to use the zhjs9 web page and associated analysis tools, you
+would need to edit the former and change the JS9 paths, and move the
+contents of the three analysis tools sub-directories into the appropriate
+sub-directories in the main JS9 install directory.
+
+<p>
+Instead, you can simply merge this directory into your desktop app, e.g.
+<pre>
+  js9 -a --merge ~/Dropbox/zhjs9/zhjs9.html
+</pre>
+This will generate and load a temporary webpage using correct paths to
+the JS9 install directory and load the analysis tools into the JS9
+helper. You can also merge the analysis tools without loading the web
+page by specifying only the directory:
+<pre>
+  js9 -a --merge ~/Dropbox/zhjs9
+</pre>
+In addition, if a bin directory is present, it will be added to the PATH
+used when processing analysis commands.
+
+<p>
+A merged web page can, of course, include its own javascript and css
+files, as shown in the example above. It can also
+include <b>JS9.Load()</b> commands, for example, to load files from a
+subdirectory. In this case, you should set the <b>fixpath</b> property
+to <b>false</b> so that the paths of the data files are not changed
+into paths relative to the current working directory (which is the
+default behavior for desktop JS9.Load() calls):
+<pre>
+&lt;a href='javascript:JS9.Load("fits/casa.fits", {scale:"log", colormap: "cool", fixpath:false});'&gt;CAS-A&lt;/a&gt;
+</pre>
+
+<p>
+Finally, the <b>--hostfs</b> switch (NB: was --node prior to v3.1)
+allows you to access the host file system in a local (only, not remote)
+web page environment. By default, this feature is turned off because
+it requires turning off the Electron's
+<a href="https://www.electronjs.org/docs/tutorial/context-isolation">
+Context Isolation</a> security feature, providing a greater attack
+surface for hackers. But since this host access is permitted only for
+local web pages, an attacker would have to be on your system ... so
+you're probably in big trouble anyway.
+
+<p>
+That said, there are two good reasons for turning on host file system access:
+<ul>
+<li> to enable direct access to data files in the local file system
+<li> to run scripts that require access to system resources
+</ul>
+
+<p>
+When enabled, the JS9 app will (subject to the boolean value of
+the <b>JS9.globalOpts.localAccess</b> property) mount the local file
+system inside the web page and access FITS files directly, instead of
+fetching and storing them in browser memory. This can speed up the
+load/display time considerably, while minimizing the use of a browser
+memory. The list of file extensions which are accessed directly in
+this way is specified by the
+<b>JS9.globalOpts.localTemplates</b> property, which defaults
+to <b>.fits</b> and <b>.fts</b>. Note that bzip'ed (.bz2) and gzip'ed
+(.gz) files are not accessed directly: the former are not supported by
+the CFITSIO FITS access library, while the latter are supported by
+uncompressing the file in memory, which is done more efficiently by
+JS9 itself. Also, symbolic links currently are not accessed directly.
+We expect to remove this restriction in the near future.
+
+<p>
+You can also run scripts that access local system resources. For
+example, the following script will load the Chandra image of the Kes
+75 supernova remnant, display three energy cuts as separate images,
+find the total number of counts in each image, and write the results
+to a log file, using the Node.js 'fs' module.
+<pre>
+  # enable node support and run the script in the command file 
+  js9 -a --node true --cmdfile ecnts.js
+
+  // where ecnts.js contains the following Javascript:
+  var fs;
+  try{
+      fs = require("fs");
+  }
+  catch(e){
+      JS9.error("Node.js 'fs' module is unavailable. Did you enable node?");
+  }
+  JS9.Load("kes75/kes75_evt2.fits.gz", {onload: function(im){
+      var i;
+      var s = "";
+      var got = 0;
+      // energy filters
+      var f = ["energy=500:1500", "energy=1500:2500", "energy=2500:8000"];
+      // get counts in regions as each image is displayed
+      var getcnts = function(i){
+    	return function(xim){
+  	    s += xim.countsInRegions();
+  	    got++;
+  	    if( got === 3 ){
+                // write the results to a log file
+  		fs.writeFile("countsInRegions.log", s, function(err) {
+		    if( err ) { JS9.error(err); }
+  		}); 
+  	    }
+    	};
+      };
+      // process each of the event filters to make a separate image
+      for(i=0; i&lt;f.length; i++){
+    	// display filtered image in a separate displayed
+    	JS9.DisplaySection({filter:f[i], separate:true,
+    			    ondisplaysection: getcnts(i)}, {display: im});
+      }
+  }});
+</pre>
+
+<p>
+For a list of all js9 script switches, use the <b>--help</b> switch:
+<pre>
+  js9 --help
+</pre>
+
+<p>
+The JS9 <b>File</b> menu contains two options only available for Desktop use:
+<ul>
+<li><b>print window ...</b> print the entire Electron.js window
+<li><b>save window to pdf</b> save the entire Electron.js windows to a PDF file
+called js9.pdf in the current directory
+</ul>
+The print command always brings up a dialog box. The save command will save the
+window as a PDF in the current directory, without bringing up a dialog box.
+
+<h3>Security Notes</h3>
+
+<p>
+It is important to note that Electron.js is not a web
+browser, and web pages you load are not sandboxed. Our JS9 desktop
+application code takes additional precautions to enhance security:
+<ul>
+<li> http protocol is disabled for remote pages
+<li> Javascript eval is disabled in web pages
+<li> the ability to click a link to navigate to a new web page is disabled
+<li> the ability to click a link to display to a new web page in a different tab or window is enabled, but the new web page is displayed in your default browser
+<li> context isolation is turned on, unless host file system support is explicitly enabled (--hostfs)
+</ul>
+
+<p>
+Even with these safeguards in place, <b>it is important that you load
+only local or trusted remote web pages into the JS9 desktop app.</b>
+See: <a href="http://electron.atom.io/docs/tutorial/security/">
+Electron.js security</a> for more information.
+
+<p>
+You should update your copy of Electron.js periodically to ensure that you
+have the latest security fixes in place.
+
+<h5>Last updated: August 24, 2020</h5>
+</div>
+
+</body>
+</html>

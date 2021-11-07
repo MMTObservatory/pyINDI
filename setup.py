@@ -74,5 +74,9 @@ except Exception:
     version = '{version}'
 """.lstrip()
 
-setup(use_scm_version={'write_to': os.path.join('pyindi', 'version.py'),
-                       'write_to_template': VERSION_TEMPLATE}, install_requires=['lxml'])
+
+
+#setup(use_scm_version={'write_to': os.path.join('pyindi', 'version.py'),
+#                       'write_to_template': VERSION_TEMPLATE}, install_requires=['lxml'])
+
+setup(version='0.0.0', name='pyindi')

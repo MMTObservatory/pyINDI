@@ -1,0 +1,425 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>Creating a JS9 Web Page</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>Creating a JS9 Web Page</h3></center>
+
+<h3>Adding JS9 to Your Web Page</h3>
+<p>
+The sample js9basics.html file shows how to add JS9 to a web page by
+assigning JS9 CSS classes to "div" elements.  The js9multi.html web
+page goes further by showing how multiple instances of JS9 can be
+added using unique IDs.
+
+<p>
+To start, a few JavaScript and CSS files must be loaded into the web
+page.  Ordinarily this is done in the page's header, which typically
+will look something like this:
+<pre>
+  &lt;head&gt;
+  &lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;
+  &lt;meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1" &gt; 
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1" &gt;
+  &lt;link type="image/x-icon" rel="shortcut icon" href="./favicon.ico"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="js9support.css"&gt;
+  &lt;link type="text/css" rel="stylesheet" href="js9.css"&gt;
+  &lt;script type="text/javascript" src="js9prefs.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9support.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9plugins.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+</pre>
+The js9prefs.js file (and deprecated js9Prefs.json file) is optional.
+It contains a JS9Prefs object that holds various default settings for
+JS9, e.g. default colormap and scale for image display.  Feel free to
+edit this file to set up your own site-specific parameters. See
+<a href="./preferences.html">JS9 Site Preferences</a> for a
+description of the available parameters.
+
+<p>
+Order is important: The js9prefs.js file must be loaded first. The
+js9support.min.js must be loaded before you load js9.min.js. You must
+load the plugin files after you load js9.min.js.  You can simply copy
+the order of files as specified in the JS9 demo files.
+
+<p>
+You can, of course, arrange to have your web server gzip the javascript
+files, using browser-based capabilities to ungzip them automatically. The
+JS9 web site serves <b>pre-compressed content</b>, as described in the
+<a href="http://httpd.apache.org/docs/current/mod/mod_deflate.html">
+Apache Module mod_deflate</a> page.
+
+<p>
+The text file <b>js9support.txt</b> is a list of the files contained
+in js9support.css, js9support.js, js9support.min,js, and js9plugins.js.
+
+<p>
+The js9support.min.js file contains a number of required third-party
+software modules, including jQuery, fabric.js (2D graphics), flot (for
+plotting), dhtmlwindow (for light windows), etc. It is separated from
+js9.min.js to optimize file caching. Although JS9 <b>will not run</b>
+properly without these third-party modules, you are free to load them
+manually, i.e., without loading js9support.min.js itself. A manual
+load is useful in cases where you want a different version of one of
+the third-party modules (e.g., js9support.min.js loads jQuery 1.12.2,
+but you need to utilize jQuery 1.11.3). In such a case, we still
+recommend creating a single file to hold third-party modules, in order
+to minimize load latency.
+
+<p>
+JS9 <b>will run</b> without the js9plugins.js file, but with much
+restricted functionality.  In particular, core plugins such as
+blending, blinking, colorbar, data cube, magnifier, panner, etc. are
+loaded from this file, as are analysis plugins such as encircled
+energy, radial projection, region statistics, and 3D plot.  Note that
+the regions and mouse/touch core plugins are always loaded from within
+js9.min.js itself, since they are essential to almost all JS9
+functionality.
+
+<p>
+All of these Javascript plugin files are contained in the plugins
+subdirectory, so you can load them individually, e.g.:
+<pre>
+  &lt;script type="text/javascript" src="js9prefs.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9support.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="js9.min.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="plugins/core/menubar.js"&gt;&lt;/script&gt;
+  &lt;script type="text/javascript" src="plugins/core/info.js"&gt;&lt;/script&gt;
+</pre>
+will load only the menubar and info display plugins.
+
+<p>
+During startup, JS9 will asynchronously load the <b>js9worker.js</b>
+file in order to create a worker process. It also will load either
+the <b>astroem.js</b> file or the <b>astroemw.js</b>
+and <b>astroemw.wasm</b> files, depending on whether
+<a href="http://webassembly.org/">WebAssembly</a> is supported on your browser.
+
+<p>
+The main JS9 display as well as JS9 plugins are placed on a web page
+by assigning JS9 classes to ordinary "div" elements. The two important
+JS9 classes are:
+<ul>
+<li><b>JS9:</b> this class will display the main JS9 image window
+<li><b>JS9Menubar:</b> this class will display the JS9 menubar
+</ul>
+Thus, for example, to place a menubar on top of a JS9 display, use:
+<pre>
+  &lt;div class="JS9Menubar"&gt;
+  &lt;div class="JS9"&gt;
+</pre>
+<p>
+Among the many JS9 plugins that you can add to your webpage are:
+<ul>
+<li><b>Archives & Catalogs</b>: access to external archives and catalogs
+<li><b>Bin/Filter/Section</b>: support for extracting sections from images
+<li><b>Blending</b>: blend images using standard composite techniques
+<li><b>Blinking</b>: blink two or more images
+<li><b>Colormaps</b>: create colormaps
+<li><b>Console:</b> display a console window for executing commands
+<li><b>Contours</b>: create contour maps
+<li><b>Data Cube</b>: process 3D FITS data cubes
+<li><b>Extensions</b>: view FITS extensions
+<li><b>Info:</b> display position, value, and other information as mouse moves
+<li><b>Keyboard Actions</b>: configure keyboard actions
+<li><b>Magnifier:</b> display a magnifier window centered on the mouse position
+<li><b>Mouse/Touch</b>: configure mouse/touch actions
+<li><b>Panner:</b> display a panner window of the whole image
+<li><b>Pixel Table</b>: display a pixel value table centered on the mouse position
+<li><b>Preferences</b>: configure JS9 preferences
+</ul>
+<p>
+Any of these can be added to a web page by specifying a div element with the
+appropriate class:
+<pre>
+    &lt;div class="JS9Menubar"&gt;&lt;/div&gt;
+    &lt;div class="JS9Toolbar"&gt;&lt;/div&gt;
+    &lt;div class="JS9"&gt;&lt;/div&gt;
+    &lt;div style="margin-top: 2px;"&gt;
+    &lt;div class="JS9Colorbar"&gt;&lt;/div&gt;
+</pre>
+
+<p>
+NB: all of these plugins can also be displayed at any time as light
+windows, using the appropriate <b>View</b> menu options. Light windows
+can moved around on the page and dismissed when no longer needed. Also
+note that if a plugin is declared statically in a page, it will not be
+made available in the <b>View</b> menu.
+
+<p>
+Placement of JS9 div elements should follow standard web page rules
+and constraints.  This means that div elements can be placed in any
+order to create different graphical views. For example, the
+js9basics.html page places the menubar above the image display, in
+keeping with the traditional layout of DS9. The entire JS9 construct
+is placed in a data cell of a table, next to a data cell containing
+data URLs.
+
+<p>
+The JS9 display has a default width and height of 512x512. You can
+change this by adding <b>data-width</b> and <b>data-height</b>
+attributes to the div. For example, to create a display of size 256x256, use:
+<pre>
+  &lt;div class="JS9" data-width="256px" data-height="256px"&gt;
+</pre>
+The <b>data-width</b> and <b>data-height</b> attributes can be applied
+to the other JS9 divs (which can be especially useful for the menubar).
+Thus, for example, if you shorten the width of the Js9 display, you might
+also want to shorten the width of the menubar:
+<pre>
+  &lt;div class="JS9Menubar" data-width="256px" data-height="48px"&gt;
+</pre>
+
+<p>
+Multiple instances of JS9 (including the main JS9 display element
+and secondary plugins elements) can be added to a single web page. This
+is done by specifying multiple sets of JS9 elements. Each main JS9 display
+element should have a unique HTML <b>id</b> associated with it:
+<pre>
+   &lt;div class="JS9" id="JS9"&gt;&lt;/div&gt;
+   &lt;div class="JS9" id="myJS9"&gt;&lt;/div&gt;
+</pre>
+
+<p>
+To connect a JS9 plugin element to a given JS9 display element, you
+can either use an HTML <b>id</b> that obeys certain rules, or you can
+use an HTML data attribute <b>data-js9id</b>, as described below.
+
+<p>
+To connect a JS9 display to one or more JS9 plugins using an
+HTML <b>id</b> attribute, the plugin ids should be specified as follows:
+<ul>
+<li> start with a unique ID name, e.g. "myJS9" that matches the main JS9 id
+<li> follow with an optional dash or underscore
+<li> finish with the type of JS9 plugin, e.g. "Menubar", "Panner", "Magnifier" "Info", "3dPlot", "RegionStats", etc.
+</ul>
+For example:
+<pre>
+    &lt;div class="JS9Menubar" id="myJS9Menubar"&gt;&lt;/div&gt;
+    &lt;div class="JS9" id="myJS9"&gt;&lt;/div&gt;
+    &lt;div class="JS9Colorbar" id="myJS9Colorbar"&gt;&lt;/div&gt;
+    &lt;div class="ImExamRegionStats" id="myJS9RegionStats"&gt;&lt;/div&gt;
+</pre>
+Note that the type of plugin is the simple name of the plugin, without the class prefix, e.g., "RegionStats" instead of "ImExamRegionStats". (Esoteric note: for
+non-JS9 class plugins, you can prefix the class to avoid name collisions.)
+
+<p>
+To connect a JS9 display to one or more JS9 plugins using a
+HTML data attribute <b>js9id</b>, specify the id of the main
+JS9 display element as its value:
+<pre>
+    &lt;div class="JS9Menubar" data-js9id="myJS9"&gt;&lt;/div&gt;
+    &lt;div class="JS9" id="myJS9"&gt;&lt;/div&gt;
+    &lt;div style="margin-top: 2px;"&gt;
+    &lt;div class="JS9Colorbar" data-js9id="myJS9"&gt;&lt;/div&gt;
+</pre>
+These two connection methods are equivalent. However, the <b>js9id</b>
+data attribute method also allows you to specify the single-character
+token <b>*</b> as a target value for many plugins. In this case, the
+display associated with the plugin is dynamically selected by clicking
+the mouse in a JS9 display window. In this way, a single plugin can serve
+several displays.
+
+<p>
+The plugins that support dynamic selection are:
+<ul>
+<li> Blend
+<li> Blink
+<li> Colorbar
+<li> Info
+<li> Magnifier
+<li> Menubar
+<li> Panner
+<li> Separate
+<li> EncEnergy
+<li> RadialProj
+<li> Histogram
+<li> RegionStats
+<li> XProj
+<li> YProj
+<li> 3dPlot
+</ul>
+
+<p>
+Note that ids are not required at all if there is only one JS9 instance on
+the web page:
+<pre>
+    &lt;div class="JS9Menubar"&gt;&lt;/div&gt;
+    &lt;div class="JS9Toolbar"&gt;&lt;/div&gt;
+    &lt;div class="JS9"&gt;&lt;/div&gt;
+    &lt;div style="margin-top: 2px;"&gt;
+    &lt;div class="JS9Colorbar"&gt;&lt;/div&gt;
+</pre>
+However, if your site needs to communicate with clients using
+the <b>js9 script</b> for external communication, you can
+differentiate between clients loading the same JS9-enabled web page by
+supplying a unique ID when the JS9 page is served.
+
+<p> A full example of how to define multiple instances of JS9 with ids
+is found, for example, in the js9multi.html file. Two DS9 instances
+are defined, having IDs of "JS9" (the default) and "myJS9". When
+"myJS9" is the display ID, "myJS9Menubar" specifies the associated
+menubar and "myJS9Console" specifies the associated console.
+
+<p>
+The js9.css file contains CSS directives for various parts of
+JS9. These can be modified (or overwritten) as needed, subject to
+ordinary CSS rules. In general, we recommend overwriting CSS rules by
+loading a site-specific CSS file after the js9.css file. This makes
+updating much easier.
+
+<p>
+One CSS directive worth noting is the <b>JS9Button</b> class, which
+defines the look and feel of the buttons found on the Menubar, inside
+plugins, etc.  The <b>JS9Button</b> class currently is set to
+the <b>JS9ClassicButton</b> class, which mimics Mac OSX buttons in
+shape and color. An alternative is the <b>JS9FlatButton</b> class
+displays a flat blue button that highlights when the mouse hovers and
+darkens when clicked. A <b>lightblue</b> background is often used with
+this class of button. JS9 also defines a <b>JS9BorderButton</b> which
+has a blue colored border and a white background.  The JS9 Menubar
+supports two data properties to make it easier to change the button
+and background:
+<ul>
+<li><b>buttonClass</b>: the class of button to use ("JS9ClassicButton", "JS9FlatButton", "JS9BorderButton" ... or your own class)
+<li><b>backgroundColor</b>: color of background (default: "lightblue")
+</ul>
+The <a href="../js9sizes.html">JS9 Size Demo</a> displays different button styles.
+
+<p>
+Normally, JS9 will initialize itself automatically once the page is
+loaded and ready: internally, jQuery $(document).ready() calls
+<b>JS9.init()</b>. If you need to delay JS9 initialization (e.g., you
+are using a platform that fires $(document).ready() before the
+platform is really ready), you can set <b>data-js9init</b> to "false"
+on any JS9 div. In this case, you must call the init routine manually:
+<pre>
+  JS9.init();
+</pre>
+Until you do this, no JS9 div elements will be visible.
+
+<p>
+When JS9 is fully loaded and ready (including connection to the JS9
+helper, if necessary), it fires the <b>JS9:ready</b> event. You can
+use this event to perform your own initialization:
+<pre>
+  $(document).on("JS9:ready", function(){
+      myinit();
+  });
+</pre>
+
+<p>
+<h3>Menubar Styles</h3> The default menubar has a style in which all
+of the major menus are shown at the top-level of the menubar. This is
+the <b>classic</b> style. JS9 also supports a <b>mac</b> style
+menubar, in which the <b>File</b>, <b>Edit</b> and <b>View</b> menus
+are placed on the left side of the menubar and the <b>Help</b> menu on
+the right.  The other main menus are displayed as sub-menus within
+the <b>View</b> menu. The <b>mac</b> style can be specified in two
+ways: you can set the JS9globalOpts.menubarStyle property to "mac" in
+your js9prefs.js file to set the default menubar style for all menus
+in the page. Alternatively you can supply a <b>data-style="mac"</b>
+attribute to the Menubar div element:
+<pre>
+  &lt;div class="JS9Menubar" data-style="mac"&gt;
+</pre>
+This will set the menubar style for this element only.
+
+<p>
+<h3>Supermenus: One Menubar to Rule Them All</h3> By default, each
+menubar controls one JS9 display. You can, however, create a menubar
+that controls multiple displays, so that a given menu selection is
+applied to each display (or to a specifically selected image). This is
+done by creating a menubar div with two special characteristics:
+<ul>
+<li> the id of the menubar starts with <b>SUPERMENU_</b> (it can end with anything, or nothing)
+<li> an HTML5 data attribute called <b>data-displays</b> lists the JS9 displays to control or "*" for all displays
+</ul>
+For example, to control two JS9 displays:
+<pre>
+  &lt;div class="JS9Menubar" id="SUPERMENU_" data-displays="JS9,myJS9"&gt;&lt;/div&gt;
+</pre>
+As shown, the <b>data-displays</b> attribute is a comma-separated list
+of JS9 display ids to control with this super-menu.
+<p>
+A super-menu acts like an ordinary menu, except that it will control
+all of the JS9 displays in the list. Thus, you can change multiple
+colormaps at once, run analysis on all displays, etc.
+<p>
+You also can click on an individual display to make it the <b>selected
+display</b> for the supermenu. The selected display will be
+highlighted, and the supermenu will target its actions at this display
+alone, rather than at all of the displays. Click again in a selected
+display (or clicking in another display) to unselect it. In this way,
+a single supermenu can be used to control several displays
+individually (akin to how the top-level Apple menu functions with
+regard to applications).
+<p>
+A supermenu displays an additional <b>Super</b> menu button on the
+left side of the menubar. This button contains a list of all displays
+controlled by the supermenu, with the selected display starred. You
+can choose a new selected display from this menu, or choose "all
+displays" to unselect.
+<p>
+Of course, you also can define a menubar for each display in order to
+control them individually. Since the actions of an ordinary menu and a
+super-menu can be mixed for a given JS9 display, the displays will not
+always be perfectly synchronized. In such a case, the super-menu's
+selected values will be tied to the first display in the
+<b>data-displays</b> list.  For example, if the first display listed
+is at zoom 2 and the second is at zoom 4, the Zoom menu will show
+a current zoom value of 2.
+
+<p>
+<h3>Adding Server-side Analysis Tasks to Your Web Page</h3>
+<p>
+Server-side JS9 analysis tasks can be executed using
+the <b>Analysis</b> menu, but they also can be executed directly from
+the web page using HTML elements (buttons, forms, etc.) To do this, a
+web page author simply creates the web interface and calls
+either <b>JS9.RunAnalysis()</b> (for buttons, menus, etc.)
+or <b>JS9.SubmitAnalysis()</b> (for forms). These are described
+in the <a href="localtasks.html">Local Tasks</a> web page.
+
+<p>
+<h3>Adding Local Analysis Tasks to Your Web Page</h3>
+<p>
+JS9 also supports the ability to perform local analysis, i.e.,
+analysis tasks defined and executed right on your web page, rather
+than being executed by a back-end server.  This is accomplished by
+offering access to the image data and region information via
+a <b>public JS9 API</b>. See the
+<a href="localtasks.html">Local Tasks</a> for more information.
+
+<p>
+<h3>Adding JS9 Display Windows Dynamically</h3>
+<p>
+JS9 display windows can be created dynamically using the JS9 Public API call
+<b>JS9.LoadWindow()</b>. You can create a light window to hold a new
+JS9 display on the same page or you can create an entirely separate
+pop-up window. See the
+<a href="publicapi.html">JS9 Public API</a> for more information.
+
+<p>
+<h3>Adding Data Files to a Web Page</h3>
+<p>
+Data file links are added to a web page by supplying URLs that call
+the <b>JS9.Load()</b> routine.
+You also can load images automatically when the web page loads using the
+<b>JS9.Preload()</b> routine.
+See:
+<a href="yourdata.html">Adding Data Files To a Web Page</a> for more
+information.
+
+<h5>Last updated: June 5, 2019</h5>
+</div>
+
+</body>
+</html>

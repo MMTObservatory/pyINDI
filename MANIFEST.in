@@ -5,6 +5,7 @@ include LICENSE.rst
 include pyproject.toml
 
 recursive-include pyindi *.pyx *.c *.pxd
+recursive-include pyindi/www/*
 recursive-include docs *
 recursive-include licenses *
 recursive-include scripts *

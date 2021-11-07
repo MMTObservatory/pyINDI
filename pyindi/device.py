@@ -15,6 +15,7 @@ from abc import ABC
 from pathlib import Path
 import functools
 import traceback
+import inspect
 
 """
 The Base classes for the pyINDI device. Definitions
@@ -29,18 +30,6 @@ http://www.indilib.org/api/index.html
 now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
 
-if Path("/src").exists():
-    """
-    TODO: The logging path should be a
-    configureable or an environment variable.
-    """
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'/src/{timestr}.log',
-                        level=logging.DEBUG)
-else:
-    logging.basicConfig(format="%(asctime)-15s %(message)s",
-                        filename=f'/home/mtnops/.mtnops/{timestr}.log',
-                        level=logging.DEBUG)
 
 
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
@@ -655,7 +644,8 @@ class ISwitchVector(IVectorProperty):
                  perm: IPerm,
                  timeout: float = 0,
                  label: str = None,
-                 group: str = None):
+                 group: str = None, 
+                 timestamp: str = None):
         """
          ## Arguments:
          * np: List of INumber properties in the INumberVector
@@ -675,7 +665,7 @@ class ISwitchVector(IVectorProperty):
 
         if value not in list(ISState):
             raise ValueError(
-                "ISwitch value must be in 'On' or 'Off' not {value}")
+                f"ISwitch value must be in 'On' or 'Off' not {value}")
 
         # If its one of many we need to set the
         # other items.
@@ -740,7 +730,8 @@ class IBLOBVector(IVectorProperty):
                  perm: IPerm,
                  label: str = None,
                  timeout: str = None,
-                 group: str = None):
+                 group: str = None, 
+                 timestamp: str = None):
         """
          ## Arguments:
          * np: List of INumber properties in the INumberVector
@@ -806,6 +797,7 @@ class device(ABC):
     """
 
     _registrants = []
+    _NewPropertyMethods = {}
 
     def __init__(self, loop=None, config=None, name=None):
 
@@ -816,32 +808,117 @@ class device(ABC):
         name: Name of the device defaulting to name of the class
         """
 
-        if loop is None:
-            self.mainloop = asyncio.get_event_loop()
-        else:
-            self.mainloop = loop
+
+        self.props = []
+        self.config = config
+        self.timer_queue = asyncio.Queue()
 
         if name is None:
             self._devname = self.__class__.__name__
         else:
             self._devname = name
 
-        self.props = []
-        self.config = config
-        self.timer_queue = asyncio.Queue()
-
-        self.reader, self.writer = \
-            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
-
         self.outq = asyncio.Queue()
         self.handles = []
 
         self._once = True
 
-        # Not sure why but the default exception handler
-        # halts the loops and never shows the traceback.
-        # So overwrite the default.
-        self.mainloop.set_exception_handler(self.exception)
+        self.repeat_q = asyncio.Queue()
+
+        self.mainloop = loop
+
+    def start(self): 
+        """
+        Start up the mainloop, grab the stdio and run the xml reader.
+        This method can hide the asynchronicity from subclasses. Simply
+        instantiate the subclass and call this method in the same thread
+        and you never have to know that this is asyncio. 
+
+        It is probably better to use the astart function but that requires
+        astart
+        """
+   
+        self.mainloop = asyncio.get_event_loop()
+        self.reader, self.writer = self.mainloop.run_until_complete(stdio())
+        self.running = True
+        future = asyncio.gather(
+            self.run(),
+            self.toindiserver(),
+            self.repeat_queuer()
+        )
+
+        self.mainloop.run_until_complete(future)
+
+    
+    async def astart(self):
+
+        """Start up in async mode"""
+
+        self.mainloop = asyncio.get_running_loop()
+        self.reader, self.writer = await stdio()
+        self.running = True
+        future = asyncio.gather(
+            self.run(),
+            self.toindiserver(),
+            self.repeat_queuer()
+        )
+
+        await future
+
+    async def repeat_queuer(self):
+        while self.running:
+            func = await self.repeat_q.get()
+            try:
+                if inspect.iscoroutinefunction(func):
+                    await func(self)
+                else:
+                    func(self)
+
+            except Exception as error:
+                sys.stderr.write(
+                    f"There was an exception the \
+                    later decorated fxn {func}:")
+
+                sys.stderr.write(f"{error}")
+                sys.stderr.write("See traceback below.")
+                traceback.print_exc(file=sys.stderr)
+
+
+#    def __init__(self, loop=None, config=None, name=None):
+#
+#        """
+#        Arguments:
+#        loop: the asyncio event loop
+#        config: the configureable info from ConfigParser
+#        name: Name of the device defaulting to name of the class
+#        """
+#
+#        if loop is None:
+#            self.mainloop = asyncio.get_event_loop()
+#        else:
+#            self.mainloop = loop
+#
+#        if name is None:
+#            self._devname = self.__class__.__name__
+#        else:
+#            self._devname = name
+#
+#        self.props = []
+#        self.config = config
+#        self.timer_queue = asyncio.Queue()
+#
+#        self.reader, self.writer = \
+#            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
+#
+#        self.outq = asyncio.Queue()
+#        self.handles = []
+#
+#        self._once = True
+#
+#        # Not sure why but the default exception handler
+#        # halts the loops and never shows the traceback.
+#        # So overwrite the default.
+#        self.mainloop.set_exception_handler(self.exception)
 
     def exception(self, loop, context):
 
@@ -865,26 +942,13 @@ class device(ABC):
     def __repr__(self):
         return f"<{self.name()}>"
 
-    def start(self):
-        """
-        Start up the mainloop, grab the stdio and run the xml reader.
-        This method can hide the asynchronicity from subclasses. Simply
-        instantiate the subclass and call this method in the same thread
-        and you never have to know that this is asyncio. 
-        """
-        self.running = True
-        future = asyncio.gather(
-            self.run(),
-            self.toindiserver(),
-            #self.idle()
-        )
-        #print(type(future))
-        self.mainloop.run_until_complete(future)
-
+    
     async def toindiserver(self):
 
         while self.running:
             output = await self.outq.get()
+
+            logging.debug(output.decode())
 
             self.writer.write(output)
             await self.writer.drain()
@@ -913,7 +977,10 @@ class device(ABC):
                 logging.debug(f"Could not parse xml {error} {inp}")
                 continue
 
-            logging.debug(etree.tostring(xml, pretty_print=True))
+            logging.info("Parsed data from client")
+            logging.info(etree.tostring(xml, pretty_print=True).decode())
+            logging.info("End client data")
+
             if xml.tag == "getProperties":
 
                 if "device" in xml.attrib:
@@ -924,14 +991,41 @@ class device(ABC):
 
                 self.initProperties()
 
+                # maybe we should run this concurrently
+                # with gather. If it blocks this run loop
+                # it will be difficult to debug.
+                if "device" in xml.attrib:
+                    await self.asyncInitProperties(xml.attrib['device'])
+                else:
+                    await self.asyncInitProperties()
+
+
                 if self._once:
                     # This is where the `repeat` decorated
                     # functions are called the first time
                     for reg in self._registrants:
-                        func = getattr(self, reg.__name__)
-                        func()
-                    self._once = False
 
+                        initiate_callback = getattr(self, reg.__name__)
+                        # initiate_callback is actually the 'get_instance'
+                        # function defined in device.repeat.
+                        initiate_callback()
+
+                    self._once = False
+            
+            elif xml.attrib['name'] in self._NewPropertyMethods:
+                names = [ele.attrib["name"] for ele in xml]
+                if "Number" in xml.tag:
+                    values = [float(ele.text.strip()) for ele in xml]
+                else:
+                    values = [str(ele.text.strip()) for ele in xml]
+
+                self._NewPropertyMethods[xml.attrib['name']](
+                        self,
+                        xml.attrib["device"],
+                        xml.attrib['name'],
+                        values,
+                        names
+                        )
 
             elif xml.tag == "newNumberVector":
 
@@ -940,7 +1034,9 @@ class device(ABC):
                     values = [float(ele.text.strip()) for ele in xml]
                     self.ISNewNumber(
                         xml.attrib["device"],
-                        xml.attrib["name"], values, names)
+                        xml.attrib["name"], 
+                        values, 
+                        names)
 
                 except Exception as error:
                     logging.debug(f"{error}")
@@ -966,7 +1062,9 @@ class device(ABC):
                     values = [str(ele.text).strip() for ele in xml]
                     self.ISNewSwitch(
                         xml.attrib["device"],
-                        xml.attrib["name"], values, names)
+                        xml.attrib["name"], 
+                        values, 
+                        names)
                 except Exception as error:
                     logging.debug(f"{error}")
                     logging.debug(etree.tostring(xml))
@@ -974,6 +1072,13 @@ class device(ABC):
 
     def initProperties(self):
         """"""
+        pass
+
+    async def asyncInitProperties(self, device=None):
+        """This function is called after the getProperties tags is 
+        recieved at the same time as initProperties. Override it
+        to start async tasks to be run in the event loop."""
+
         pass
 
 
@@ -1005,18 +1110,36 @@ class device(ABC):
             file.
         """
 
+        ok_tags = (
+                "defSwitchVector",
+                "defTextVector",
+                "defNumberVector",
+                "defBLOBVector",
+                "defLightVector",
+                )
+
         with open(skelfile) as skfd:
             xmlstr = skfd.read()
             xml = etree.fromstring(xmlstr)
 
-        for ivec in xml.getchildren():
+        for xml_def in xml.getchildren():
+            if xml_def.tag not in ok_tags:
+                # Ignore anything not a vector definition.
+                continue
             properties = []
-            for prop in ivec.getchildren():
+            for prop in xml_def.getchildren():
+                
                 att = prop.attrib
                 att.update({'value': prop.text.strip()})
                 properties.append(att)
-
-            self.IDDef(self.vectorFactory(ivec.tag, ivec.attrib, properties))
+            try:
+                ivec = self.vectorFactory(xml_def.tag, xml_def.attrib, properties)
+            except Exception as error:
+                logging.error(f"The following error was caused by this xml tag \
+                        \n {etree.tostring(xml_def)}")
+                logging.error(error)
+                raise
+            self.IDDef(ivec)
 
 
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
@@ -1045,7 +1168,7 @@ class device(ABC):
 
         # We could let this return None but not finding a
         # property seems to be a pretty important issue.
-        raise ValueError(f"Could not find {device}, {name} in {self.props}")
+        raise ValueError(f"Could not find {device}, {name} in props")
 
     def IUUpdate(self, device, name, values, names, Set=False):
         """
@@ -1061,7 +1184,6 @@ class device(ABC):
         vp = self.IUFind(name=name, device=device)
 
         for nm, val in zip(names, values):
-            self.IDMessage(f"setting {nm} to {val}")
             vp[nm] = val
 
         if Set:
@@ -1076,18 +1198,19 @@ class device(ABC):
                                   implement ISGetProperties")
 
     def IDMessage(self, msg: str,
-                  timestamp: Union[str, datetime.datetime, None] = None):
+                  timestamp: Union[str, datetime.datetime, None] = None,
+                  msgtype: Union["INFO", "WARN", "DEBUG"]="INFO"):
 
         if type(timestamp) == datetime.datetime:
-            timestamp = timestamp.isoformat()
+            timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
 
         elif timestamp is None:
-            timestamp = datetime.datetime.now().isoformat()
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-        xml = f'<message message="{msg}" '
+        xml = f'<message message="[{msgtype}] {msg}" '
         xml += f'timestamp="{timestamp}" '
-        xml += f'device="{self.name()}"> '
-        xml += '\n\n</message>'
+        xml += f'device="{self.name()}"/> '
+    
         self.outq.put_nowait(xml.encode())
         # self.writer.write(xml.encode())
 
@@ -1105,7 +1228,7 @@ class device(ABC):
 
     def IDSet(self, vector: IVectorProperty, msg=None):
         if isinstance(vector, IBLOB) or isinstance(vector, IBLOBVector):
-            raise ("Must use IDSetBLOB to send BLOB to client.")
+            raise RuntimeError("Must use IDSetBLOB to send BLOB to client.")
         self.outq.put_nowait(etree.tostring(vector.Set(msg), pretty_print=True))
         # self.writer.write(etree.tostring(vector.Set(msg), pretty_print=True))
 
@@ -1117,15 +1240,29 @@ class device(ABC):
 
         # register the property internally
 
-
         if prop.device != self._devname:
-            raise ValueError(f"INDI prop {prop.name} device does not match this device, {prop.device} {self._devname}")
+            raise ValueError(
+                    f"INDI prop {prop.name} device does not match this device, {prop.device} {self._devname}"
+                    )
 
-        self.props.append(prop)
+        if prop not in self.props:
+            self.props.append(prop)
         # Send it to the indiserver
         self.outq.put_nowait((etree.tostring(prop.Def(msg), pretty_print=True)))
 
         # self.writer.write((etree.tostring(prop.Def(msg), pretty_print=True)))
+
+    @classmethod
+    def NewVectorProperty(cls, name: str):
+
+        def get_function(func: Callable):
+
+            cls._NewPropertyMethods[name] = func
+            return func
+
+        return get_function
+
+
 
     @classmethod
     def repeat(cls, millis: int):
@@ -1147,7 +1284,7 @@ class device(ABC):
 
             def get_instance(instance: device):
                 """
-                Set the funct to be called with call_later
+                Set the function to be called with call_later
                 asyncio procedure.
 
                 Called after ISGetProperties is called
@@ -1158,29 +1295,34 @@ class device(ABC):
                 def call_with_error_handling():
                     """Call the function but make sure
                     we have error handling with the traceback"""
-                    try:
-                        func(instance)
-                    except Exception as error:
-                        sys.stderr.write(
-                            f"There was an exception the \
-                            later decorated fxn {func}:")
-                        sys.stderr.write(f"{error}")
-                        sys.stderr.write("See traceback below.")
-                        traceback.print_exc(file=sys.stderr)
+
+
+                    instance.repeat_q.put_nowait(func)
+#                    try:
+#                        func(instance)
+#                    except Exception as error:
+#                        sys.stderr.write(
+#                            f"There was an exception the \
+#                            later decorated fxn {func}:")
+#                        sys.stderr.write(f"{error}")
+#                        sys.stderr.write("See traceback below.")
+#                        traceback.print_exc(file=sys.stderr)
 
                     # do it again in millis
                     cl = instance.mainloop.call_later(
                         millis / 1000.0,
                         call_with_error_handling)
                     instance.handles.append(cl)
-                    return cl
+                    return 
 
+                # The below line calls the wrapped
+                # function for the first time
                 cl = instance.mainloop.call_later(
                     millis / 1000.0,
                     call_with_error_handling)
 
                 instance.handles.append(cl)
-                return cl
+                return 
 
             return get_instance
 
@@ -1254,3 +1396,5 @@ class device(ABC):
             raise ValueError(message)
 
         return vec
+
+

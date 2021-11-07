@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<link type="text/css" rel="stylesheet" href="../js9.css">
+<title>Accessing Data Archives with JS9</title>
+</head>
+<body>
+<div class="helpLogo"><img src="../images/js9logo.png" alt="js9"></div>
+<div class="helpContainer">
+<center><h3>Accessing Data Archives with JS9</h3></center>
+
+JS9 can display data in any astronomical archive where a query
+produces a downloadable URL to a FITS file. The load proxy mechanism
+is used, so accessing archives assumes that the JS9 web site has been
+configured to support proxy loads.
+
+<h3>Examples of data archives that generate FITS URLS for use with JS9</h3>
+<ul>
+<li> <a href="https://www.cfa.harvard.edu/archive/chandra/search" target="_blank" rel="noopener noreferrer">The Unofficial Chandra Archive</a>: in the search results, copy a small image URL from the <i>Title</i> or click <i>ObsId</i> to get the Chandra FTP directory for this observation. The *.evt2.fits.gz file contains the event table.
+<li> <a href="https://heasarc.gsfc.nasa.gov/cgi-bin/W3Browse/w3browse.pl" target="_blank" rel="noopener noreferrer">NASA/HEASARC Browse</a>: in the Browse Query Results, the <i>D</i> option ("Preview data products for this row") in the <i>Services</i> column will give FITS URLs.
+<li> <a href="http://skyview.gsfc.nasa.gov/current/cgi/query.pl" target="_blank" rel="noopener noreferrer">NASA/HEASARC SkyView</a>: in the search results, copy the FITS URL from the <i>Download FITS or quick look jpeg image</i> option.
+</ul>
+
+<h3>Summary: how to access data archives with JS9</h3>
+<ul>
+<li> visit a data archive web page in your browser
+<li> execute a search for the desired observation (e.g., type in 'M87' or 'Crab Nebula' in the Chandra Archive's Name box listed above)
+<li> once the link to a FITS file has been created:
+<ul>
+<li> drag and drop the FITS link onto your JS9 display
+</ul>
+<li> or:
+<ul>
+<li> copy the resulting FITS file link
+<li> in JS9, select the <b>File:open link via proxy ...</b> menu option
+<li> paste the FITS URL link into the dialog box
+<li> click the <b>Load</b> button
+</ul>
+</ul>
+
+<h3>Details: using a proxy server to access data archives</h3>
+<p>
+For security reasons, JavaScript contained in one web page can
+access data in another web page only if both web pages have the
+same origin (i.e., basically coming from the same host).  This
+policy is called the 
+<a href="https://en.wikipedia.org/wiki/Same-origin_policy">
+Same Origin Policy</a>. This means that JS9 cannot load a FITS file from
+an arbitrary URL without using special techniques.
+<p>
+One such technique is to use a proxy server: the URL is not loaded
+directly into JS9, but instead is copied back to the server from which
+JS9 itself was loaded. The file is then retrieved by JS9 so that the
+"same origin" rules are not violated.
+<p>
+When the back-end server associated with a JS9 web page supports the
+proxy service, you will see a menu option in the <b>File</b> menu
+called <b>open link via proxy ...</b>
+<p>
+Enter a FITS URL into the proxy dialog box and press the <b>Load</b>
+button. The data file will be retrieved by the server and stored in a
+directory specifically tied to the web page. (The directory and its
+contents will be deleted when the page is unloaded.)  JS9 then will
+load the file from this directory. Note that since the file resides on
+the back-end server, all back-end analysis defined on that server is
+available.
+<p>
+You also can drag and drop the link directly onto the JS9 display.
+The <b>open link via proxy ...</b> menu option is mentioned first,
+because it can sometimes require less dexterity (e.g., the archive web
+page is displayed on a different desktop from JS9) and also because it
+contains a visual cue regarding proxy loads: the option will be greyed
+out if JS9 has not been configured to allow proxy loads.
+<p>
+This proxy load technique can also be used FITS links from other
+sources. For example, if you have a FITS file on Google Drive, iCloud,
+Dropbox or even a static web page, you can generate/copy the link and
+paste it into the proxy dialog box for display. (Dropbox files also
+can utilize the <b>open link via CORS ...</b> option, which downloads
+the data directly to JS9, bypassing the proxy server.)
+
+<h5>Last updated: April 17, 2019</h5>
+</div>
+
+</body>
+</html>

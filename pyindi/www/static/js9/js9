@@ -1,0 +1,292 @@
+#!/bin/bash
+#set -x
+
+# values will be filled in by mkjs9 during the build
+if [ x${JS9_SRCDIR} = x ]; then
+  JS9_SRCDIR=""
+fi
+if [ x${JS9_INSTALLDIR} = x ]; then
+  JS9_INSTALLDIR=""
+fi
+
+# make sure js9Msg sees these, if possible
+if [ x${JS9_SRCDIR} != x ]; then
+  export JS9_SRCDIR
+fi
+if [ x${JS9_INSTALLDIR} != x ]; then
+  export JS9_INSTALLDIR
+fi
+
+# look for js9 script in directory running this script
+# this is for desktop js9 used without building anything
+#
+# in case the user has changed the js9 script, try to figure out the right one
+# is this file a link?
+BFILE="${BASH_SOURCE[0]}"
+LFILE="$( readlink $BFILE )"
+if [ x"$LFILE" != x ]; then
+  XFILE="$LFILE"
+else
+  XFILE="$BFILE"
+fi
+# is the containing directory a link?
+BDIR="$( dirname "${XFILE}" )"
+LDIR="$( readlink "$BDIR" )"
+if [ x"$LDIR" != x ]; then
+  XDIR="$LDIR"
+else
+  XDIR="$BDIR"
+fi
+# any more links we need to know about?
+DIR="$( cd "${XDIR}" >/dev/null 2>&1 && pwd )"
+# look for the script and set the run directory
+if [ -r ${DIR}/js9 ]; then
+  export JS9_RUNDIR=${DIR}
+fi
+
+# get OS
+OS=`uname -s`
+
+# error routine
+error () {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+usage(){
+  XEQ=`basename $0`
+  printf "$XEQ: communication with the JS9 Desktop app and browser-based web pages\n\n"
+  printf "  usage:\n"
+  printf "  # no args: start JS9 app or JS9 web page in a browser\n"
+  printf "  %s\n" $XEQ
+  printf "  # send a command to an existing JS9 app or web page\n"
+  printf "  %s [switches] [cmd] [args]\n" $XEQ
+  printf "  # start the JS9 Desktop app and load images\n"
+  printf "  %s -a [switches] [image1 image2 ...]\n" $XEQ
+  printf "  # start the JS9 Desktop app and load images with json opts\n"
+  printf "  %s -a [switches] [image1 opts1 image2 ...]\n" $XEQ
+  printf "  # start the JS9 Desktop app and load images with switch opts\n"
+  printf "  %s -a [switches] [image1 --opt1 val1 --opt2 val2 image2 ...]\n" $XEQ
+  printf "  # or without -a if no switches specified:\n"
+  printf "  %s [image1, image2, ...]\n" $XEQ
+  printf "  # start a JS9 web page in a browser and load images\n"
+  printf "  %s -b [bname] [switches] [image1, image2, ...]\n" $XEQ
+  printf "  # convert JS9 region file to DS9 region file\n"
+  printf "  %s -r js9RegionFile\n" $XEQ
+  printf " \n"
+  printf "  general switches:\n"
+  printf "    --help                    # print this message\n"
+  printf " \n"
+  printf "  app (-a) specific switches:\n"
+  printf "    -a                        # start JS9 app (requires Electron.js)\n"
+  printf "    --cmds [js9 commands]     # JS9 commands to execute after loading images\n"
+  printf "    --cmdfile [file]          # file of commands to execute after loading images\n"
+  printf "    --debug  [true|false]     # bring up Chrome debugger\n"
+  printf "    --eval   [true|false]     # enable eval (def: false, not recommended)\n"
+  printf "    --height [h]              # height of app\n"
+  printf "    --helper [true|false]     # whether to start up helper app (def: true)\n"
+  printf "    --hostfs [true|false]     # enable access to host file system (def: false)\n"
+  printf "    --merge [dir/[webpage]]   # merge tools from dir, opt: display web page \n"
+  printf "    --renameid [oid1:nid1,..] # rename ids of the JS9 display\n"
+  printf "    --savedir [path]          # dir for saved files (skip save dialog box)\n"
+  printf "    --title [id]              # rename the id of the JS9 display\n"
+  printf "    -w|--webpage [url]        # url or full path of web page to open\n"
+  printf "    --width [w]               # width of app\n"
+  printf " \n"
+  printf "  browser (-b) specific switches:\n"
+  printf "    -b|--browser [bname]      # start browser chrome|firefox|safari\n"
+  printf "    -w|--webpage [url]        # url or full path of web page to open\n"
+  printf " \n"
+  printf "  command and browser (-b) switches:\n"
+  printf "    -d|--debug                # output debugging info\n"
+  printf "    -h|--host|--helper [host] # helper host (def: localhost)\n"
+  printf "    -i|--id [id]              # client JS9 id (def: JS9)\n"
+  printf "    -m|--multi                # send to multiple clients\n"
+  printf "    -|-p|--pipe               # read argument list from stdin\n"
+  printf "    --pageid [id]             # unique page id from server\n"
+  printf "    -t|--timeout              # timeout for browser startup\n"
+  printf "    -v|--verify               # output verification info\n"
+  printf " \n"
+  printf "  send commands to an existing JS9 app or web page:\n"
+  printf "    %s help                  # list available commands\n" $XEQ
+  printf "    %s cmap heat             # change colormap to 'heat'\n" $XEQ
+  printf "    %s regions circle        # create a circle region\n" $XEQ
+  printf "    %s --id myJS9 regions    # get regions for this instance\n" $XEQ
+  printf "    %s -s                    # read commands from stdin\n" $XEQ
+  printf " \n"
+  printf "  start app or browser, and load an image:\n"
+  printf "    # start the js9 app and load foo.fits\n"
+  printf "    # (requires Electron.js app to be installed)\n"
+  printf "    %s -a foo.fits\n" $XEQ
+  printf "    # start the js9 app, load foo.fits, with switch opts\n"
+  printf "    %s -a foo.fits --colormap heat --scale log\n" $XEQ
+  printf "    # start the js9 app, load foo.fits, with json opt\n"
+  printf "    %s -a foo.fits '{\"colormap\":\"heat\", \"scale\":\"log\"}'\n" $XEQ
+  printf "    # start the js9 app, load foo.fits, execute the js9 commands\n"
+  printf "    # contained in the foo.js script file\n"
+  printf "    %s -a --cmdfile foo.js foo.fits\n" $XEQ
+  printf "    # start the js9 app and load foo.fits into myjs9.html page\n"
+  printf "    %s -a --webpage ~/myjs9.html foo.fits\n" $XEQ
+  printf "    # start the js9 app, enable node for direct access to file system\n"
+  printf "    %s -a --node true foo.fits\n" $XEQ
+  printf "    # start chrome and load foo.fits into the myjs9.html page\n"
+  printf "    %s -b chrome -w ~/myjs9.html foo.fits\n" $XEQ
+  printf "    # display js9.html web page (or \$JS9_WEBPAGE) in \$JS9_BROWSER\n"
+  printf "    %s -b foo.fits\n" $XEQ
+  printf "    # ... then carry on as usual\n"
+  printf "    %s cmap heat\n" $XEQ
+  printf " \n"
+  printf "  environment variables:\n"
+  printf "    JS9_SRCDIR               # where to find files, if you don't build/install\n"
+  printf "    JS9_BROWSER              # browser to use with -b (chrome|firefox|safari)\n"
+  printf "    JS9_WEBPAGE              # url or path of web page to use (app or browser)\n"
+  printf " \n"
+  printf "  notes:\n"
+  printf "    Make sure the relative paths to the js9 files in your web page are correct!"
+  printf "\n"
+  if [ x"$OS" = xDarwin ]; then
+    printf "\n    When using Desktop JS9 with Electron.app, you can codesign it to avoid"
+    printf "\n    repeated requests by macOS to allow incoming connections:\n"
+    printf "\n      sudo codesign --force --deep --sign - /pathto/Electron.app/Contents/MacOS/Electron/\n\n"
+  fi
+}
+
+# look for Node.js program (for messaging, but not for app)
+command -v node 1>/dev/null 2>&1
+if [ $? = 0 ]; then
+  NODE_EXE="node"
+fi
+# look for Electron program (for messaging or for app)
+case $OS in
+  Linux)  TRY="electron"
+	  command -v "$TRY" 1>/dev/null 2>&1
+	  if [ $? = 0 ]; then
+	      # https://github.com/electron/electron/issues/17972
+	      ELECTRON_EXE="$TRY --no-sandbox"
+	  fi
+  ;;
+  Darwin) TRIES="${JS9_ELECTRON_APP} ${HOME}/Applications/Electron.app/Contents/MacOS/Electron /Applications/Electron.app/Contents/MacOS/Electron /usr/local/lib/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+	  for TRY in $TRIES; do
+	  command -v "$TRY" 1>/dev/null 2>&1
+	  if [ $? = 0 ]; then
+	      ELECTRON_EXE="$TRY"
+              break;
+	  fi
+	  done
+  ;;
+esac
+
+# quick check for --help
+if [ $# = 1 -a "$1" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+# check if all args (if any) are files
+if [ $# -ge 0 ]; then
+  ALLFILES=true
+  for file in "$@"
+    do
+    f=`echo $file | sed 's/\[.*\]//'`
+    if [[ ! "$f" =~ ^https?:// && ! -r "$f" ]]; then
+      ALLFILES=false
+    fi
+  done
+fi
+
+# if all args are files, we would like to start up the app or the browser
+if [ x$ALLFILES = xtrue ]; then
+  if [ x"$ELECTRON_EXE" != x ]; then
+    # start the app
+    DOAPP=true
+  fi
+else
+  # otherwise look for script-level parameters
+  while getopts ":arsv" opt; do
+    case $opt in
+      a) DOAPP=true ;;
+      r) DOREG=true ;;
+      s) set -- ;;
+      v) DOVERIFY=true ;;
+      *) break ;;
+    esac
+  done
+fi
+
+# use Electron or use Node, depending on the mode we are in
+if [ x$DOAPP = xtrue ]; then
+  if [ x"$ELECTRON_EXE" != x ]; then
+    JS9_XEQ="$ELECTRON_EXE"
+  else
+    error "desktop js9 requires Electron.js (https://www.electronjs.org)"
+  fi
+  MSGSCRIPT="js9Electron.js"
+else
+  if [ x"$JS9_XEQ" = x ]; then
+    if [ x"$NODE_EXE" != x ]; then
+      JS9_XEQ="$NODE_EXE"
+    elif [ x"$ELECTRON_EXE" != x ]; then
+      JS9_XEQ="$ELECTRON_EXE"
+    else
+      error "js9 scripting requires Node.js (https://nodejs.org) or Electron.js (https://www.electronjs.org)"
+    fi
+  fi
+  if [ x$DOREG = xtrue ]; then
+    MSGSCRIPT="js9Regions.js"
+  else
+    MSGSCRIPT="js9Msg.js"
+  fi
+fi
+
+# make sure we can find the JS9 messaging script
+if [ -r "./${MSGSCRIPT}" ]; then
+  JS9_MSGSCRIPT="./${MSGSCRIPT}"
+elif [ -r "${JS9_RUNDIR}/${MSGSCRIPT}" ]; then
+  JS9_MSGSCRIPT="${JS9_RUNDIR}/${MSGSCRIPT}"
+elif [ -r "${JS9_INSTALLDIR}/${MSGSCRIPT}" ]; then
+  JS9_MSGSCRIPT="${JS9_INSTALLDIR}/${MSGSCRIPT}"
+elif [ -r "${JS9_SRCDIR}/${MSGSCRIPT}" ]; then
+  JS9_MSGSCRIPT="${JS9_SRCDIR}/${MSGSCRIPT}"
+else
+  error "ERROR: can't find ${MSGSCRIPT} (install JS9, or set \$JS9_SRCDIR )"
+fi
+export JS9_MSGSCRIPT
+
+# make sure we have a browser defined
+if [ x$JS9_BROWSER = x ]; then
+    case $OS in
+        Darwin) JS9_BROWSER="safari" ;;
+        *)      JS9_BROWSER="chrome" ;;
+    esac
+fi
+export JS9_BROWSER
+
+# run node or Electron with the msg script
+if [ x$DOVERIFY = xtrue ]; then
+  echo "executing: $JS9_XEQ" "$JS9_MSGSCRIPT" $*
+fi
+
+# we need to quote the remaining arguments to deal with spaces in filenames
+# https://superuser.com/questions/403263/how-to-pass-bash-script-arguments-to-a-subshell
+declare -a XARGS
+COUNT=$#
+for ((INDEX=0; INDEX<COUNT; ++INDEX))
+do
+    XARG="$(printf "%q" "$1")"
+    XARGS[INDEX]="$(printf "%q" "$XARG")"
+    shift
+done
+
+# eval the command so that strings are handled properly
+if [ x"$DOAPP" = xtrue ]; then
+  if [ x$DOVERIFY = xtrue ]; then
+    # verify means we want all output from electron
+    eval "$JS9_XEQ" "$JS9_MSGSCRIPT" $ARGS ${XARGS[*]}
+  else
+    # else trash the output (too many electron messages)
+    eval "$JS9_XEQ" "$JS9_MSGSCRIPT" $ARGS ${XARGS[*]} >/dev/null 2>&1
+  fi
+else
+  # if not using electron, we want to see all output
+  eval "$JS9_XEQ" "$JS9_MSGSCRIPT" $ARGS ${XARGS[*]}
+fi
