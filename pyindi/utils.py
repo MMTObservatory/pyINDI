@@ -133,8 +133,7 @@ class XMLHandler(ContentHandler):
                     raise RuntimeError(f"We don't understand the key {key} != {self._currentKey}")
 
                 try:
-
-                    self._watched[key](self.rootElement)
+                    self._watched[self._currentKey](self.rootElement)
                 except Exception as error:
                     print(f"{key} callback gave error: {error}")
                     raise
@@ -213,14 +212,15 @@ class INDIHandle(INDIClientSingleton):
                 with_inst = lambda ele : fxn(self, ele)
                 cls.handler.watch_property(device, name, with_inst)
             cls.call_on_init.append(init)
+
         print("returning add_callback")
+
         return add_callback
 
     def unwrap_xml(self, ele):
         props = []
         if ele.tag[:3] in ('def', 'set'):
             for child in ele:
-                print(child)
                 props.append(
                     dict(
                         tag = child.tag,
