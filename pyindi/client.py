@@ -215,13 +215,16 @@ class INDIClient:
                 )
                 self.task = asyncio.gather(
                     self.read_from_indiserver(),
-                    return_exceptions=True
                 )
                 await self.task
+                exc = self.task.exception()
+                if exc:
+                    raise exc
+
                 logging.debug("INDI client tasks finished. indiserver crash?")
                 
-            except Exception:
-                pass
+            except Exception as error:
+                logging.debug(f"INDIClient connect error {error}")
 
             finally:
                 # If gets here, need to disconnect and retry connection
