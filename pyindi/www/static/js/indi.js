@@ -85,7 +85,7 @@ const buildNav = () => {
 	var div = document.createElement("div");
 	div.classList.add("pyindi-row");
 
-	
+
 
 	var aGithub = document.createElement("a");
 	aGithub.classList.add("fab", "fa-github", "icon");
@@ -158,7 +158,7 @@ const buildDevice = (INDI) => {
 
 	// Build icon for min/max
 	var i = document.createElement("i");
-	i.classList.add("fas", "fa-minus-circle", "minmax"); // fontawesome
+	i.classList.add("fas", "fa-plus-circle", "minmax"); // fontawesome
 
 	
 
@@ -216,7 +216,7 @@ const buildGroup = (INDI) => {
 	div.setAttribute("data-device", INDI.device);
 	div.setAttribute("data-group", INDI.group);
 	div.id = genGroupID(INDI);
-	div.classList.add("pyindi-group");
+	div.classList.add("pyindi-group", "hide");
 
 	// Build header group
 	var header = document.createElement("div");
