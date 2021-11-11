@@ -44,7 +44,8 @@
 				CUSTOM_GUI && console.log('Custom gui selected');
 				start = new Date();
 				imgs = [];
-				document.documentElement.setAttribute("data-theme", "light");
+
+				buildpyINDI();
 
 				var devices = {% raw json_encode(device_name) %};
 				console.log(`Found ${devices.length} devices`);
@@ -107,11 +108,12 @@
 
 				/*
 				If we want a custom gui, we need to build the html below in <body>.
-				In that, we should use a data-attribute so when a new INDIvp comes
-				in, we try to find the data-attribute. To start off, lets only use the
+				In that, we should use the group ID so when a new INDIvp comes
+				in, we try to find the id. To start off, lets only use the
 				group for custom positioning because all children will automatically
 				be built there. After, we can focus on skipping group and only doing
-				the vectors. 
+				the vectors. Utilty function for group ID is genGroupID(INDI) and the
+				group naming scheme is no spacing in the names and is joined by a "-".
 				*/
 				if (INDIvp.op === "def") {
 					if (!CUSTOM_GUI) {
@@ -123,7 +125,7 @@
 					}
 					else {
 						// Get the element to build the new group in
-						appendToSelector = `[data-gui="${INDIvp.device}.${INDIvp.group}"]`;
+						appendToSelector = `[data-custom-device="${INDIvp.device}"][data-custom-group="${INDIvp.group}"]`; 
 						var appendTo = document.querySelector(appendToSelector);
 
 						// If the placement doesn't exist, issue to console and return
@@ -162,8 +164,7 @@
 		</script>
 	</head>
 	<body>
-		<!-- Use this area to build custom GUIs and map in callback -->
-		<div data-gui="Dome Simulator.Main Control"></div>
+		<div data-custom-device="Dome Simulator" data-custom-group="Main Control"></div>
 	</body>
 	<script>document.body.addEventListener("load", main());</script>
 </html>

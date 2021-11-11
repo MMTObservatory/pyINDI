@@ -12,7 +12,7 @@ import tornado.web
 from pyindi.webclient import INDIWebApp, INDIHandler
 
 DEVICES = [
-    "Filter Simulator",
+    "Weather",
     "Dome Simulator"
 ]
 """

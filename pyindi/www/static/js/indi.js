@@ -4,11 +4,26 @@ const INDIPERM_WO = "wo";
 const INDIPERM_RW = "rw";
 
 const INDISTATES = {
-	"Idle": "var(--indistate-idle)",
-	"Ok": "var(--indistate-ok)",
-	"Busy": "var(--indistate-busy)",
-	"Alert": "var(--indistate-alert)",
-	"Unknown": "var(--indistate-unknown)"
+	"Idle": {
+		"background-color": "var(--indistate-idle)",
+		"color": "var(--text-light)"
+	},
+	"Ok": {
+		"background-color": "var(--indistate-ok)",
+		"color": "var(--text-light-active)"
+	},
+	"Busy": {
+		"background-color": "var(--indistate-busy)",
+		"color": "var(--text-light-active)"
+	},
+	"Alert": {
+		"background-color": "var(--indistate-alert)",
+		"color": "var(--text-light-active)"
+	},
+	"Unknown": {
+		"background-color": "var(--indistate-unknown)",
+		"color": "var(--text-light-active)"
+	}
 };
 
 const INDIBLINKS = {
@@ -24,6 +39,9 @@ const INDISWRULES = {
 	"AtMostOne": "radio",
 	"AnyOfMany": "checkbox"
 }
+
+// GLOBALS
+var pyindi; // Selector for pyindi gui
 
 /* BUILDERS
 
@@ -48,6 +66,72 @@ Functions
 - buildLights              : builds INDI lights when new light is received
 */
 
+const buildpyINDI = () => {
+	pyindi = document.createElement("div");
+	pyindi.classList.add("pyindi");
+
+	var nav = buildNav();
+
+	pyindi.appendChild(nav)
+	document.body.appendChild(pyindi);
+
+	return pyindi;
+}
+
+const buildNav = () => {
+	var nav = document.createElement("nav");
+	nav.classList.add("pyindi-nav");
+
+	var div = document.createElement("div");
+	div.classList.add("pyindi-row");
+
+	
+
+	var aGithub = document.createElement("a");
+	aGithub.classList.add("fab", "fa-github", "icon");
+	aGithub.href = "https://github.com/so-mops/pyINDI";
+	aGithub.title = "Source Code";
+	aGithub.target = "_blank";
+	var navBar1 = document.createElement("div");
+	navBar1.classList.add("pyindi-col", "pyindi-h4");
+	var navBar2 = document.createElement("div");
+	navBar2.classList.add("pyindi-col","text-center", "pyindi-h4");
+	var navBar3 = document.createElement("div");
+	navBar3.classList.add("pyindi-col", "text-right", "pyindi-h4");
+	navBar2.textContent = "pyINDI";
+	var iDarkMode = document.createElement("i");
+	iDarkMode.classList.add("fas", "fa-moon", "icon");
+
+	iDarkMode.addEventListener("click", (event) => {
+		if (event.target.classList.contains("fa-sun")) {
+			event.target.classList.add("fa-moon");
+			event.target.classList.remove("fa-sun");
+			document.documentElement.setAttribute("data-theme", "light");
+		}
+		else {
+			event.target.classList.add("fa-sun");
+			event.target.classList.remove("fa-moon");
+			document.documentElement.setAttribute("data-theme", "dark");
+		}
+	})
+	navBar1.appendChild(aGithub);
+	div.appendChild(navBar1);
+	div.appendChild(navBar2);
+	navBar3.appendChild(iDarkMode)
+	div.appendChild(navBar3);
+	nav.appendChild(div);
+
+	document.body.appendChild(nav);
+
+	return nav;
+	
+}
+
+const buildFooter = () => {
+
+	return;
+}
+
 const buildDevice = (INDI) => {
 	/* Builds the default section for new device
 
@@ -71,6 +155,32 @@ const buildDevice = (INDI) => {
 	// Build header div for header
 	var header = document.createElement("div");
 	header.classList.add("pyindi-device-header");
+
+	// Build icon for min/max
+	var i = document.createElement("i");
+	i.classList.add("fas", "fa-minus-circle", "minmax"); // fontawesome
+
+	
+
+	// Handle the minimize and maximize button click
+	i.addEventListener("click", (event) => {
+		if (event.target.classList.contains("fa-minus-circle")) {
+			event.target.classList.add("fa-plus-circle");
+			event.target.classList.remove("fa-minus-circle");
+		}
+		else {
+			event.target.classList.add("fa-minus-circle");
+			event.target.classList.remove("fa-plus-circle");
+		}
+		// Next sibling is the p so go to next
+		//let nextSibling = event.target.nextElementSibling.nextElementSibling;
+		//hide(nextSibling);
+
+		let deviceDiv = document.querySelector(`div.pyindi-group[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
+		console.log(deviceDiv);
+		hide(deviceDiv);
+
+	})
 	
 	// Build label for device
 	var p = document.createElement("p");
@@ -79,6 +189,7 @@ const buildDevice = (INDI) => {
 	p.textContent = INDI.device;
 
 	// Append all
+	header.appendChild(i);
 	header.appendChild(p);
 	div.appendChild(header);
 
@@ -112,7 +223,6 @@ const buildGroup = (INDI) => {
 	header.classList.add("pyindi-group-header");
 
 	// Build icon for min/max
-	// TODO do we want this when custom-gui?
 	var i = document.createElement("i");
 	i.classList.add("fas", "fa-minus-circle", "minmax"); // fontawesome
 
@@ -129,8 +239,9 @@ const buildGroup = (INDI) => {
 		// Next sibling is the p so go to next
 		//let nextSibling = event.target.nextElementSibling.nextElementSibling;
 		//hide(nextSibling);
-
-		let fieldset = document.querySelector(`fieldset[data-group="${INDI.group}"]`);
+		
+		let fieldset = document.querySelector(`fieldset[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
+		console.log(fieldset);
 		hide(fieldset);
 
 	})
@@ -264,27 +375,25 @@ const buildTexts = (INDI, appendTo) => {
 		//div.id = nosp(tp.name);
 		var id = genPropertyID(INDI, tp);
 		div.id = id;
-		div.classList.add("fix-div");
+		div.classList.add("fix-div", "pyindi-row");
 
 		// Create label for indi text row
 		var label = document.createElement("label");
 		label.textContent = tp.label;
-		label.classList.add("pyindi-property-label");
+		label.classList.add("pyindi-property-label", "pyindi-col");
 		label.htmlFor = id;
 
 		div.appendChild(label);
 
 		// Build ro and wo
-		var ro = document.createElement("textarea");
+		var ro = document.createElement("label");
 
-		ro.rows = 1;
 		ro.readOnly = true;
-		ro.classList.add("pyindi-property", "pyindi-ro");
+		ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
 		ro.textContent = tp.value;
 
-		var wo = document.createElement("textarea");
-		wo.rows = 1;
-		wo.classList.add("pyindi-property", "pyindi-wo");
+		var wo = document.createElement("input");
+		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col");
 		//wo.id = `${nosp(INDI.device)}__${nosp(tp.name)}`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
@@ -347,12 +456,12 @@ const buildNumbers = (INDI, appendTo) => {
 		var id = genPropertyID(INDI, np);
 		div.id = id;
 		div.setAttribute("data-format", np.format);
-		div.classList.add("fix-div");
+		div.classList.add("fix-div", "pyindi-row");
 
 		// Create label for indi text row
 		var label = document.createElement("label");
 		label.textContent = np.label;
-		label.classList.add("pyindi-property-label");
+		label.classList.add("pyindi-property-label", "pyindi-col");
 		label.htmlFor = id;
 
 		div.appendChild(label);
@@ -360,10 +469,10 @@ const buildNumbers = (INDI, appendTo) => {
 		// Build ro and wo
 		var ro = document.createElement("label");
 		ro.textContent = np.value;
-		ro.classList.add("pyindi-property", "pyindi-ro");
+		ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
 
 		var wo = document.createElement("input");
-		wo.classList.add("pyindi-property", "pyindi-wo")
+		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col")
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
@@ -476,7 +585,7 @@ const buildLights = (INDI, appendTo) => {
 	vphtmldef : HTML object that was modified to add new properties
 	*/
 	INDI.values.forEach((lp) => {
-		var div = document.createElement("div"); // To store each light in
+		var span = document.createElement("span"); // To store each light in
 		var id = genPropertyID(INDI, lp);
 		var label = document.createElement("label");
 
@@ -487,8 +596,8 @@ const buildLights = (INDI, appendTo) => {
 		label.style.backgroundColor = indistate2css(lp.value);
 
 		// Append all
-		div.appendChild(label)
-		appendTo.appendChild(div);
+		span.appendChild(label)
+		appendTo.appendChild(span);
 	});
 
 	return appendTo;
@@ -541,7 +650,7 @@ const newDevice = (INDI, appendTo=null) => {
 		var html = buildDevice(INDI);
 
 		// Append to specified or to the body
-		appendTo ? appendTo.appendChild(html) : document.body.appendChild(html);
+		appendTo ? appendTo.appendChild(html) : pyindi.appendChild(html);
 	}
 
 	return document.querySelector(selector);
@@ -720,19 +829,21 @@ const newLight = (INDI, appendTo=null) => {
 	vphtmldef  : HTML object that was just built
 	vpselector : String selector for that object
 	*/
-	var vpselector = genVectorID(INDI);
-	buildVectorAndProperties(vpselector, INDI, appendTo);
+	var selector = genVectorID(INDI);
+	buildVectorAndProperties(selector, INDI, appendTo);
 	
 	// Update values from indi
 	INDI.values.forEach((lp) => {
-		let lpselector = `label#${nosp(INDI.device)}__${nosp(lp.name)}.ILightlabel`;
-		let light = document.querySelector(`${vpselector} ${lpselector}`);
+		var lpSelector = genPropertyID(INDI, lp);
+		var light = document.querySelector(`#${lpSelector}`);
 
 		// Update the color of the light depending on indistate
-		light.style.backgroundColor = indistate2css(lp.value);
+		var colors = indistate2css(lp.value);
+		light.style.backgroundColor = colors["background-color"]
+		light.style.color = colors["color"]
 
 		// Assign class for blinking
-		let blink = indistate2blink(lp.value);
+		/* let blink = indistate2blink(lp.value);
 		if (!blink) {
 			// No blink so remove 
 			light.classList.remove("blinking-busy", "blinking-alert")
@@ -744,13 +855,13 @@ const newLight = (INDI, appendTo=null) => {
 		else if (blink === "blinking-alert") {
 			light.classList.remove("blinking-busy");
 			light.classList.add(blink)
-		}
+		} */
 	});
 
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(vpselector);
+	return document.querySelector(selector);
 }  
 
 /* UTILITIES
@@ -807,7 +918,7 @@ const updateLedState = (INDI) => {
 	/* Gets led and updates style depending on indistate */
 	var vpselector = genVectorID(INDI);
 	var led = document.querySelector(`#${vpselector} .led`)
-	led.style.backgroundColor = indistate2css(INDI.state);
+	led.style.backgroundColor = indistate2css(INDI.state)["background-color"];
 }
 
 const formatNumber = (numStr, fStr) => {
