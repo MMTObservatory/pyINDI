@@ -64,7 +64,7 @@ const wsStart = () => {
     if (loc.port != READONLY_PORT) {
       read_write = true;
     }
-    const url = 'ws://' + loc.host + WS_PAGE;
+    const url = `ws://${loc.host}${WS_PAGE}`;
     console.log(url);
     ws = new WebSocket(url);
 
@@ -79,7 +79,7 @@ const wsStart = () => {
       for (var property in setPropertyCallbacks) {
         var callback = setPropertyCallbacks[property];
         if (callback) {
-          console.log ('requesting ' + property);
+          console.log(`Requesting ${property}`);
           setPropertyCallback(property, callback);
         }
       }
@@ -465,8 +465,7 @@ const updateProperties = (xml_text) => {
       The rest of this was in a jquery each function and I don't know why because only one xml payload is delivered at a time. Maybe it was designed for multiple in the beginning then converted. For example, if there were more than one root node then this would only go over the first one. Keep this in mind if an error occurs during this part. That could be the fix.
       */
       var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`];
-      
-      
+    
       if (callback) {
         var INDI = flattenIndiLess(root_node);
         callback(INDI);

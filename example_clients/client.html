@@ -44,9 +44,11 @@
 				CUSTOM_GUI && console.log('Custom gui selected');
 				start = new Date();
 				imgs = [];
-
-				buildpyINDI();
-
+				
+				// If no custom GUI, use generic pyINDI GUI
+				!CUSTOM_GUI && buildpyINDI();
+				
+				// Tornado way of getting list
 				var devices = {% raw json_encode(device_name) %};
 				console.log(`Found ${devices.length} devices`);
 						
@@ -56,7 +58,7 @@
 				}
 			}
 
-			const updateAvailable = (INDIvp, omit=false) => {
+			const updateAvailable = (INDI, omit=false) => {
 				/* Updates hash table of available vectors
 
 				Description
@@ -69,20 +71,20 @@
 
 				Arguments
 				---------
-				INDIvp : Object that contains all information about the indi property
+				INDI : Object that contains all information about the indi property
 				omit   : If true, stores the value as false to omit from gui
 
 				Returns
 				-------
 				None
 				*/
-				var identifier = `${INDIvp.device}.${INDIvp.name}`;
+				var identifier = `${INDI.device}.${INDI.name}`;
 				available[identifier] = omit ? false : true;
 
 				return;
 			}
 
-			const handleProperty = (INDIvp) => {
+			const handleProperty = (INDI) => {
 				/* Handles incoming indi
 
 				Description
@@ -98,7 +100,7 @@
 
 				Arguments
 				---------
-				INDIvp   : Object that contains all information about the indi property
+				INDI : Object that contains all information about the indi property
 
 				Returns
 				-------
@@ -108,53 +110,53 @@
 
 				/*
 				If we want a custom gui, we need to build the html below in <body>.
-				In that, we should use the group ID so when a new INDIvp comes
+				In that, we should use the group ID so when a new INDI comes
 				in, we try to find the id. To start off, lets only use the
 				group for custom positioning because all children will automatically
 				be built there. After, we can focus on skipping group and only doing
 				the vectors. Utilty function for group ID is genGroupID(INDI) and the
 				group naming scheme is no spacing in the names and is joined by a "-".
 				*/
-				if (INDIvp.op === "def") {
+				if (INDI.op === "def") {
 					if (!CUSTOM_GUI) {
-						var device = newDevice(INDIvp);
-						var group = newGroup(INDIvp);
+						var device = newDevice(INDI);
+						var group = newGroup(INDI);
 
 						// Update
-						updateAvailable(INDIvp);
+						updateAvailable(INDI);
 					}
 					else {
 						// Get the element to build the new group in
-						appendToSelector = `[data-custom-device="${INDIvp.device}"][data-custom-group="${INDIvp.group}"]`; 
+						appendToSelector = `[data-custom-device="${INDI.device}"][data-custom-group="${INDI.group}"]`; 
 						var appendTo = document.querySelector(appendToSelector);
 
 						// If the placement doesn't exist, issue to console and return
 						if (!appendTo) {
-							console.debug(`Skipping ${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
-							updateAvailable(INDIvp, omit=true);
+							console.debug(`Skipping ${INDI.device}.${INDI.group}.${INDI.name}`);
+							updateAvailable(INDI, omit=true);
 							return;
 						}
-						var group = newGroup(INDIvp, appendTo);
-						updateAvailable(INDIvp);
+						var group = newGroup(INDI, appendTo);
+						updateAvailable(INDI);
 					}
 				}
 				// Build properties
-				if (!available[`${INDIvp.device}.${INDIvp.name}`]) {
+				if (!available[`${INDI.device}.${INDI.name}`]) {
 					return;
 				}
 
-				switch (INDIvp.metainfo) {
+				switch (INDI.metainfo) {
 					case "nvp":
-						ele = newNumber(INDIvp);
+						ele = newNumber(INDI);
 					break;
 					case "svp":
-						ele = newSwitch(INDIvp);
+						ele = newSwitch(INDI);
 					break;
 					case "tvp":
-						ele = newText(INDIvp);
+						ele = newText(INDI);
 					break;
 					case "lvp":
-						ele = newLight(INDIvp);
+						ele = newLight(INDI);
 					break;
 					default:
 				}

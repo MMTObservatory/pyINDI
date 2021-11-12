@@ -1,8 +1,7 @@
-/* CONSTANTS */
+/* Constants *****************************************************************/
 const INDIPERM_RO = "ro";
 const INDIPERM_WO = "wo";
 const INDIPERM_RW = "rw";
-
 const INDISTATES = {
 	"Idle": {
 		"background-color": "var(--indistate-idle)",
@@ -25,7 +24,7 @@ const INDISTATES = {
 		"color": "var(--text-light-active)"
 	}
 };
-
+const BLINKING_LIGHTS = false;
 const INDIBLINKS = {
 	"Idle" : null,
 	"Ok": null,
@@ -33,17 +32,17 @@ const INDIBLINKS = {
 	"Alert": "blinking-alert",
 	"Unknown": null
 }
-
 const INDISWRULES = {
 	"OneOfMany": "radio",
 	"AtMostOne": "radio",
 	"AnyOfMany": "checkbox"
 }
 
-// GLOBALS
+/* Globals *******************************************************************/
 var pyindi; // Selector for pyindi gui
+var customGUI = true; // Flips to false if buildpyINDI is called
 
-/* BUILDERS
+/* Builders *******************************************************************
 
 Description
 --------
@@ -56,6 +55,8 @@ requires a new div.
 
 Functions
 ---------
+- buildpyINDI              : Builds the generic pyINDI GUI
+- buildNav                 : Builds the navbar for pyindi generic GUI
 - buildDevice              : builds div to hold new device
 - buildGroup               : builds group to hold new group
 - buildVectorAndProperties : handles all vector and properties
@@ -67,6 +68,10 @@ Functions
 */
 
 const buildpyINDI = () => {
+	/* Builds the pyindi gui */
+	// Update custom GUI since this was called
+	customGUI = false;
+
 	pyindi = document.createElement("div");
 	pyindi.classList.add("pyindi");
 
@@ -79,30 +84,25 @@ const buildpyINDI = () => {
 }
 
 const buildNav = () => {
+	/* Builds navbar for pyindi */
 	var nav = document.createElement("nav");
 	nav.classList.add("pyindi-nav");
 
 	var div = document.createElement("div");
 	div.classList.add("pyindi-row");
 
+	// Create link to source code for users to file issues
+	var link = document.createElement("a");
+	link.classList.add("fab", "fa-github", "icon");
+	link.href = "https://github.com/so-mops/pyINDI";
+	link.title = "Source Code";
+	link.target = "_blank";
 
+	// Create dark mode icon toggle
+	var icon = document.createElement("i");
+	icon.classList.add("fas", "fa-moon", "icon");
 
-	var aGithub = document.createElement("a");
-	aGithub.classList.add("fab", "fa-github", "icon");
-	aGithub.href = "https://github.com/so-mops/pyINDI";
-	aGithub.title = "Source Code";
-	aGithub.target = "_blank";
-	var navBar1 = document.createElement("div");
-	navBar1.classList.add("pyindi-col", "pyindi-h4");
-	var navBar2 = document.createElement("div");
-	navBar2.classList.add("pyindi-col","text-center", "pyindi-h4");
-	var navBar3 = document.createElement("div");
-	navBar3.classList.add("pyindi-col", "text-right", "pyindi-h4");
-	navBar2.textContent = "pyINDI";
-	var iDarkMode = document.createElement("i");
-	iDarkMode.classList.add("fas", "fa-moon", "icon");
-
-	iDarkMode.addEventListener("click", (event) => {
+	icon.addEventListener("click", (event) => {
 		if (event.target.classList.contains("fa-sun")) {
 			event.target.classList.add("fa-moon");
 			event.target.classList.remove("fa-sun");
@@ -114,22 +114,30 @@ const buildNav = () => {
 			document.documentElement.setAttribute("data-theme", "dark");
 		}
 	})
-	navBar1.appendChild(aGithub);
-	div.appendChild(navBar1);
-	div.appendChild(navBar2);
-	navBar3.appendChild(iDarkMode)
-	div.appendChild(navBar3);
+
+	// Build three nav items for navbar
+	for (let i = 0; i < 3; i++) {
+		let navItem = document.createElement("div");
+		navItem.classList.add("pyindi-col", "pyindi-h4")
+		switch (i) {
+			case 0:
+				navItem.appendChild(link);
+				break;
+			case 1:
+				navItem.classList.add("text-center");
+				navItem.textContent = "pyINDI";
+				break;
+			case 2:
+				navItem.classList.add("text-right");
+				navItem.appendChild(icon);
+				break;
+			default:
+		}
+		div.appendChild(navItem)
+	}
 	nav.appendChild(div);
 
-	document.body.appendChild(nav);
-
 	return nav;
-	
-}
-
-const buildFooter = () => {
-
-	return;
 }
 
 const buildDevice = (INDI) => {
@@ -145,7 +153,7 @@ const buildDevice = (INDI) => {
 
 	Returns
 	-------
-	section : HTML object that was just built
+	div : HTML object that was just built
 	*/
 	var div = document.createElement("div");
 	div.setAttribute("data-device", INDI.device);
@@ -172,14 +180,10 @@ const buildDevice = (INDI) => {
 			event.target.classList.add("fa-minus-circle");
 			event.target.classList.remove("fa-plus-circle");
 		}
-		// Next sibling is the p so go to next
-		//let nextSibling = event.target.nextElementSibling.nextElementSibling;
-		//hide(nextSibling);
 
-		let deviceDiv = document.querySelector(`div.pyindi-group[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
-		console.log(deviceDiv);
-		hide(deviceDiv);
-
+		// Get first group in device and hide siblings
+		let group = document.querySelector(`div.pyindi-group[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
+		hideSibling(group);
 	})
 	
 	// Build label for device
@@ -205,7 +209,7 @@ const buildGroup = (INDI) => {
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI : Object that contains all information about the indi property
 
 	Returns
 	-------
@@ -216,7 +220,8 @@ const buildGroup = (INDI) => {
 	div.setAttribute("data-device", INDI.device);
 	div.setAttribute("data-group", INDI.group);
 	div.id = genGroupID(INDI);
-	div.classList.add("pyindi-group", "hide");
+	div.classList.add("pyindi-group");
+	customGUI ? "" : div.classList.add("hide");
 
 	// Build header group
 	var header = document.createElement("div");
@@ -236,13 +241,10 @@ const buildGroup = (INDI) => {
 			event.target.classList.add("fa-minus-circle");
 			event.target.classList.remove("fa-plus-circle");
 		}
-		// Next sibling is the p so go to next
-		//let nextSibling = event.target.nextElementSibling.nextElementSibling;
-		//hide(nextSibling);
 		
-		let fieldset = document.querySelector(`fieldset[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
-		console.log(fieldset);
-		hide(fieldset);
+		// Get first child then hide all children in group
+		let vector = document.querySelector(`fieldset[data-group="${INDI.group}"][data-device="${INDI.device}"]`);
+		hideSibling(vector);
 
 	})
   
@@ -259,7 +261,7 @@ const buildGroup = (INDI) => {
 	return div;
 };
 
-const buildVectorAndProperties = (selector, INDI, appendTo) => {
+const buildVectorAndProperties = (vectorSelector, INDI, appendTo) => {
 	/* Handles building vector and the properties with it
 
 	Description
@@ -268,17 +270,17 @@ const buildVectorAndProperties = (selector, INDI, appendTo) => {
 
 	Arguments
 	---------
-	selector : string to select vector
-	INDI     : Object that contains all information about the indi property
-	appendTo : html item to append to
+	vectorSelector : string to select vector
+	INDI           : Object that contains all information about the indi property
+	appendTo       : html item to append to
 
 	Returns
 	-------
 	None
 	*/
 	// If doesn't exist then build it! 
-	if (!document.querySelector(`#${selector}`)) {
-		console.log(`Creating new ${INDI.metainfo}=${genVectorID(INDI)}`);
+	if (!document.querySelector(`#${vectorSelector}`)) {
+		console.debug(`Creating new ${INDI.metainfo}=${genVectorID(INDI)}`);
 		var html = buildVector(INDI);
 
 		switch (INDI.metainfo) {
@@ -295,6 +297,7 @@ const buildVectorAndProperties = (selector, INDI, appendTo) => {
 				html = buildLights(INDI, html);
 				break;
 			default:
+				console.warn(`INDI metainfo=${INDI.metainfo} not recognized!`)
 		}
 
 		// Append to designated spot unless null then append to group
@@ -323,12 +326,11 @@ const buildVector = (INDI) => {
 
 	Returns
 	-------
-	section : HTML object that was just built
+	fieldset : HTML object that was just built
 	*/
 	var fieldset = document.createElement("fieldset");
 
-	fieldset.classList.add("pyindi-vector"); // Get class meta
-	//fieldset.id = nosp(INDI.name);
+	fieldset.classList.add("pyindi-vector");
 	fieldset.id = genVectorID(INDI);
 	fieldset.setAttribute("data-device", INDI.device);
 	fieldset.setAttribute("data-group", INDI.group);
@@ -361,25 +363,24 @@ const buildTexts = (INDI, appendTo) => {
 
 	Arguments
 	---------
-	INDI    : Object that contains all information about the indi property
-	vphtmldef : HTML object to append new properties to
+	INDI     : Object that contains all information about the indi property
+	appendTo : HTML object to append new properties to
 
 	Returns
 	-------
-	vphtmldef : HTML object that was modified to add new properties
+	appendTo : HTML object that was modified to add new properties
 	*/
-	INDI.values.forEach((tp) => {
+	INDI.values.forEach((property) => {
 		// Create div that the indi text row will exist
 		var div = document.createElement("div");
 		
-		//div.id = nosp(tp.name);
-		var id = genPropertyID(INDI, tp);
+		var id = genPropertyID(INDI, property);
 		div.id = id;
 		div.classList.add("fix-div", "pyindi-row");
 
 		// Create label for indi text row
 		var label = document.createElement("label");
-		label.textContent = tp.label;
+		label.textContent = property.label;
 		label.classList.add("pyindi-property-label", "pyindi-col");
 		label.htmlFor = id;
 
@@ -390,41 +391,23 @@ const buildTexts = (INDI, appendTo) => {
 
 		ro.readOnly = true;
 		ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
-		ro.textContent = tp.value;
+		ro.textContent = property.value;
 
 		var wo = document.createElement("input");
 		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col");
-		//wo.id = `${nosp(INDI.device)}__${nosp(tp.name)}`;
+		//wo.id = `${noSpecial(INDI.device)}__${noSpecial(property.name)}`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
 			if (event.key === "Enter") {
 				event.preventDefault() // TODO Test if needed
 				let value = event.target.value;
-				setindi("Text", genINDI(INDI), tp.name, value);
+				setindi("Text", genINDI(INDI), property.name, value);
 			}
 		});
 
-		wo.addEventListener("keydown", (event) => {
-			if (event.key === "Enter") {
-				event.preventDefault();
-			}
-		})
-
 		// Determine if it is readonly, writeonly, or both and append
-		switch (INDI.perm) {
-			case INDIPERM_RO:
-				div.appendChild(ro);
-				break;
-			case INDIPERM_RW:
-				div.appendChild(ro);
-				div.appendChild(wo);
-				break;
-			case INDIPERM_WO:
-				div.appendChild(wo);
-				break;
-			default:
-		}
+		div = appendROWO(INDI.perm, div, ro, wo);
 
 		// Append the div to the fieldset
 		appendTo.appendChild(div);
@@ -442,67 +425,89 @@ const buildNumbers = (INDI, appendTo) => {
 
 	Arguments
 	---------
-	INDI    : Object that contains all information about the indi property
-	vphtmldef : HTML object to append new properties to
+	INDI     : Object that contains all information about the indi property
+	appendTo : HTML object to append new properties to
 
 	Returns
 	-------
-	vphtmldef : HTML object that was modified to add new properties
+	appendTo : HTML object that was modified to add new properties
 	*/
-	INDI.values.forEach((np) => {
-		// Create div that the indi text row will exist
+	INDI.values.forEach((property) => {
+		// Create div that the indi labal, ro, and wo will exist in
 		var div = document.createElement("div");
 
-		var id = genPropertyID(INDI, np);
+		var id = genPropertyID(INDI, property);
 		div.id = id;
-		div.setAttribute("data-format", np.format);
+		div.setAttribute("data-format", property.format);
+
 		div.classList.add("fix-div", "pyindi-row");
 
 		// Create label for indi text row
 		var label = document.createElement("label");
-		label.textContent = np.label;
+		label.textContent = property.label;
 		label.classList.add("pyindi-property-label", "pyindi-col");
 		label.htmlFor = id;
 
 		div.appendChild(label);
 
 		// Build ro and wo
-		var ro = document.createElement("label");
-		ro.textContent = np.value;
+		var ro = document.createElement("label"); // Make textarea for no resize
+		ro.textContent = property.value;
 		ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
 
 		var wo = document.createElement("input");
 		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col")
+
+		// Add min and max data attributes
+		var tipStr = '';
+		if (property.hasOwnProperty("min")) {
+			wo.setAttribute("data-min", property.min);
+			tipStr += `Minimum value = ${property.min} `;
+		}
+		if (property.hasOwnProperty("max")) {
+			wo.setAttribute("data-max", property.max);
+			tipStr += `Maximum value = ${property.max} `;
+		}
+
+		// Display invalid for numbers out of range
+		var tip = document.createElement("div");
+		tip.textContent = tipStr;
+		tip.classList.add("hide", "text-right", "tip");
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
 			if (event.key === "Enter") {
 				event.preventDefault() // TODO Test if needed
 				let value = event.target.value;
-				setindi("Number", genINDI(INDI), np.name, value);
+				
+				// Test if in range 
+				let min = parseFloat(wo.getAttribute("data-min"));
+				let max = parseFloat(wo.getAttribute("data-max"));
+				
+				if (value < min) {
+					// Add class
+					wo.classList.add("invalid");
+					tip.classList.remove("hide");
+				}
+				else if (value > max) {
+					// Add class
+					wo.classList.add("invalid");
+					tip.classList.remove("hide");
+				}
+				else {
+					wo.classList.remove("invalid");
+					tip.classList.add("hide")
+					setindi("Number", genINDI(INDI), property.name, value);
+				}
 			}
 		});
-		wo.addEventListener("keydown", (event) => {
-			if (event.key === "Enter") {
-				event.preventDefault();
-			}
-		})
 
 		// Determine if it is readonly, writeonly, or both and append
-		switch (INDI.perm) {
-			case INDIPERM_RO:
-				div.appendChild(ro);
-				break;
-			case INDIPERM_RW:
-				div.appendChild(ro);
-				div.appendChild(wo);
-				break;
-			case INDIPERM_WO:
-				div.appendChild(wo);
-				break;
-			default:
-		}
-		// Append the div to the fieldset
+		div = appendROWO(INDI.perm, div, ro, wo);
+		
+
+		// Append the tip to div and div to the fieldset
+		div.appendChild(tip);
 		appendTo.appendChild(div);
 
 	});
@@ -518,39 +523,35 @@ const buildSwitches = (INDI, appendTo) => {
 
 	Arguments
 	---------
-	INDI    : Object that contains all information about the indi property
-	vphtmldef : HTML object to append new properties to
+	INDI     : Object that contains all information about the indi property
+	appendTo : HTML object to append new properties to
 
 	Returns
 	-------
-	vphtmldef : HTML object that was modified to add new properties
+	appendTo : HTML object that was modified to add new properties
 	*/
 	var type = indisw2selector(INDI.rule);
-	// Keeping div empty while I build everything else
-	INDI.values.forEach((sp) => {
+
+	INDI.values.forEach((property) => {
 		var span = document.createElement("span");
-		var id = genPropertyID(INDI, sp);
-		//span.setAttribute("INDIname", sp.name);
-		//span.id = id;
+		var id = genPropertyID(INDI, property);
 
 		// Create label for button text
 		var label = document.createElement("label")
 		label.classList.add("pyindi-switch-label");
 		label.htmlFor = id;
-		label.textContent = sp.label
+		label.textContent = property.label
 
-		// Create radio button
+		// Create button
 		var input = document.createElement("input");
 		input.type = type;
 		input.id = id;
-		input.setAttribute("name", nosp(INDI.name));
-		input.setAttribute("data-device", INDI.device);
-		input.setAttribute("data-vector", INDI.name);
-		input.setAttribute("data-name", sp.name);
+		input.name = noSpecial(INDI.name);
+
 		input.classList.add("pyindi-switch-input");
-		input.value = nosp(sp.name);
-		//input.setAttribute("indiname", nosp(sp.name));
-		input.checked = sp.value === "On" ? true : false;
+		input.value = noSpecial(property.name);
+
+		input.checked = property.value === "On" ? true : false;
 		
 		// Create event listeners for input button
 		input.addEventListener("change", (event) => {
@@ -577,23 +578,22 @@ const buildLights = (INDI, appendTo) => {
 
 	Arguments
 	---------
-	INDI    : Object that contains all information about the indi property
-	vphtmldef : HTML object to append new properties to
+	INDI     : Object that contains all information about the indi property
+	appendTo : HTML object to append new properties to
 
 	Returns
 	-------
-	vphtmldef : HTML object that was modified to add new properties
+	appendTo : HTML object that was appended to
 	*/
-	INDI.values.forEach((lp) => {
+	INDI.values.forEach((property) => {
 		var span = document.createElement("span"); // To store each light in
-		var id = genPropertyID(INDI, lp);
+		var id = genPropertyID(INDI, property);
 		var label = document.createElement("label");
 
-		//label.id = lp.label; This was in the pyindi code, probably a bug
 		label.classList.add("pyindi-light-label");
 		label.id = id;
-		label.textContent = lp.label;
-		label.style.backgroundColor = indistate2css(lp.value);
+		label.textContent = property.label;
+		label.style.backgroundColor = indistate2css(property.value);
 
 		// Append all
 		span.appendChild(label)
@@ -603,7 +603,7 @@ const buildLights = (INDI, appendTo) => {
 	return appendTo;
 };
 
-/* NEW INDI INFORMATION
+/* Handlers for New INDI payloads *********************************************
 
 Description
 -----------
@@ -614,15 +614,13 @@ and return the selector string to the html object.
 
 Functions
 ---------
-- newDevice
-- newGroup
-- newVector
-- newText
-- newNumber
-- newSwitch
-- newLight
+- newDevice : Handles new device from INDI and builds if not exist
+- newGroup  : Handles new group from INDI and builds if not exist
+- newText   : Handles new text from INDI and builds if not exist
+- newNumber : Handles new number from INDI and builds if not exist
+- newSwitch : Handles new switch from INDI and builds if not exist
+- newLight  : Handles new light from INDI and builds if not exist
 */
-
 const newDevice = (INDI, appendTo=null) => {
 	/* Creates a new device
 
@@ -637,23 +635,22 @@ const newDevice = (INDI, appendTo=null) => {
 
 	Returns
 	-------
-	html     : HTML object that was just built
-	selector : String selector for that object
+	deviceSelector : INDI device HTML object
 	*/
-	var selector = genDeviceID(INDI);
+	var deviceSelector = genDeviceID(INDI);
 
 	// If vpselector is empty, build
-	if (!document.querySelector(`#${selector}`)) {
+	if (!document.querySelector(`#${deviceSelector}`)) {
 		console.debug(`Creating new device=${INDI.device}`);
 
 		// Doesn't exist, build the section and add attributes and classes
 		var html = buildDevice(INDI);
 
-		// Append to specified or to the body
+		// Append to specified or to the pyindi gui
 		appendTo ? appendTo.appendChild(html) : pyindi.appendChild(html);
 	}
 
-	return document.querySelector(selector);
+	return document.querySelector(deviceSelector);
 }
 
 const newGroup = (INDI, appendTo=null) => {
@@ -665,18 +662,17 @@ const newGroup = (INDI, appendTo=null) => {
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI     : Object that contains all information about the indi property
 	appendTo : HTML object to append the new HTML elements
 
 	Returns
 	-------
-	vphtmldef  : HTML object that was just built
-	vpselector : String selector for that object
+	groupSelector : INDI group HTML object
 	*/
-	var selector = genGroupID(INDI);
+	var groupSelector = genGroupID(INDI);
 
 	// If vpselector is empty, build
-	if (!document.querySelector(`#${selector}`)) {
+	if (!document.querySelector(`#${groupSelector}`)) {
 		console.debug(`Creating new group=${INDI.device}-${INDI.group}`);
 
 		// Doesn't exists, build and add attributes and classes
@@ -687,14 +683,12 @@ const newGroup = (INDI, appendTo=null) => {
 		}
 		else {
 			// Append to the parent section
-			var parent = genDeviceID(INDI);
-			document.querySelector(`#${parent}`).appendChild(html);
+			var parentSelector = genDeviceID(INDI);
+			document.querySelector(`#${parentSelector}`).appendChild(html);
 		}
-
-		return html;
 	}
 	
-	return document.querySelector(selector);
+	return document.querySelector(groupSelector);
 };
 
 const newText = (INDI, appendTo=null) => {
@@ -706,33 +700,34 @@ const newText = (INDI, appendTo=null) => {
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI     : Object that contains all information about the indi property
 	appendTo : HTML object to append the new HTML elements
 
 	Returns
 	-------
-	vphtmldef  : HTML object that was just built
-	vpselector : String selector for that object
+	vectorSelector : INDI vector HTML object
 	*/
-	var selector = genVectorID(INDI);	
-	buildVectorAndProperties(selector, INDI, appendTo);
+	var vectorSelector = genVectorID(INDI);	
+	buildVectorAndProperties(vectorSelector, INDI, appendTo);
 	
 	// Update values from indi
-	INDI.values.forEach((tp) => {
-		var tpSelector = genPropertyID(INDI, tp); // Need to still get ro
-		var ro = document.querySelector(`#${tpSelector} .pyindi-ro`);
+	INDI.values.forEach((property) => {
+		var propertySelector = genPropertyID(INDI, property);
+		var parent = document.querySelector(`#${propertySelector}`);
+		var ro = document.querySelector(`#${propertySelector} .pyindi-ro`);
 
-		// Handle null content
-		ro.textContent = isNull(tp.value) ? "" : tp.value
+		// Handle case if wo only, then ro will not exist
+		if (ro) {
+			// Handle null content
+			ro.textContent = isNull(property.value) ? "" : property.value
+		}
 	})
 
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(selector);
+	return document.querySelector(vectorSelector);
 }
-
-
 
 const newNumber = (INDI, appendTo=null) => {
 	/* Creates a new number
@@ -743,33 +738,35 @@ const newNumber = (INDI, appendTo=null) => {
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI     : Object that contains all information about the indi property
 	appendTo : HTML object to append the new HTML elements
 
 	Returns
 	-------
-	vphtmldef  : HTML object that was just built
-	vpselector : String selector for that object
+	vectorSelector : INDI vector HTML object
 	*/
-	var selector = genVectorID(INDI);
-	buildVectorAndProperties(selector, INDI, appendTo);
+	var vectorSelector = genVectorID(INDI);
+	buildVectorAndProperties(vectorSelector, INDI, appendTo);
 	
 	// Update values from indi
-	INDI.values.forEach((np) => {
-		var npSelector = genPropertyID(INDI, np); // Need to still get ro
-		var property = document.querySelector(`#${npSelector}`);
-		var ro = document.querySelector(`#${npSelector} .pyindi-ro`);
+	INDI.values.forEach((property) => {
+		var propertySelector = genPropertyID(INDI, property);
+		var parent = document.querySelector(`#${propertySelector}`);
+		var ro = document.querySelector(`#${propertySelector} .pyindi-ro`);
 
-		var format = property.getAttribute("data-format");
-		var value = formatNumber(np.value, format);
-		
-		ro.textContent = value;
+		// Handle case if wo only, then ro will not exist
+		if (ro) {
+			var format = parent.getAttribute("data-format");
+			var value = formatNumber(property.value, format);
+
+			ro.textContent = value;
+		}
 	})
 
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(selector)
+	return document.querySelector(vectorSelector)
 }
 
 const newSwitch = (INDI, appendTo=null) => {
@@ -781,27 +778,26 @@ const newSwitch = (INDI, appendTo=null) => {
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI     : Object that contains all information about the indi property
 	appendTo : HTML object to append the new HTML elements
 
 	Returns
 	-------
-	vphtmldef  : HTML object that was just built
-	vpselector : String selector for that object
+	vectorSelector : INDI vector HTML object
 	*/
-	var selector = genVectorID(INDI);
-	buildVectorAndProperties(selector, INDI, appendTo);
+	var vectorSelector = genVectorID(INDI);
+	buildVectorAndProperties(vectorSelector, INDI, appendTo);
 
 	// Update values from indi
-	INDI.values.forEach((sp) => {
-		var spSelector = genPropertyID(INDI, sp);
+	INDI.values.forEach((property) => {
+		var propertySelector = genPropertyID(INDI, property);
 
-		let sw = document.querySelector(`#${spSelector}`);
+		let sw = document.querySelector(`#${propertySelector}`);
 		let label = document.querySelector(`label[for="${sw.id}"]`);
 
 		// Update the color of the switch depending on checked
 		var active = "pyindi-switch-label-active";
-		sw.checked = sp.value === "On" ? true : false;
+		sw.checked = property.value === "On" ? true : false;
 
 		sw.checked ? label.classList.add(active) : label.classList.remove(active);
 	});
@@ -809,7 +805,7 @@ const newSwitch = (INDI, appendTo=null) => {
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(selector);
+	return document.querySelector(vectorSelector);
 }
 
 const newLight = (INDI, appendTo=null) => {
@@ -817,54 +813,55 @@ const newLight = (INDI, appendTo=null) => {
 
 	Description
 	-----------
-	Called when new light property comes over the websocket.
+	Called when new light vector comes over the websocket.
 
 	Arguments
 	---------
-	INDI   : Object that contains all information about the indi property
+	INDI     : Object that contains all information about the indi property
 	appendTo : HTML object to append the new HTML elements
 
 	Returns
 	-------
-	vphtmldef  : HTML object that was just built
-	vpselector : String selector for that object
+	vectorSelector : INDI vector HTML object
 	*/
-	var selector = genVectorID(INDI);
-	buildVectorAndProperties(selector, INDI, appendTo);
+	var vectorSelector = genVectorID(INDI);
+	buildVectorAndProperties(vectorSelector, INDI, appendTo);
 	
 	// Update values from indi
-	INDI.values.forEach((lp) => {
-		var lpSelector = genPropertyID(INDI, lp);
-		var light = document.querySelector(`#${lpSelector}`);
+	INDI.values.forEach((property) => {
+		var propertySelector = genPropertyID(INDI, property);
+		var light = document.querySelector(`#${propertySelector}`);
 
 		// Update the color of the light depending on indistate
-		var colors = indistate2css(lp.value);
+		var colors = indistate2css(property.value);
 		light.style.backgroundColor = colors["background-color"]
 		light.style.color = colors["color"]
 
-		// Assign class for blinking
-		/* let blink = indistate2blink(lp.value);
-		if (!blink) {
-			// No blink so remove 
-			light.classList.remove("blinking-busy", "blinking-alert")
+		// Assign class for blinking if enabled
+		if (BLINKING_LIGHTS) {
+			let blink = indistate2blink(property.value);
+			if (!blink) {
+				// No blink so remove 
+				light.classList.remove("blinking-busy", "blinking-alert")
+			}
+			else if (blink === "blinking-busy") {
+				light.classList.remove("blinking-alert");
+				light.classList.add(blink)
+			}
+			else if (blink === "blinking-alert") {
+				light.classList.remove("blinking-busy");
+				light.classList.add(blink)
+			}
 		}
-		else if (blink === "blinking-busy") {
-			light.classList.remove("blinking-alert");
-			light.classList.add(blink)
-		}
-		else if (blink === "blinking-alert") {
-			light.classList.remove("blinking-busy");
-			light.classList.add(blink)
-		} */
 	});
 
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(selector);
+	return document.querySelector(vectorSelector);
 }  
 
-/* UTILITIES
+/* Utilities ******************************************************************
 
 Description
 --------
@@ -874,9 +871,19 @@ manage INDI properties.
 Functions
 ---------
 - indistate2css   : converts INDI state to styling
+- indistate2blink : converts INDI state to blinking for lights
 - indisw2selector : converts INDI switch to selector types
-- formatNumber    : Formats incoming indi numbers
-- nosp            : Replaces space with _
+- updateLEDState  : gets LED and updates style depending on indistate
+- formatNumber    : Formats incoming INDI numbers
+- genDeviceID     : Generates device ID attribute
+- genGroupID      : Generates group ID attribute
+- genVectorID     : Generates vector ID attribute
+- genPropertyID   : Generates property ID attribute
+- genINDI         : Builds payload to send back to indiserver
+- noSpace         : Replaces space with _
+- noSpecial       : Replaces special characters
+- hideSibling     : Toggles hiding and showing all siblings
+- isNull          : Checks if null or undefined
 */
 const indistate2css = (INDIState) => {
 	/* Converts indi state to styling for alerts */
@@ -916,28 +923,13 @@ const indisw2selector = (INDIRule) => {
 
 const updateLedState = (INDI) => {
 	/* Gets led and updates style depending on indistate */
-	var vpselector = genVectorID(INDI);
-	var led = document.querySelector(`#${vpselector} .led`)
+	var vectorSelector = genVectorID(INDI);
+	var led = document.querySelector(`#${vectorSelector} .led`)
 	led.style.backgroundColor = indistate2css(INDI.state)["background-color"];
 }
 
 const formatNumber = (numStr, fStr) => {
-	/* Format indi numbers
-	
-	Description
-	-----------
-	Format the floating point INDI numbers but don't mess with 
-	the sexagesimal stuff.
-
-	Arguments
-	---------
-	numStr : the number as a string
-	fStr   : the INDI format string
-
-	Returns
-	-------
-	outStr : the correct formatted number as string
-	*/
+	/* Format indi numbers */
 	num = parseFloat(numStr);
 	var outstr;
 	var decimal = parseInt(fStr.slice(0, fStr.length - 1).split('.')[1]);
@@ -955,35 +947,47 @@ const formatNumber = (numStr, fStr) => {
 }
 
 /*
-Notes
------
 Sometimes groups and vectors have the same name which causes a collision in the
 ids. I bypassed this by using a "-" between group and devices and a "__"
 between vectors and their properties.
 */
 genDeviceID = (INDI) => {
-	return nosp(INDI.device);
+	/* Generates device ID attribute */
+	return noSpecial(INDI.device);
 }
+
 genGroupID = (INDI) => {
-	return `${genDeviceID(INDI)}-${nosp(INDI.group)}`;
+	/* Generates group ID attribute */
+	return `${genDeviceID(INDI)}-${noSpecial(INDI.group)}`;
 }
+
 genVectorID = (INDI) => {
+	/* Generates vector ID attribute */
 	// Cannot use group because it is not sent in SET indi commands
-	return `${genDeviceID(INDI)}__${nosp(INDI.name)}`;
+	return `${genDeviceID(INDI)}__${noSpecial(INDI.name)}`;
 }
+
 genPropertyID = (INDI, prop) => {
-	return `${genVectorID(INDI)}__${nosp(prop.name)}`;
+	/* Generates property ID attribute */
+	return `${genVectorID(INDI)}__${noSpecial(prop.name)}`;
 }
+
 genINDI = (INDI) => {
+	/* Builds payload to send back to indiserver */
 	return `${INDI.device}.${INDI.name}`;
 }
 
-const nosp = (str) => {
+const noSpace = (str) => {
 	/* Replaces spaces with _ */
 	return str.replace(/ /g, '_');
 }
 
-const hide = (nextSibling) => {
+const noSpecial = (str) => {
+	/* Replaces special characters */
+	return noSpace(str).replace(/[&\/\\#,+()$~%.'":*?<>{}]/g, '')
+}
+
+const hideSibling = (nextSibling) => {
 	/* Toggles hiding and showing all siblings */
 	while (nextSibling) { // Returns null if no next sibling
 		// Toggle the hide class
@@ -994,5 +998,25 @@ const hide = (nextSibling) => {
 }
 
 const isNull = (value) => {
+	/* Checks if null or undefined */
 	return (value === undefined || value === null);
+}
+
+const appendROWO = (INDIperm, appendTo, ro, wo) => {
+	/* Depending on perm, append ro or wo or both */
+	switch (INDIperm) {
+		case INDIPERM_RO:
+			appendTo.appendChild(ro);
+			break;
+		case INDIPERM_RW:
+			appendTo.appendChild(ro);
+			appendTo.appendChild(wo);
+			break;
+		case INDIPERM_WO:
+			appendTo.appendChild(wo);
+			break;
+		default:
+	}
+
+	return appendTo
 }

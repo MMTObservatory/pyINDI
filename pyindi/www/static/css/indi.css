@@ -4,6 +4,8 @@
 	--indistate-busy: #FFC400;
 	--indistate-alert: #FF1744;
 	--indistate-unknown: magenta;
+	--invalid: #FF1744;
+	--invalid-focus: #FF5252;
 	--primary-light: #82B1FF;
 	--primary: #3D5AFE;
 	--primary-dark: #304FFE;
@@ -23,7 +25,7 @@
 	--gray-800: #424242;
 	--gray-900: #212121;
   --black: #000;
-	--text-header-h1: #424242;
+	--text-header-h1: #fff;
 	--text-header-h2: #616161;
 	--text-header-h3: #424242;
 	--text-header-h4: #fff;
@@ -39,8 +41,9 @@
 	--bg-switch-active: #3D5AFE;
 	--bg-switch-active-hover: #304FFE;
 	--bg-input-border: #E0E0E0;
-	--bg-device-header: #F5F5F5;
-	--bg-minmax: #424242;
+	--bg-device-header: #00796B;
+	--bg-minmax: #00796B;
+	--bg-minmax-header: #fff;
 	--bg-device: #ffffff;
 	--bg-body: #f8f9fa;
 	--bg-light: #EEEEEE;
@@ -52,33 +55,37 @@
 	--indistate-ok: #69F0AE;
 	--indistate-busy: #FFD740;
 	--indistate-alert: #FF5252;
+	--invalid: #FF5252;
+	--invalid-focus: #FF8A80;
 	--indistate-unknown: magenta;
+	--primary-light: #B388FF; 
 	--primary: #7C4DFF;
 	--primary-dark: #651FFF;
-	--text-header-h1: #fff;
+	--text-header-h1: #000;
 	--text-header-h2: #E0E0E0;
 	--text-header-h3: #F5F5F5;
-	--text-header-h4: #000;
+	--text-header-h4: #fff;
 	--text-label: #fff;
 	--text-value: #fff;
 	--text-switch: #EEEEEE;
 	--text-switch-active: #FAFAFA;
-	--text-navbar: #000000;
+	--text-navbar: #fff;
 	--text-light: #EEEEEE;
 	--text-light-active: #212121;
 	--bg-input: #424242;
 	--bg-input-border: #616161;
-	--bg-device-header: #424242;
+	--bg-device-header: #B388FF;
 	--bg-minmax: #B388FF;
+	--bg-minmax-header: #000;
 	--bg-device: #212121;
 	--bg-body: #000;
 	--bg-switch: #757575;
 	--bg-switch-hover: #616161;
 	--bg-switch-active: #7C4DFF;
 	--bg-switch-active-hover: #651FFF;
-	--bg-nav: #18FFFF;
+	--bg-nav: #424242;
 	--bg-light: #757575;
-	--bg-icon: #000;
+	--bg-icon: #fff;
 	
 }
 .text-right {
@@ -94,7 +101,6 @@
 	max-width: 640px;
 	margin: 0 auto;
 	border-radius: .25rem;
-	box-shadow: 0 2px 4px 0px hsla(0, 0%, 0%, 0.2);
 }
 .pyindi-nav {
 	background-color: var(--bg-nav);
@@ -154,6 +160,7 @@
 	padding: .75rem .75rem;
 	margin: 0;
 	background-color: inherit;
+	max-width: 640px;
 }
 .pyindi-h2 {
 	font-weight: 700;
@@ -209,7 +216,7 @@
 	overflow: visible;
 	background-color: var(--bg-switch);
 	margin: .25rem .125rem;
-	box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2);
+	/* box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2); */
 	color: var(--text-switch);
 	margin-right: .5rem;
 }
@@ -284,6 +291,14 @@ body {
 	outline: none;
 	box-shadow: 0 0 0 0.125rem var(--primary-light);
 }
+.invalid {
+	border: 1px solid var(--invalid);
+}
+.invalid:focus {
+	border-color: var(--invalid);
+	box-shadow: 0 0 0 0.125rem var(--invalid-focus);
+}
+
 /* 
 https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
 When floating child in parent, the parent ignores them.
@@ -324,6 +339,9 @@ When floating child in parent, the parent ignores them.
 	user-select: none;
 	color: var(--bg-minmax);
 }
+.pyindi-device-header .minmax {
+	color: var(--bg-minmax-header);
+}
 .icon {
 	line-height: 1.5;
 	cursor: pointer;
@@ -332,6 +350,11 @@ When floating child in parent, the parent ignores them.
 }
 .hide {
 	display: none;
+}
+.tip {
+	color: var(--invalid);
+	width: 100%;
+	font-size: .8rem;
 }
 .blinking-busy {
   animation: blinker 1.5s linear infinite;

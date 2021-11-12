@@ -12,7 +12,11 @@ import tornado.web
 from pyindi.webclient import INDIWebApp, INDIHandler
 
 DEVICES = [
-    "Weather",
+    #"DOME-NG-INDI",
+    #"FOCUS-NG-INDI",
+    #"TCS-NG-INDI",
+    #"Mirror Cover",
+    #"Upper Dome",
     "Dome Simulator"
 ]
 """
