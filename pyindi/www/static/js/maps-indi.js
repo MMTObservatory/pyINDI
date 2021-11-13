@@ -522,6 +522,10 @@ const scrapeMessages = (partial_doc) => {
   return cp_partial_doc;
 }
 const showINDIMessage = (timestamp, device, message) => {
+  if (customGUI) {
+    showmsg(message);
+    return;
+  }
   var p = document.createElement("p");
   
   p.classList.add("pyindi-log")
