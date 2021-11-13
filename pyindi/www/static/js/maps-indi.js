@@ -10,7 +10,7 @@ const INDI_TYPES = [
   "Light",
   "BLOB"
 ]
-const INDI_DEBUG = true; // Turn on debugging
+const INDI_DEBUG = false; // Turn on debugging
 const READONLY_PORT = 8081; // setindi() is muted when on this port
 const WS_PAGE = "/indi/websocket"; // Must match URL
 const WS_SEND_WAIT = 30 // millaseconds, how long to wait to resend
@@ -507,9 +507,10 @@ const scrapeMessages = (partial_doc) => {
       var root_node = dom.documentElement; // Root node
 
       var msg = root_node.getAttribute("message");
-      
-      var msgprefix = "INDI message: "
-      showmsg(`${msgprefix}${msg}`);
+      var device = root_node.getAttribute("device");
+      var timestamp = root_node.getAttribute("timestamp");
+       
+      showINDIMessage(timestamp, device, msg);
 
       // Removes message from xml
       cp_partial_doc = cp_partial_doc.replace(match[0], "")
@@ -520,11 +521,26 @@ const scrapeMessages = (partial_doc) => {
   }
   return cp_partial_doc;
 }
+const showINDIMessage = (timestamp, device, message) => {
+  var p = document.createElement("p");
+  
+  p.classList.add("pyindi-log")
+  var loggerHeight = logger.scrollHeight;
+
+  var isScrolledToBottom = logger.scrollHeight - logger.clientHeight <= logger.scrollTop + 1;
+
+  // https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
+  p.textContent = `${timestamp} ${device} ${message}`
+  logger.appendChild(p);
+  if (isScrolledToBottom) {
+    logger.scrollTo(0, loggerHeight,);
+  }
+}
 
 const showmsg = (msg) => {
   /* Prints to console if INDI_DEBUG is true */
   if (INDI_DEBUG) {
-    console.debug(msg);
+    console.info(msg);
   }
 
   return;

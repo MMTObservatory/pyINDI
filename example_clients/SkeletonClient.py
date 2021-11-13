@@ -12,12 +12,12 @@ import tornado.web
 from pyindi.webclient import INDIWebApp, INDIHandler
 
 DEVICES = [
-    #"DOME-NG-INDI",
-    #"FOCUS-NG-INDI",
-    #"TCS-NG-INDI",
-    #"Mirror Cover",
-    #"Upper Dome",
-    "Dome Simulator"
+    "DOME-NG-INDI",
+    "FOCUS-NG-INDI",
+    "TCS-NG-INDI",
+    "Mirror Cover",
+    "Upper Dome"
+    #"Dome Simulator"
 ]
 """
 THis script uses the INDIWebApp class to build an INDI
@@ -37,7 +37,7 @@ class Skeleton(INDIHandler):
 webport = 5905
 indiport = 7624
 
-wa = INDIWebApp( webport=webport, indihost='localhost')
+wa = INDIWebApp( webport=webport, indihost='10.30.1.1')
 imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 

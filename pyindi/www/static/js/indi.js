@@ -76,11 +76,28 @@ const buildpyINDI = () => {
 	pyindi.classList.add("pyindi");
 
 	var nav = buildNav();
+	var logViewer = buildINDILogViewer();
 
-	pyindi.appendChild(nav)
+	pyindi.appendChild(nav);
+	pyindi.appendChild(logViewer);
+
 	document.body.appendChild(pyindi);
 
 	return pyindi;
+}
+
+const buildINDILogViewer = () => {
+	/* Builds a log viewer for INDI messages */
+	var div = document.createElement("div");
+	div.classList.add("pyindi-log-viewer");
+
+	// Store in global variable for now so maps-indi can get to it
+	logger = document.createElement("div");
+	logger.classList.add("pyindi-log-container");
+
+	div.appendChild(logger);
+	return div;
+
 }
 
 const buildNav = () => {
