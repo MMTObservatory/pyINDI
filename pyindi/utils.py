@@ -2,6 +2,9 @@ from xml.sax import ContentHandler
 from xml.sax.expatreader import ExpatParser
 from xml.etree import ElementTree as etree
 from .client import INDIClientSingleton
+import logging
+import time
+import asyncio
 
 
 class XMLFeeder:
@@ -26,6 +29,7 @@ class XMLHandler(ContentHandler):
     reading = False
     current_blob = None
 
+
     def __init__(self):
         self._watched = {}
         self._isWatching = False
@@ -33,6 +37,7 @@ class XMLHandler(ContentHandler):
         self._currentElement = None
         self._rootElement = None
         self._currentKey = None
+        self._currentMessage = None
         self._groups = {}
 
         super().__init__()
@@ -46,7 +51,7 @@ class XMLHandler(ContentHandler):
     def watch_property(self, device, name, callback=None):
         if callback is None:
             callback = lambda ele:print(ele)
-        print(f"adding {device}.{name} to watched list")
+        logging.debug(f"watching property {device}.{name}")
         self._watched[f"{device}.{name}"] = callback
 
 
@@ -57,10 +62,11 @@ class XMLHandler(ContentHandler):
 
 
     def startElement(self, tag, attr):
+        logging.debug(f"tag is {tag}")
         if tag == "root":
             return
 
-        if tag[:3] not in ("set", "def", "one"):
+        if tag[:3] not in ("set", "def", "one", "mes"):
             return
 
         if self._isWatching:
@@ -70,7 +76,6 @@ class XMLHandler(ContentHandler):
             return
 
         if tag[:3] in ("def", "set"):
-
             if 'device' not in attr.keys():
                 return 
             device = attr.getValue('device')
@@ -105,6 +110,9 @@ class XMLHandler(ContentHandler):
                 self._isWatching = True
                 self._currentKey = f'{device}.*'
                 
+        elif tag == "message":
+            #logging.debug(f"we have a message {message.attrib['message']}")
+            self.currentMessage = etree.Element(tag, **dict(attr))
 
 
     def characters(self, content):
@@ -119,6 +127,8 @@ class XMLHandler(ContentHandler):
     
     def endElement(self, tag):
         if self._isWatching:
+            
+            
             if tag == self.rootElement.tag:
                 
                 device = self.rootElement.attrib['device']
@@ -142,46 +152,76 @@ class XMLHandler(ContentHandler):
             elif tag == self.currentElement.tag:
                 self.currentElement = self.rootElement
 
+        if tag == "message":
+            logging.debug("MESSAGE IS ...")
+            self.parent.new_message(self.currentMessage)
+            self.currentMessage = None
+
+
+
+
     def new_device(self, device):
-        for name, fxn in self.parent.new_device_fxns.items():
-            fxn(self.parent, device)
+        self.parent.new_device(device)
 
     def new_group(self, device, group):
-        for name, fxn in self.parent.new_group_fxns.items():
-            fxn(self.parent, device, group)
+        self.parent.new_group(device, group)
 
 
-class INDIHandle(INDIClientSingleton):
+class INDIEvents(INDIClientSingleton):
     """
     Pythonic way of handling INDI xml events
     like def:
     new device, new group and or new property
     or updating a property with set. 
     """
+
+    # these are here because the
+    # classmethods need to see them.
     handler=XMLHandler()
     feeder=XMLFeeder(handler)
-    new_device_fxns = {}
-    new_group_fxns = {}
     call_on_init = []
 
 
-    def __init__(self):
+    def __init__(self):   
+
+        # Make the XMLHandler aware of 
+        # the INDIHandle client so it can
+        # call INDHandle methods corresponding
+        # to XML events.
         self.handler.set_parent(self)
         for fxn in self.call_on_init:
             fxn(self)
 
 
     async def xml_from_indiserver(self, data):
+        logging.debug(f"New data from indiserver {data[:20]}")
         self.feeder.write_message(data)
+
+    
+    async def connection(self, timeout=0):
+        if timeout > 0:
+            start = time.time()
+            while (time.time() - start) < timeout:
+                if self.is_connected:
+                    return
+                else:
+                    await asyncio.sleep(0.25)
+        else:
+            while 1:
+                if self.is_connected:
+                    return
+                else:
+                    await asyncio.sleep(0.25)
+
 
 
     async def getProperties(self, device='', name=None):
 
 
         if name is None:
-            xml = f"<getProperties version='1.7' device='{device}'/>"
+            xml = f"<getProperties version='1.7' device='{device}'/>\n"
         else:
-            xml = f"<getProperties version='1.7' device='{device}' name='{name}'/>"
+            xml = f"<getProperties version='1.7' device='{device}' name='{name}'/>\n"
 
         await self.xml_to_indiserver(xml)
 
@@ -196,13 +236,22 @@ class INDIHandle(INDIClientSingleton):
     def groups(self):
         return self.hander._groups
 
-    @classmethod
-    def new_device(cls, fxn):
-        cls.new_device_fxns[fxn.__name__] = fxn
+    def new_device(self, device):
+        logging.debug(f"Ignoring new device {device}")
 
-    @classmethod
-    def new_group(cls, fxn):
-        cls.new_group_fxns[fxn.__name__] = fxn
+    def new_group(self, device, group):
+        logging.debug(f"Ignoring new group {group}")
+
+    def new_msg(self, message):
+        logging.debug(f"Ignoring new message {msg}")
+
+#    @classmethod
+#    def new_device(cls, fxn):
+#        cls.new_device_fxns[fxn.__name__] = fxn
+#
+#    @classmethod
+#    def new_group(cls, fxn):
+#        cls.new_group_fxns[fxn.__name__] = fxn
 
     @classmethod
     def handle_property(cls, device, name):
@@ -234,4 +283,7 @@ class INDIHandle(INDIClientSingleton):
                 attrib = ele.attrib,
                 props = props
                 )
-   
+
+    def setindi(self, device, name, values, names):
+        pass
+

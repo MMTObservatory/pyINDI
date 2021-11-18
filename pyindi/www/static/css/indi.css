@@ -1,0 +1,266 @@
+:root {
+	--indistate-idle: #EEEEEE;
+	--indistate-ok: #00E676;
+	--indistate-busy: #FFC400;
+	--indistate-alert: #FF1744;
+	--indistate-unknown: magenta;
+	--primary-light: #82B1FF;
+	--primary: #3D5AFE;
+	--primary-dark: #304FFE;
+	--muted: #EEEEEE;
+	--muted-dark: #E0E0E0;
+	--muted-light: #F5F5F5;
+	font-size: 14px;
+	--gray-0: #fff;
+	--gray-50: #FAFAFA;
+	--gray-100: #F5F5F5;
+	--gray-200: #EEEEEE;
+	--gray-300: #E0E0E0;
+	--gray-400: #BDBDBD;
+	--gray-500: #9E9E9E;
+	--gray-600: #757575;
+	--gray-700: #616161;
+	--gray-800: #424242;
+	--gray-900: #212121;
+  --black: #000;
+	--text-header-h1: #fff;
+	--text-header-h2: #616161;
+	--text-header-h3: #424242;
+	--text-label: #424242;
+	--text-value: #212121;
+	--text-switch: #212121;
+	--text-switch-active: #FAFAFA;
+	--bg-input: #fff;
+	--bg-switch: #EEEEEE;
+	--bg-switch-hover: #E0E0E0;
+	--bg-switch-active: #3D5AFE;
+	--bg-switch-active-hover: #304FFE;
+	--bg-input-border: #E0E0E0;
+	--bg-device-header: #00796B;
+	--bg-minmax: #00796B;
+	--bg-device: #ffffff;
+	--bg-body: #f8f9fa;
+}
+[data-theme="dark"] {
+	--primary: #7C4DFF;
+	--primary-dark: #651FFF;
+	--text-header-h1: #fff;
+	--text-header-h2: #E0E0E0;
+	--text-header-h3: #F5F5F5;
+	--text-label: #fff;
+	--text-value: #fff;
+	--text-switch: #EEEEEE;
+	--text-switch-active: #FAFAFA;
+	--bg-input: #424242;
+	--bg-input-border: #616161;
+	--bg-device-header: #424242;
+	--bg-minmax: #B388FF;
+	--bg-device: #212121;
+	--bg-body: #000000;
+	--bg-switch: #757575;
+	--bg-switch-hover: #616161;
+	--bg-switch-active: #7C4DFF;
+	--bg-switch-active-hover: #651FFF;
+}
+
+.pyindi-device {
+	margin: 1rem 1rem;
+	border-radius: .25rem;
+	max-width: 640px;
+	margin: 0 auto;
+	background-color: var(--bg-device);
+	border-radius: .25rem;
+}
+.pyindi-device-header {
+	line-height: 1.5;
+	padding: 1rem .75rem;
+	display: block;
+	background-color: var(--bg-device-header);
+	border-top-left-radius: .25rem;
+	border-top-right-radius: .25rem;
+}
+.pyindi-h1 {
+	font-weight: 700;
+	font-size: 1.25rem;
+	color: var(--text-header-h1);
+	margin: 0;
+}
+.pyindi-group {
+	padding: .75rem .75rem;
+	margin: 0;
+	background-color: inherit;
+}
+.pyindi-h2 {
+	font-weight: 700;
+	font-size: 1.25rem;
+	color: var(--text-header-h2);
+	margin: 0;
+	display: inline-block;
+}
+.pyindi-group-header {
+	line-height: 1.5;
+	padding: 0;
+}
+.pyindi-light-label {
+	display: inline-block;
+	font-weight: 400;
+	line-height: 1.5;
+	text-align: center;
+	user-select: none;
+	border: 1px solid transparent;
+	padding: .25rem .5rem;
+	font-size: 1rem;
+	border-radius: 1rem;
+	overflow: visible;
+	background-color: var(--muted);
+	margin: .25rem .125rem;
+	color: var(--text-switch);
+	min-width: 50px;
+}
+.pyindi-switch-label {
+	display: inline-block;
+	font-weight: 700;
+	line-height: 1.5;
+	letter-spacing: 1.2px;
+	text-align: center;
+	text-decoration: none;
+	text-transform: uppercase;
+	vertical-align: middle;
+	cursor: pointer;
+	user-select: none;
+	border: 1px solid transparent;
+	padding: .5rem .75rem;
+	font-size: .9rem;
+	border-radius: .25rem;
+	overflow: visible;
+	background-color: var(--bg-switch);
+	margin: .25rem .125rem;
+	box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2);
+	color: var(--text-switch);
+	margin-right: .5rem;
+}
+.pyindi-switch-label:hover {
+	background-color: var(--bg-switch-hover);
+	border-color: var(--bg-switch-hover);
+}
+.pyindi-switch-label-active {
+	background-color: var(--bg-switch-active);
+	border-color: var(--bg-switch-active);
+	color: var(--text-switch-active);
+}
+.pyindi-switch-label-active:hover {
+	background-color: var(--bg-switch-active-hover);
+	border-color: var(--bg-switch-active-hover);
+}
+.pyindi-switch-input {
+	position: absolute;
+	clip: rect(0,0,0,0);
+	pointer-events: none;
+}
+/* This should be used for when the button is active like radio button */
+legend {
+	font-size: 1.125rem;
+	font-weight: 700;
+	margin-bottom: .25rem;
+	color: var(--text-header-h3);
+}
+body {
+	font-family: sans-serif;
+	background-color: var(--bg-body);
+}
+.pyindi-vector {
+	background-color: inherit;
+	border: none;
+	border-radius: .25rem;
+	margin: 1.5rem .75rem;;
+	padding: 0;
+}
+.pyindi-property {
+	resize: none;
+	border-radius: .25rem;
+	font-size: 1rem;
+	line-height: 1.5;
+	background-clip: padding-box;
+	appearance: none;
+	margin-bottom: 0;
+	outline: none;
+	font-family: inherit;
+	margin-left: 1rem;
+	width: 12rem;
+}
+.pyindi-ro {
+	border: none;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	background-color: inherit;
+	float: left;
+	color: var(--text-value)
+}
+.pyindi-wo {
+	border: 1px solid var(--bg-input-border);
+	padding-top: .375rem;
+	padding-bottom: .375rem;
+	background-color: var(--bg-input);
+	transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+	float: right;
+	color: var(--text-label);
+}
+.pyindi-wo:focus {
+	border-color: var(--primary);
+	outline: none;
+	box-shadow: 0 0 0 0.125rem var(--primary-light);
+}
+/* 
+https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
+When floating child in parent, the parent ignores them.
+*/
+.fix-div:after {
+	content: " "; 
+	display: block;
+	clear: both;
+}
+.pyindi-number-div:after {
+	content: " "; 
+	display: block;
+	clear: both;
+}
+.pyindi-property-label {
+	margin-bottom: 0;
+	line-height: 1.5;
+	padding-top: calc(.375rem + 1px);
+	padding-bottom: calc(.375rem + 1px);
+	float: left;
+	vertical-align: middle;
+	width: 14rem;
+	color: var(--text-label);
+}
+.led {
+	margin-right: 5px;
+	margin-top: 2px;
+	float: left;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+}
+.minmax {
+	margin-right: 10px;
+	line-height: 1.5;
+	font-size: 1.25rem;
+	cursor: pointer;
+	user-select: none;
+	color: var(--bg-minmax);
+}
+.hide {
+	display: none;
+}
+.blinking-busy {
+  animation: blinker 1.5s linear infinite;
+}
+.blinking-alert {
+  animation: blinker 0.5s linear infinite;
+}
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}

@@ -57,15 +57,6 @@ function round (v, n)
     return sprintf ("%." + n + "f", parseFloat(v));
 }
 
-
-/**
- * return s with HTML entities expanded
- */
-function scrubEntities (s) {
-	// html just does &<>
-	return $('<div/>').text(s+"").html().replace(/'/g,'&apos;').replace(/"/g,'&quot;');
-}
-
 /**
  * Return now as an ISO date stamp
  */

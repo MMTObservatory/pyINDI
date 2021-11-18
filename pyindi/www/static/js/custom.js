@@ -1,0 +1,3 @@
+/*
+All custom javascript should go in here.
+*/

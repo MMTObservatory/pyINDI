@@ -1,42 +1,67 @@
-from pyindi.utils import INDIHandler
+from pyindi.utils import INDIEvents
+from pyindi.client import INDIClient
 import sys
 import asyncio
 from xml.etree import ElementTree as etree
+import logging
+#logging.getLogger().setLevel(logging.DEBUG)
 
+class Debugger(INDIEvents):
 
-class Debugger(INDIHandler):
-
-
-
-
-    async def main(self, host, port):
+    async def main(self, host, port, device=''):
 
         self.start(host=host, port=port)
-        tsk = asyncio.create_task(self.connect())
-        print(self.handler._watched)
-        await asyncio.sleep(0.5)
-        await self.getProperties("SBIG CCD")
+        inditask = asyncio.create_task(self.connect())
+        await self.connection()
+        print(self.conn.reader)
+        await self.getProperties()
 
-        await tsk
+        await inditask
+ 
 
-    @INDIDebugger.new_device
-    def on_new_device(self, device):
-        pass
+    def new_device(self, device):
+        print(f"New device {device}")
 
-    @INDIDebugger.new_group
-    def on_new_group(self, device, group):
-        pass
+    def new_group(self, device, group):
+        print(f"new group {group}")
 
+    def new_message(self, msg):
+        print("new message {msg}")
 
-
-    @INDIDebugger.handle_property("SBIG CCD", "CONNECTION")
+    @INDIEvents.handle_property("WAVESERV", "CONNECTION")
     def on_connection(self, ele):
         print(self.unwrap_xml(ele))
 
+    @INDIEvents.handle_property("Telescope Simulator", "*")
+    def on_connection(self, ele):
+        return
+        print(self.unwrap_xml(ele))
 
-def callback(ele):
+    def new_message(self, msg):
+        logging.warning(msg.attrib["message"])
+
+
+class client(INDIClient):
+
+    async def xml_from_indiserver(self, data):
+
+        if "message" in data:
+            print(data)
+
+async def main(host, port):
+    s=client()
+    s.start(host=host, port=port)
+    tsk = asyncio.create_task(s.connect())
+    for a in range(5):
+        if s.conn is None:
+            print(None)
+        else:
+            print(s.conn.reader)
+        await asyncio.sleep(0.5)
     
-    print(etree.tostring(ele).decode())
+
+    await asyncio.sleep(10)
 
 d=Debugger()
 asyncio.run(d.main(*sys.argv[1:]))
+#asyncio.run(main(*sys.argv[1:]))

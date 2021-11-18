@@ -11,7 +11,10 @@ sys.path.insert(0, str(Path.cwd().parent))
 import tornado.web
 from pyindi.webclient import INDIWebApp, INDIHandler
 
-
+DEVICES = [
+    "Filter Simulator",
+    "Dome Simulator"
+]
 """
 THis script uses the INDIWebApp class to build an INDI
 client as a tornado web application. The root page is 
@@ -23,14 +26,14 @@ class Skeleton(INDIHandler):
 
     def get(self):
 
-        self.indi_render(Path.cwd()/"client.html", device_name="SkeletonDevice")
+        self.indi_render(Path.cwd()/"client.html", device_name=DEVICES)
 
 
 
 webport = 5905
 indiport = 7624
 
-wa = INDIWebApp( webport=webport  )
+wa = INDIWebApp( webport=webport, indihost='localhost')
 imgs = Path('./imgs')
 imgs.mkdir(exist_ok=True)
 
@@ -43,4 +46,6 @@ print(f"http://localhost:{webport}/")
 wa.build_app(
     [(r"/", Skeleton),
      (r"/imgs/(.*)", tornado.web.StaticFileHandler, {"path": imgs})],
-    debug=True)
+    debug=True
+)
+
