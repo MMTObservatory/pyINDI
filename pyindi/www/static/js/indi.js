@@ -37,6 +37,9 @@ const INDISWRULES = {
 	"AtMostOne": "radio",
 	"AnyOfMany": "checkbox"
 }
+const WELCOME = `
+INDI messages & logs displayed below
+`
 
 /* Globals *******************************************************************/
 var pyindi; // Selector for pyindi gui
@@ -56,6 +59,7 @@ requires a new div.
 Functions
 ---------
 - buildpyINDI              : Builds the generic pyINDI GUI
+- buildpyINDILogViewer     : Builds the window for viewing logs
 - buildNav                 : Builds the navbar for pyindi generic GUI
 - buildDevice              : builds div to hold new device
 - buildGroup               : builds group to hold new group
@@ -76,7 +80,7 @@ const buildpyINDI = () => {
 	pyindi.classList.add("pyindi");
 
 	var nav = buildNav();
-	var logViewer = buildINDILogViewer();
+	var logViewer = buildpyINDILogViewer();
 
 	pyindi.appendChild(nav);
 	pyindi.appendChild(logViewer);
@@ -86,18 +90,24 @@ const buildpyINDI = () => {
 	return pyindi;
 }
 
-const buildINDILogViewer = () => {
+const buildpyINDILogViewer = () => {
 	/* Builds a log viewer for INDI messages */
 	var div = document.createElement("div");
 	div.classList.add("pyindi-log-viewer");
 
 	// Store in global variable for now so maps-indi can get to it
-	logger = document.createElement("div");
+	var logger = document.createElement("div");
+	logger.id = "logger";
 	logger.classList.add("pyindi-log-container");
 
+	// Make welcome message
+	var p = document.createElement("p");
+	p.classList.add("pyindi-log");
+	p.textContent = WELCOME;
+
+	logger.appendChild(p);
 	div.appendChild(logger);
 	return div;
-
 }
 
 const buildNav = () => {
@@ -175,7 +185,7 @@ const buildDevice = (INDI) => {
 	var div = document.createElement("div");
 	div.setAttribute("data-device", INDI.device);
 	div.id = genDeviceID(INDI);
-	div.classList.add("pyindi-device");
+	div.classList.add("pyindi-device", "hidden"); // Add hidden to know state
 
 	// Build header div for header
 	var header = document.createElement("div");
@@ -185,17 +195,17 @@ const buildDevice = (INDI) => {
 	var i = document.createElement("i");
 	i.classList.add("fas", "fa-plus-circle", "minmax"); // fontawesome
 
-	
-
 	// Handle the minimize and maximize button click
 	i.addEventListener("click", (event) => {
 		if (event.target.classList.contains("fa-minus-circle")) {
 			event.target.classList.add("fa-plus-circle");
 			event.target.classList.remove("fa-minus-circle");
+			div.classList.add("hidden");
 		}
 		else {
 			event.target.classList.add("fa-minus-circle");
 			event.target.classList.remove("fa-plus-circle");
+			div.classList.remove("hidden");
 		}
 
 		// Get first group in device and hide siblings
@@ -237,8 +247,13 @@ const buildGroup = (INDI) => {
 	div.setAttribute("data-device", INDI.device);
 	div.setAttribute("data-group", INDI.group);
 	div.id = genGroupID(INDI);
+	var parent = document.querySelector(`#${genDeviceID(INDI)}`);
+
 	div.classList.add("pyindi-group");
-	customGUI ? "" : div.classList.add("hide");
+	// If customGUI don't do this but device has hidden class added for new groups
+	if (!customGUI && parent.classList.contains("hidden")) {
+		div.classList.add("hide");
+	}
 
 	// Build header group
 	var header = document.createElement("div");
@@ -296,7 +311,7 @@ const buildVectorAndProperties = (vectorSelector, INDI, appendTo) => {
 	None
 	*/
 	// If doesn't exist then build it! 
-	if (!document.querySelector(`#${vectorSelector}`)) {
+	if (!document.getElementById(vectorSelector)) {
 		console.debug(`Creating new ${INDI.metainfo}=${genVectorID(INDI)}`);
 		var html = buildVector(INDI);
 
@@ -399,7 +414,7 @@ const buildTexts = (INDI, appendTo) => {
 		var label = document.createElement("label");
 		label.textContent = property.label;
 		label.classList.add("pyindi-property-label", "pyindi-col");
-		label.htmlFor = id;
+		label.htmlFor = `${id}__input`;
 
 		div.appendChild(label);
 
@@ -412,7 +427,7 @@ const buildTexts = (INDI, appendTo) => {
 
 		var wo = document.createElement("input");
 		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col");
-		//wo.id = `${noSpecial(INDI.device)}__${noSpecial(property.name)}`;
+		wo.id = `${id}__input`;
 
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
@@ -463,7 +478,7 @@ const buildNumbers = (INDI, appendTo) => {
 		var label = document.createElement("label");
 		label.textContent = property.label;
 		label.classList.add("pyindi-property-label", "pyindi-col");
-		label.htmlFor = id;
+		label.htmlFor = `${id}__input`;
 
 		div.appendChild(label);
 
@@ -474,6 +489,8 @@ const buildNumbers = (INDI, appendTo) => {
 
 		var wo = document.createElement("input");
 		wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col")
+		wo.id = `${id}__input`;
+		wo.defaultValue = 0;
 
 		// Add min and max data attributes
 		var tipStr = '';
@@ -489,25 +506,21 @@ const buildNumbers = (INDI, appendTo) => {
 		// Display invalid for numbers out of range
 		var tip = document.createElement("div");
 		tip.textContent = tipStr;
+		tip.id = `${id}__tip`;
 		tip.classList.add("hide", "text-right", "tip");
 
+		wo.addEventListener("blur", (event) => {
+			wo.value.length == 0 ? wo.value = 0 : ""; // Fill in 0 if empty
+		})
 		// If "Enter" is pressed on writeonly area, send new text to indi
 		wo.addEventListener("keyup", (event) => {
 			if (event.key === "Enter") {
-				event.preventDefault() // TODO Test if needed
-				let value = event.target.value;
-				
-				// Test if in range 
+				// Test if ok
 				let min = parseFloat(wo.getAttribute("data-min"));
 				let max = parseFloat(wo.getAttribute("data-max"));
-				
-				if (value < min) {
-					// Add class
-					wo.classList.add("invalid");
-					tip.classList.remove("hide");
-				}
-				else if (value > max) {
-					// Add class
+				let value = event.target.value;
+				if (value < min || value > max) { // Even if min/max null will be false
+					// Add invalid class
 					wo.classList.add("invalid");
 					tip.classList.remove("hide");
 				}
@@ -516,6 +529,39 @@ const buildNumbers = (INDI, appendTo) => {
 					tip.classList.add("hide")
 					setindi("Number", genINDI(INDI), property.name, value);
 				}
+				/* This was a way to send all values to indi
+				// Need to send all the values because it is necessary
+				let theArgs = [];
+				// Try sending all information
+				var badData = false;
+				INDI.values.forEach((tmpProperty) => {
+					let tmpId = `${genPropertyID(INDI, tmpProperty)}`;
+					let tmpElement = document.getElementById(`${tmpId}__input`);
+					let tmpTip = document.getElementById(`${tmpId}__tip`)
+					let tmpValue = tmpElement.value;
+
+					// Test if ok
+					let min = parseFloat(tmpElement.getAttribute("data-min"));
+					let max = parseFloat(tmpElement.getAttribute("data-max"));
+
+					if (tmpValue < min || tmpValue > max) { // Even if min/max null will be false
+						// Add invalid class
+						tmpElement.classList.add("invalid");
+						tmpTip.classList.remove("hide");
+						badData = true;
+					}
+					else {
+						tmpElement.classList.remove("invalid");
+						tmpTip.classList.add("hide")
+					}
+
+					// Build array
+					theArgs.push(tmpProperty.name);
+					theArgs.push(tmpValue);
+				});
+				console.log(...theArgs)
+				if (!badData) {setindi("Number", genINDI(INDI), ...theArgs);}
+				*/
 			}
 		});
 
@@ -667,7 +713,7 @@ const newDevice = (INDI, appendTo=null) => {
 		appendTo ? appendTo.appendChild(html) : pyindi.appendChild(html);
 	}
 
-	return document.querySelector(deviceSelector);
+	return document.getElementById(deviceSelector);
 }
 
 const newGroup = (INDI, appendTo=null) => {
@@ -705,8 +751,30 @@ const newGroup = (INDI, appendTo=null) => {
 		}
 	}
 	
-	return document.querySelector(groupSelector);
+	return document.getElementById(groupSelector);
 };
+
+const newVector = (INDI, appendTo=null) => {
+	/* Starting point for all incoming vector properties */
+	var vector;
+	switch (INDI.metainfo) {
+		case "nvp":
+			vector = newNumber(INDI, appendTo);
+			break;
+		case "svp":
+			vector = newSwitch(INDI, appendTo);
+			break;
+		case "tvp":
+			vector = newText(INDI, appendTo);
+			break;
+		case "lvp":
+			vector = newLight(INDI, appendTo);
+			break;
+		default:
+	}
+
+	return vector;
+}
 
 const newText = (INDI, appendTo=null) => {
 	/* Creates a new text 
@@ -743,7 +811,7 @@ const newText = (INDI, appendTo=null) => {
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(vectorSelector);
+	return document.getElementById(vectorSelector);
 }
 
 const newNumber = (INDI, appendTo=null) => {
@@ -783,7 +851,7 @@ const newNumber = (INDI, appendTo=null) => {
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(vectorSelector)
+	return document.getElementById(vectorSelector)
 }
 
 const newSwitch = (INDI, appendTo=null) => {
@@ -822,7 +890,7 @@ const newSwitch = (INDI, appendTo=null) => {
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(vectorSelector);
+	return document.getElementById(vectorSelector);
 }
 
 const newLight = (INDI, appendTo=null) => {
@@ -875,7 +943,7 @@ const newLight = (INDI, appendTo=null) => {
 	// Update LED color on indistate
 	updateLedState(INDI);
 
-	return document.querySelector(vectorSelector);
+	return document.getElementById(vectorSelector);
 }  
 
 /* Utilities ******************************************************************

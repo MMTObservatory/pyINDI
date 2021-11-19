@@ -10,7 +10,7 @@ const INDI_TYPES = [
   "Light",
   "BLOB"
 ]
-const INDI_DEBUG = false; // Turn on debugging
+const INDI_DEBUG = true; // Turn on debugging
 const READONLY_PORT = 8081; // setindi() is muted when on this port
 const WS_PAGE = "/indi/websocket"; // Must match URL
 const WS_SEND_WAIT = 30 // millaseconds, how long to wait to resend
@@ -24,6 +24,7 @@ var ws; // The persistent web socket connection
 var read_write = false; // The websocket will trigger this true if connected
 var setPropertyCallbacks = {} // Stores callbacks for properties
 var partial_doc = ""; // accumulate xml in pieces
+var logger; // Store element that logger is in
 
 document.addEventListener("DOMContentLoaded", () => {
   /* Initialize the list of types that updateProperties will handle */
@@ -38,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log(`Accepting ${indi_types}`);
 
+  // Connect to logger
+  logger = document.getElementById("logger");
+  
   // create web server connection
   wsStart();
 })
@@ -207,12 +211,12 @@ const setindi = (...theArgs) => {
     msgprefix = "Websocket send (not sent): ";
   }
 
-  showmsg(`${msgprefix}${setcmd}`);
+  showMessage(`${msgprefix}${setcmd}`);
 
   return;
 }
 
-const setPropertyCallback = (property, callback) => {
+const setPropertyCallback = (property, callback, init=false) => {
   /* Sets property callback
 
   Description
@@ -262,8 +266,6 @@ const setPropertyCallback = (property, callback) => {
   }
 
   getprop += `/>\n`;
-  // Send over ws
-  wsSend(getprop);
 
   // Also ask for BLOBs, harmless if not
   var getblob = `<enableBLOB device="${device}"`;
@@ -273,8 +275,13 @@ const setPropertyCallback = (property, callback) => {
 
   getblob += `>Also</enableBLOB>\n`;
 
-  // Send over ws
-  wsSend(getblob);
+  // Without this check it sends properties twice
+  if (!init) {
+    ws.send(getprop);
+    ws.send(getblob);
+  }
+
+  first_time = false;
 
   return;
 };
@@ -522,13 +529,14 @@ const scrapeMessages = (partial_doc) => {
   return cp_partial_doc;
 }
 const showINDIMessage = (timestamp, device, message) => {
-  if (customGUI) {
-    showmsg(message);
+  if (customGUI && !logger) {
+    showMessage(message);
     return;
   }
+  
   var p = document.createElement("p");
   
-  p.classList.add("pyindi-log")
+  p.classList.add("pyindi-log");
   var loggerHeight = logger.scrollHeight;
 
   var isScrolledToBottom = logger.scrollHeight - logger.clientHeight <= logger.scrollTop + 1;
@@ -541,11 +549,9 @@ const showINDIMessage = (timestamp, device, message) => {
   }
 }
 
-const showmsg = (msg) => {
-  /* Prints to console if INDI_DEBUG is true */
-  if (INDI_DEBUG) {
-    console.info(msg);
-  }
-
+const showMessage = (message) => {
+  /* Prints to the console if INDI_DEBUG is true */
+  INDI_DEBUG && console.info(message);
   return;
 }
+

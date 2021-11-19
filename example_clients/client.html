@@ -7,9 +7,10 @@
 		<link rel="apple-touch-icon" sizes="180x180" href="/indi/static/favicon/apple-touch-icon.png">
 		<link rel="shortcut icon" type="image/png" sizes="32x32" href="">
 		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
+		<link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Open+Sans:wght@300;400;700&display=swap" rel="stylesheet">
 		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
 		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
-		<title>pyINDI</title>
+		<title>90Prime v2.0</title>
 		<!-- Load pyINDI scripts -->
 		<script src="/indi/static/js/indi.js"></script>
 		<script src="/indi/static/js/maps-indi.js"></script>
@@ -20,7 +21,7 @@
 		<link rel="stylesheet" href="/indi/static/css/custom.css">
 		<script>
 			/* Constants */
-			const CUSTOM_GUI = false;
+			const CUSTOM_GUI = true;
 
 			/* Globals */
 			var available = {} // Available elements to use for custom gui
@@ -42,6 +43,7 @@
 				None
 				*/
 				CUSTOM_GUI && console.log('Custom gui selected');
+				CUSTOM_GUI && document.body.setAttribute("data-theme", "dark");
 				start = new Date();
 				imgs = [];
 				
@@ -54,7 +56,7 @@
 						
 				for (let device of devices) {
 					console.log(`Configuring device ${device}`);
-					setPropertyCallback(`${device}.*`, handleProperty);
+					setPropertyCallback(`${device}.*`, handleProperty, init=true);
 				}
 			}
 
@@ -110,12 +112,9 @@
 
 				/*
 				If we want a custom gui, we need to build the html below in <body>.
-				In that, we should use the group ID so when a new INDI comes
-				in, we try to find the id. To start off, lets only use the
-				group for custom positioning because all children will automatically
-				be built there. After, we can focus on skipping group and only doing
-				the vectors. Utilty function for group ID is genGroupID(INDI) and the
-				group naming scheme is no spacing in the names and is joined by a "-".
+				In that, we should use the vector ID and device ID so when a new INDI 
+				comes in, we try to find the id. To start off, lets only use the
+				vector for custom positioning.
 				*/
 				if (INDI.op === "def") {
 					if (!CUSTOM_GUI) {
@@ -127,8 +126,11 @@
 					}
 					else {
 						// Get the element to build the new group in
-						appendToSelector = `[data-custom-device="${INDI.device}"][data-custom-group="${INDI.group}"]`; 
-						var appendTo = document.querySelector(appendToSelector);
+						var deviceSelector = `[data-custom-device="${INDI.device}"]`;
+						var vectorSelector = `[data-custom-vector="${INDI.name}"]`;
+
+						var appendToSelector = `${deviceSelector}${vectorSelector}`; 
+						var appendTo = document.querySelector(`${appendToSelector}`);
 
 						// If the placement doesn't exist, issue to console and return
 						if (!appendTo) {
@@ -136,38 +138,236 @@
 							updateAvailable(INDI, omit=true);
 							return;
 						}
-						var group = newGroup(INDI, appendTo);
+						// If data attribute exists for custom-vector, don't use group
+						var vector = newVector(INDI, appendTo);
 						updateAvailable(INDI);
+						
+						if (`${INDI.device}.${INDI.name}` === "GALIL-DMC-2280.IFOCUS_LVDT")  {
+							setupGoto();
+						}
 					}
 				}
+	
 				// Build properties
 				if (!available[`${INDI.device}.${INDI.name}`]) {
 					return;
 				}
 
-				switch (INDI.metainfo) {
-					case "nvp":
-						ele = newNumber(INDI);
-					break;
-					case "svp":
-						ele = newSwitch(INDI);
-					break;
-					case "tvp":
-						ele = newText(INDI);
-					break;
-					case "lvp":
-						ele = newLight(INDI);
-					break;
-					default:
-				}
+				var vector = newVector(INDI);
+				// Do whatever you want with this
 
+				// Replace the switch labels with the filter names and hide the filter names
+				if (vector.id === "GALIL-DMC-2280__IFILTER_NAMES") {
+					for (let i = 1; i < 7; i++) {
+						// Get the names
+						let name = document.querySelector(`#GALIL-DMC-2280__IFILTER_NAMES__ifilter_${i} .pyindi-ro`).textContent;
+						// Get the label and update textcontent
+						let label = document.querySelector(`label[for="GALIL-DMC-2280__IFILTER_CHANGE__i_slot_${i}"`);
+						label.textContent = name;
+						label.classList.add("no-format");
+					}
+				}
+				// Replace the switch labels with the filter names and hide the filter names
+				if (vector.id === "GALIL-DMC-2280__GFILTER_NAMES") {
+					for (let i = 1; i < 7; i++) {
+						// Get the names
+						let name = document.querySelector(`#GALIL-DMC-2280__GFILTER_NAMES__gfilter_${i} .pyindi-ro`).textContent;
+						// Get the label and update textcontent
+						let label = document.querySelector(`label[for="GALIL-DMC-2280__GFILTER_CHANGE__g_slot_${i}"`);
+						label.textContent = name;
+						label.classList.add("no-format");
+					}
+				}
 				return;
 			}
 		</script>
 	</head>
 	<body>
-		<div data-custom-device="" data-custom-group=""></div>
+		<div class="gui">
+			<nav class="pyindi-nav">
+				<div class="pyindi-row">
+					<div class="pyindi-col pyindi-h4">
+						<div class="">90Prime <span class="retro">v2.0</span></div>
+					</div>
+					<div class="pyindi-col pyindi-h4 text-right">
+						<a href="https://github.com/so-90prime/90prime/issues" title="Source Code" target="_blank" class="issues">Issues? <i class="fab fa-github icon"></i></a>
+					</div>
+				</div>
+			</nav>
+			<div class="grid">
+				<div class="top">
+				</div>
+				<div class="left">
+					<!-- <div class="pyindi-vector" style="text-align: center;">
+						<p class="section-title">Filterwheel</p>
+					</div> -->
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="FW_LIGHTS"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFILTER_CHANGE"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFILTER_NAMES"></div>
+					<hr class="pyindi-hr">
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFILTER_ACTIONS"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="END_OF_NIGHT"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="TELEMETRY"></div>
+				</div>
+				<div class="middle">
+					<!-- <div data-custom-device="GALIL-DMC-2280" data-custom-vector="TELEMETRY_LVDT"></div> -->
+					<!-- <div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFOCUS_DIST"></div> -->
+					<!-- <div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFOCUS_DISTALL"></div> -->
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFOCUS_LVDT"></div>
+					<fieldset class="pyindi-vector">
+						<div class="pyindi-row">
+							<div class="pyindi-col text-center">
+								<button class="pyindi-switch-label goto-switch">Goto A, B, C</button>
+							</div>
+						</div>
+					</fieldset>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFOCUS_LVDTALL"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="TELEMETRY_REFERENCE"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFOCUS_REFERENCE"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="IFILTER_STARTUP"></div>
+					<hr class="pyindi-hr">
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GFOCUS_DIST"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GLIMITS_LIGHTS"></div>
+				</div>
+				<div class="right">
+					<!-- <div data-custom-device="GALIL-DMC-2280" data-custom-vector="GW_LIGHTS"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GFILTER_CHANGE"></div>
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GFILTER_NAMES"></div>
+					<hr class="pyindi-hr">
+					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GFILTER_ACTIONS"></div>
+					<hr class="pyindi-hr"> -->
+				</div>
+				<div class="bottom">
+					
+					<div class="pyindi-log-viewer">
+						<div class="pyindi-log-container" id="logger">
+							<p class="pyindi-log">INDI Messages and Logs displayed here</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</body>
 	<script>document.body.addEventListener("load", main());</script>
+	<script>
+		const setupGoto = () => {
+			// Add button click sending all lvdt values
+			var goto = document.querySelector(".goto-switch");
+			goto.addEventListener("click", (event) => {console.log('Running button')
+				var lvdta = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdta__input");
+				var lvdtb = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdtb__input");
+				var lvdtc = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdtc__input");
+
+				// Need to build indi stuff to send in proper format
+				// Warning this is hardcoded so if you change indi properties you will have issues
+				var indiArray = "GALIL-DMC-2280__IFOCUS_LVDT__lvdta__input".split("__");
+				var indi = `${indiArray[0]}.${indiArray[1]}`;
+				var theArgs = ["lvdta", lvdta.value, "lvdtb", lvdtb.value, "lvdtc", lvdtc.value];
+				setindi("Number", indi, ...theArgs);
+			});
+		}
+		
+	</script>
+	<style>
+		.pyindi-nav {
+			background-color: #B388FF;
+			color: #000;
+		}
+		.gui {
+			max-width: 600px;
+			background-color: var(--bg-device);
+			margin: auto;
+		}
+		.grid {
+			display: grid;
+			grid-template-columns: 1fr 2fr;
+			gap: 0px 0px;
+		}
+		
+		.top {
+			grid-column: 1 / -1;
+			grid-row: 1;
+		}
+		.left {
+			grid-column: 1;
+			grid-row: 2;
+		}
+		/* .right {
+			grid-column: 3;
+			grid-row: 2;
+		} */
+		.middle {
+			grid-column: 2;
+			grid-row: 2;
+		}
+		.bottom {
+			grid-column: 1 / -1;
+			grid-row: 3;
+		}
+		.no-format {
+			text-transform: none;
+		}
+		.pyindi-light-label {
+			display: block;
+		}
+		.pyindi-switch-label {
+			display:block;
+		}
+
+		.issues {
+			text-decoration: none;
+			color: #fff;
+		}
+		.goto-switch {
+			margin-top: -15px;
+		}
+
+		#GALIL-DMC-2280__END_OF_NIGHT legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__IFILTER_ACTIONS legend {
+			display: none;
+		}
+
+		#GALIL-DMC-2280__IFILTER_NAMES {
+			display: none;
+		}
+		#GALIL-DMC-2280__GFILTER_NAMES {
+			display: none;
+		}
+		#GALIL-DMC-2280__IFOCUS_REFERENCE legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__GFILTER_ACTIONS legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__GLIMITS_LIGHTS legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__IFOCUS_LVDTALL legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__TELEMETRY legend {
+			display: none;
+		}
+		#GALIL-DMC-2280__TELEMETRY_REFERENCE legend {
+			display: none;
+		}
+		.section-title {
+			font-weight: 700;
+			font-size: 1rem;
+			letter-spacing: 2.5px;
+			text-transform: uppercase;
+			color: var(--text-header-h2);
+			margin: 0;
+			display: inline-block;
+		}
+		@media screen and (max-width: 580px) {
+			.grid {
+				display: block;
+			}
+		}
+
+	</style>
 </html>
 

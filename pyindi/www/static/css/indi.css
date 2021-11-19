@@ -45,13 +45,14 @@
 	--bg-minmax: #00796B;
 	--bg-minmax-header: #fff;
 	--bg-device: #ffffff;
-	--bg-body: #f8f9fa;
+	--bg-body: #FAFAFA;
 	--bg-light: #EEEEEE;
 	--bg-icon: #fff;
 	--bg-nav: #424242;
+	--bg-switch-press: #BDBDBD;
 }
 [data-theme="dark"] {
-	--indistate-idle: #757575;
+	--indistate-idle: #424242;
 	--indistate-ok: #69F0AE;
 	--indistate-busy: #FFD740;
 	--indistate-alert: #FF5252;
@@ -84,8 +85,9 @@
 	--bg-switch-active: #7C4DFF;
 	--bg-switch-active-hover: #651FFF;
 	--bg-nav: #424242;
-	--bg-light: #757575;
+	--bg-light: #616161;
 	--bg-icon: #fff;
+	--bg-switch-press: #424242;
 	
 }
 .text-right {
@@ -96,6 +98,14 @@
 }
 .text-center {
 	text-align: center;
+}
+.pyindi-hr {
+	height: 1px;
+	color: var(--bg-input);
+	background-color: var(--bg-input);
+	border: none;
+	width: 95%;
+	margin: auto;
 }
 .pyindi {
 	max-width: 640px;
@@ -127,16 +137,9 @@
 .pyindi-col {
 	display: flex;
 	flex-direction: column;
-	flex: 33%;
+	flex: 1;
 }
-.pyindi-wo .pyindi-col {
-	display: flex;
-	flex-direction: column;
-	flex: 33%;
-}
-.pyindi-ro .pyindi-col {
-	text-align: right;
-}
+
 
 @media screen and (max-width: 560px) {
 	.pyindi-property-label .pyindi-col {
@@ -222,16 +225,17 @@
 }
 .pyindi-switch-label:hover {
 	background-color: var(--bg-switch-hover);
-	border-color: var(--bg-switch-hover);
 }
+.pyindi-switch-label:active {
+	background-color: var(--bg-switch-press);
+}
+
 .pyindi-switch-label-active {
 	background-color: var(--bg-switch-active);
-	border-color: var(--bg-switch-active);
 	color: var(--text-switch-active);
 }
 .pyindi-switch-label-active:hover {
 	background-color: var(--bg-switch-active-hover);
-	border-color: var(--bg-switch-active-hover);
 }
 .pyindi-switch-input {
 	position: absolute;
@@ -305,6 +309,7 @@ body {
 	max-width: 100%;
 	border-radius: .25rem;
 	padding: 0 .75rem;
+	font-family:'Courier New', Courier, monospace;
 }
 .pyindi-log {
 	font-size: 0.8rem;
@@ -312,7 +317,6 @@ body {
 	line-height: 1.5;
 	color: var(--text-value)
 }
-
 .invalid {
 	border: 1px solid var(--invalid);
 }
@@ -388,4 +392,7 @@ When floating child in parent, the parent ignores them.
   50% {
     opacity: 0;
   }
+}
+.retro {
+	font-family: 'Audiowide', monospace;
 }
