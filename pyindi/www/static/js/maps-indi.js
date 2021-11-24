@@ -250,25 +250,23 @@ const setPropertyCallback = (property, callback, init=false) => {
   var devname = property.split(".");
   var device = devname[0];
   var name = devname[1];
-  var getprop = `<getProperties version="1.7" device="${device}"`;
+  var getprop = `<getProperties version="1.7" `;
   //var getprop = `<getProperties version="1.7" `;
 
-  /* if (device !== "*") {
+  if (device !== '*') {
     getprop += `device="${device}" `;
   }
-  
-  if (device !== "*" && name !== '*') {
-    getprop += `name="${name}" `;
-  } */
-
   if (name !== '*') {
-    getprop += ` name="${name}" `;
+    getprop += `name="${name}" `;
   }
 
   getprop += `/>\n`;
 
   // Also ask for BLOBs, harmless if not
-  var getblob = `<enableBLOB device="${device}"`;
+  var getblob = `<enableBLOB`;
+  if (device !== '*') {
+    getblob += ` device="${device}" `;
+  }
   if (name != '*') {
     getblob += ` name="${name}"`
   }
@@ -280,8 +278,6 @@ const setPropertyCallback = (property, callback, init=false) => {
     ws.send(getprop);
     ws.send(getblob);
   }
-
-  first_time = false;
 
   return;
 };
@@ -471,7 +467,7 @@ const updateProperties = (xml_text) => {
       /*
       The rest of this was in a jquery each function and I don't know why because only one xml payload is delivered at a time. Maybe it was designed for multiple in the beginning then converted. For example, if there were more than one root node then this would only go over the first one. Keep this in mind if an error occurs during this part. That could be the fix.
       */
-      var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`];
+      var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`] || setPropertyCallbacks['*.*'];
     
       if (callback) {
         var INDI = flattenIndiLess(root_node);

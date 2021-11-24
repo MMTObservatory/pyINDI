@@ -62,7 +62,7 @@
 	--primary-light: #B388FF; 
 	--primary: #7C4DFF;
 	--primary-dark: #651FFF;
-	--text-header-h1: #000;
+	--text-header-h1: #fff;
 	--text-header-h2: #E0E0E0;
 	--text-header-h3: #F5F5F5;
 	--text-header-h4: #fff;
@@ -75,9 +75,9 @@
 	--text-light-active: #212121;
 	--bg-input: #424242;
 	--bg-input-border: #616161;
-	--bg-device-header: #B388FF;
+	--bg-device-header: #424242;
 	--bg-minmax: #B388FF;
-	--bg-minmax-header: #000;
+	--bg-minmax-header: #fff;
 	--bg-device: #212121;
 	--bg-body: #000;
 	--bg-switch: #757575;
@@ -140,15 +140,14 @@
 	flex: 1;
 }
 
-
 @media screen and (max-width: 560px) {
-	.pyindi-property-label .pyindi-col {
+	.pyindi-property-label.pyindi-col {
 		flex: 50%;
 	}
-	.pyindi-ro .pyindi-col {
+	.pyindi-ro.pyindi-col {
 		flex: 50%;
 	}
-	.pyindi-wo .pyindi-col {
+	.pyindi-wo.pyindi-col {
 		flex: 100%;
 	}
 }
