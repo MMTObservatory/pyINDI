@@ -14,15 +14,11 @@
 		<!-- Load pyINDI scripts -->
 		<script src="/indi/static/js/indi.js"></script>
 		<script src="/indi/static/js/maps-indi.js"></script>
-		<script src="/indi/static/js/custom.js"></script>
 		<!-- Load pyINDI styling -->
 		<link rel="stylesheet" href="/indi/static/css/indi.css">
-		<!-- Custom GUI styling -->
-		<link rel="stylesheet" href="/indi/static/css/custom.css">
 		<script>
 			/* Constants */
 			const CUSTOM_GUI = true;
-
 			/* Globals */
 			var available = {} // Available elements to use for custom gui
 
@@ -42,21 +38,33 @@
 				-------
 				None
 				*/
-				CUSTOM_GUI && console.log('Custom gui selected');
-				CUSTOM_GUI && document.body.setAttribute("data-theme", "dark");
 				start = new Date();
 				imgs = [];
-				
-				// If no custom GUI, use generic pyINDI GUI
-				!CUSTOM_GUI && buildpyINDI();
+
+				// Check if using custom gui
+				if (CUSTOM_GUI) {
+					console.log('Custom gui selected');
+					document.body.setAttribute("data-theme", "dark");
+				}
+				else {
+					buildpyINDI();
+				}
 				
 				// Tornado way of getting list
 				var devices = {% raw json_encode(device_name) %};
-				console.log(`Found ${devices.length} devices`);
-						
-				for (let device of devices) {
-					console.log(`Configuring device ${device}`);
-					setPropertyCallback(`${device}.*`, handleProperty, init=true);
+
+				// If has asterisk, grab all devices
+				if (devices.includes("*")) {
+					console.log(`Requesting all devices`);
+					setPropertyCallback('*.*', handleProperty, init=true);
+				}
+				else {
+					console.log(`Found ${devices.length} devices`);
+					for (let device of devices) {
+						console.log(`Configuring device ${device}`);
+						// Sets callback property for devices listed and init doesn't run first time through callback
+						setPropertyCallback(`${device}.*`, handleProperty, init=true);
+					}
 				}
 			}
 
@@ -67,7 +75,8 @@
 				-----------
 				This function updates the available vectors to use when building
 				the gui or custom gui. The indentifier is built using the device 
-				name and the name because the name is unique per device. I wanted to use a group to generalize it more, however when not a "def" then the
+				name and the name because the name is unique per device. I wanted to 
+				use a group to generalize it more, however when not a "def" then the
 				group is not included. This works out though because we can narrow down
 				more of what to exclude.
 
@@ -238,8 +247,7 @@
 					<div data-custom-device="GALIL-DMC-2280" data-custom-vector="GFILTER_ACTIONS"></div>
 					<hr class="pyindi-hr"> -->
 				</div>
-				<div class="bottom">
-					
+				<div class="bottom">	
 					<div class="pyindi-log-viewer">
 						<div class="pyindi-log-container" id="logger">
 							<p class="pyindi-log">INDI Messages and Logs displayed here</p>
@@ -254,7 +262,7 @@
 		const setupGoto = () => {
 			// Add button click sending all lvdt values
 			var goto = document.querySelector(".goto-switch");
-			goto.addEventListener("click", (event) => {console.log('Running button')
+			goto.addEventListener("click", (event) => {
 				var lvdta = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdta__input");
 				var lvdtb = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdtb__input");
 				var lvdtc = document.getElementById("GALIL-DMC-2280__IFOCUS_LVDT__lvdtc__input");
@@ -272,6 +280,12 @@
 	<style>
 		.pyindi-nav {
 			background-color: #B388FF;
+			color: #000;
+		}
+		.pyindi-h4 {
+			color: #000;
+		}
+		.icon {
 			color: #000;
 		}
 		.gui {
@@ -317,7 +331,7 @@
 
 		.issues {
 			text-decoration: none;
-			color: #fff;
+			color: #000;
 		}
 		.goto-switch {
 			margin-top: -15px;

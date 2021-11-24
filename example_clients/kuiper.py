@@ -22,15 +22,9 @@ logging.basicConfig(level=logging.INFO)
 # Configuration
 WEBPORT = 5905 # The port for the web app
 INDIPORT = 7624 # The indiserver port
-INDIHOST = '10.30.1.2' # Where the indiserver is running
+INDIHOST = '10.30.1.1' # Where the indiserver is running
 PYINDI_PANEL_PAGE = "pyindi-panel.html" # Name of the generic indi panel
-DEVICES = [ # Append device names here
-    "DOME-NG-INDI",
-    "FOCUS-NG-INDI",
-    "TCS-NG-INDI",
-    "Mirror Cover",
-    "Upper Dome"
-]
+DEVICES = ['*']
 
 # Build classes with path to go to for page
 # These are the handlers

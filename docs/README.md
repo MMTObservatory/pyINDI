@@ -4,6 +4,7 @@ Pure Python 3.7+ implementation of INDI for client and server
 [![Powered by AstroPy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org)
 
 # Instrument Neutral Distributed Interface (INDI) Overview
+Example of a custom GUI using pyINDI
 ![Screenshot of pyindi](screenshot.png)
 
 At it's core, INDI is a small set of xml definitions that are designed to be passed between a set of devices and clients.  Those definitions are described in detail by INDI's create Elwood Downey in the [INDI White Paper](http://www.clearskyinstitute.com/INDI/INDI.pdf). You can also find the DTD file in this repo [here](./pyindi/data). The passing of the XML between the device drivers and clients is almost always done by a server called indiserver

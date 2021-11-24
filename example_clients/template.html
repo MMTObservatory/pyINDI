@@ -9,19 +9,15 @@
 		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
 		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
 		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
-		<title>pyINDI Template</title>
+		<title>pyINDI Panel</title>
 		<!-- Load pyINDI scripts -->
 		<script src="/indi/static/js/indi.js"></script>
 		<script src="/indi/static/js/maps-indi.js"></script>
-    <!-- Custom scripts -->
-		<script src="/indi/static/js/custom.js"></script>
 		<!-- Load pyINDI styling -->
 		<link rel="stylesheet" href="/indi/static/css/indi.css">
-		<!-- Custom GUI styling -->
-		<link rel="stylesheet" href="/indi/static/css/custom.css">
 		<script>
 			/* Constants */
-			const CUSTOM_GUI = false;
+			var CUSTOM_GUI = false; // Triggers to true if html is in body tag below
 
 			/* Globals */
 			var available = {} // Available elements to use for custom gui
@@ -42,21 +38,34 @@
 				-------
 				None
 				*/
-				CUSTOM_GUI && console.log('Custom gui selected');
 				start = new Date();
 				imgs = [];
-				
-				// If no custom GUI, use generic pyINDI GUI
-				!CUSTOM_GUI && buildpyINDI();
+
+				// Check if using custom gui
+				// Setup one time settings here if custom GUI like dark mode
+
+				if (CUSTOM_GUI) {
+					console.log('Custom gui selected');
+				}
+				else {
+					buildpyINDI();
+				}
 				
 				// Tornado way of getting list
 				var devices = {% raw json_encode(device_name) %};
-				console.log(`Found ${devices.length} devices`);
-						
-				for (let device of devices) {
-					console.log(`Configuring device ${device}`);
-          // Sets callback property for devices listed and init doesn't run first time through callback
-					setPropertyCallback(`${device}.*`, handleProperty, init=true);
+
+				// If has asterisk, grab all devices
+				if (devices.includes("*")) {
+					console.log(`Requesting all devices`);
+					setPropertyCallback('*.*', handleProperty, init=true);
+				}
+				else {
+					console.log(`Found ${devices.length} devices`);
+					for (let device of devices) {
+						console.log(`Configuring device ${device}`);
+						// Sets callback property for devices listed and init doesn't run first time through callback
+						setPropertyCallback(`${device}.*`, handleProperty, init=true);
+					}
 				}
 			}
 
@@ -67,7 +76,8 @@
 				-----------
 				This function updates the available vectors to use when building
 				the gui or custom gui. The indentifier is built using the device 
-				name and the name because the name is unique per device. I wanted to use a group to generalize it more, however when not a "def" then the
+				name and the name because the name is unique per device. 
+				I wanted to use a group to generalize it more, however when not a "def" then the
 				group is not included. This works out though because we can narrow down
 				more of what to exclude.
 
@@ -155,9 +165,8 @@
 		</script>
 	</head>
 	<body>
-    <!-- Put custom code here -->
-    <!-- <div data-custom-device="DEVICE" data-custom-vector="VECTOR"></div> -->
+    <!-- Put custom GUI stuff here -->
+		<!-- <div data-custom-device="" data-custom-vector=""></div> -->
 	</body>
 	<script>document.body.addEventListener("load", main());</script>
 </html>
-
