@@ -1,9 +1,11 @@
 :root {
-	--indistate-idle: #EEEEEE;
+	--indistate-idle: #E0E0E0;
 	--indistate-ok: #00E676;
 	--indistate-busy: #FFC400;
 	--indistate-alert: #FF1744;
 	--indistate-unknown: magenta;
+	--invalid: #FF1744;
+	--invalid-focus: #FF5252;
 	--primary-light: #82B1FF;
 	--primary: #3D5AFE;
 	--primary-dark: #304FFE;
@@ -26,11 +28,14 @@
 	--text-header-h1: #fff;
 	--text-header-h2: #616161;
 	--text-header-h3: #424242;
+	--text-header-h4: #fff;
 	--text-label: #424242;
 	--text-value: #212121;
 	--text-switch: #212121;
 	--text-switch-active: #FAFAFA;
-	--bg-input: #fff;
+	--text-light: #212121;
+	--text-light-active: #212121;
+	--bg-input: #FAFAFA;
 	--bg-switch: #EEEEEE;
 	--bg-switch-hover: #E0E0E0;
 	--bg-switch-active: #3D5AFE;
@@ -38,62 +43,138 @@
 	--bg-input-border: #E0E0E0;
 	--bg-device-header: #00796B;
 	--bg-minmax: #00796B;
+	--bg-minmax-header: #fff;
 	--bg-device: #ffffff;
-	--bg-body: #f8f9fa;
+	--bg-body: #FAFAFA;
+	--bg-light: #EEEEEE;
+	--bg-icon: #fff;
+	--bg-nav: #424242;
+	--bg-switch-press: #BDBDBD;
 }
 [data-theme="dark"] {
+	--indistate-idle: #424242;
+	--indistate-ok: #69F0AE;
+	--indistate-busy: #FFD740;
+	--indistate-alert: #FF5252;
+	--invalid: #FF5252;
+	--invalid-focus: #FF8A80;
+	--indistate-unknown: magenta;
+	--primary-light: #B388FF; 
 	--primary: #7C4DFF;
 	--primary-dark: #651FFF;
 	--text-header-h1: #fff;
 	--text-header-h2: #E0E0E0;
 	--text-header-h3: #F5F5F5;
+	--text-header-h4: #fff;
 	--text-label: #fff;
 	--text-value: #fff;
 	--text-switch: #EEEEEE;
 	--text-switch-active: #FAFAFA;
+	--text-navbar: #fff;
+	--text-light: #EEEEEE;
+	--text-light-active: #212121;
 	--bg-input: #424242;
 	--bg-input-border: #616161;
 	--bg-device-header: #424242;
 	--bg-minmax: #B388FF;
+	--bg-minmax-header: #fff;
 	--bg-device: #212121;
-	--bg-body: #000000;
+	--bg-body: #000;
 	--bg-switch: #757575;
 	--bg-switch-hover: #616161;
 	--bg-switch-active: #7C4DFF;
 	--bg-switch-active-hover: #651FFF;
+	--bg-nav: #424242;
+	--bg-light: #616161;
+	--bg-icon: #fff;
+	--bg-switch-press: #424242;
+	
 }
-
-.pyindi-device {
-	margin: 1rem 1rem;
-	border-radius: .25rem;
+.text-right {
+	text-align: right;
+}
+.text-left {
+	text-align: left;
+}
+.text-center {
+	text-align: center;
+}
+.pyindi-hr {
+	height: 1px;
+	color: var(--bg-input);
+	background-color: var(--bg-input);
+	border: none;
+	width: 95%;
+	margin: auto;
+}
+.pyindi {
 	max-width: 640px;
 	margin: 0 auto;
-	background-color: var(--bg-device);
 	border-radius: .25rem;
+}
+.pyindi-nav {
+	background-color: var(--bg-nav);
+	border-top-right-radius: .25rem;
+	border-top-left-radius: .25rem;
+	padding: .25rem .75rem;
+	line-height: 1.5;
+}
+.pyindi-device {
+	background-color: var(--bg-device);
 }
 .pyindi-device-header {
 	line-height: 1.5;
 	padding: 1rem .75rem;
 	display: block;
 	background-color: var(--bg-device-header);
-	border-top-left-radius: .25rem;
-	border-top-right-radius: .25rem;
+}
+.pyindi-row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	width: 100%;
+}
+.pyindi-col {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+
+@media screen and (max-width: 560px) {
+	.pyindi-property-label.pyindi-col {
+		flex: 50%;
+	}
+	.pyindi-ro.pyindi-col {
+		flex: 50%;
+	}
+	.pyindi-wo.pyindi-col {
+		flex: 100%;
+	}
 }
 .pyindi-h1 {
 	font-weight: 700;
 	font-size: 1.25rem;
 	color: var(--text-header-h1);
 	margin: 0;
+	display: inline-block;
 }
 .pyindi-group {
 	padding: .75rem .75rem;
 	margin: 0;
 	background-color: inherit;
+	max-width: 640px;
 }
 .pyindi-h2 {
 	font-weight: 700;
 	font-size: 1.25rem;
 	color: var(--text-header-h2);
+	margin: 0;
+	display: inline-block;
+}
+.pyindi-h4 {
+	font-weight: 700;
+	font-size: 1rem;
+	color: var(--text-header-h4);
 	margin: 0;
 	display: inline-block;
 }
@@ -103,19 +184,21 @@
 }
 .pyindi-light-label {
 	display: inline-block;
-	font-weight: 400;
+	font-weight: 700;
 	line-height: 1.5;
+	letter-spacing: 1.2px;
+	text-transform: uppercase;
 	text-align: center;
 	user-select: none;
 	border: 1px solid transparent;
-	padding: .25rem .5rem;
-	font-size: 1rem;
+	padding: .25rem 1rem;
+	font-size: .9rem;
 	border-radius: 1rem;
 	overflow: visible;
-	background-color: var(--muted);
+	background-color: var(--bg-light);
 	margin: .25rem .125rem;
-	color: var(--text-switch);
-	min-width: 50px;
+	color: var(--text-light);
+	margin-right: .5rem;
 }
 .pyindi-switch-label {
 	display: inline-block;
@@ -135,22 +218,23 @@
 	overflow: visible;
 	background-color: var(--bg-switch);
 	margin: .25rem .125rem;
-	box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2);
+	/* box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2); */
 	color: var(--text-switch);
 	margin-right: .5rem;
 }
 .pyindi-switch-label:hover {
 	background-color: var(--bg-switch-hover);
-	border-color: var(--bg-switch-hover);
 }
+.pyindi-switch-label:active {
+	background-color: var(--bg-switch-press);
+}
+
 .pyindi-switch-label-active {
 	background-color: var(--bg-switch-active);
-	border-color: var(--bg-switch-active);
 	color: var(--text-switch-active);
 }
 .pyindi-switch-label-active:hover {
 	background-color: var(--bg-switch-active-hover);
-	border-color: var(--bg-switch-active-hover);
 }
 .pyindi-switch-input {
 	position: absolute;
@@ -168,6 +252,7 @@ body {
 	font-family: sans-serif;
 	background-color: var(--bg-body);
 }
+
 .pyindi-vector {
 	background-color: inherit;
 	border: none;
@@ -185,24 +270,23 @@ body {
 	margin-bottom: 0;
 	outline: none;
 	font-family: inherit;
-	margin-left: 1rem;
-	width: 12rem;
 }
 .pyindi-ro {
 	border: none;
 	padding-top: calc(.375rem + 1px);
 	padding-bottom: calc(.375rem + 1px);
 	background-color: inherit;
-	float: left;
-	color: var(--text-value)
+	color: var(--text-value);
+	font-weight: 700;
 }
 .pyindi-wo {
 	border: 1px solid var(--bg-input-border);
-	padding-top: .375rem;
-	padding-bottom: .375rem;
+	padding-top: .15rem;
+	padding-bottom: .15rem;
+	margin-top: .20rem;
+	margin-bottom: .20rem;
 	background-color: var(--bg-input);
 	transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
-	float: right;
 	color: var(--text-label);
 }
 .pyindi-wo:focus {
@@ -210,6 +294,36 @@ body {
 	outline: none;
 	box-shadow: 0 0 0 0.125rem var(--primary-light);
 }
+.pyindi-log-viewer {
+	background-color: var(--bg-device);
+	padding: 1rem .75rem;
+	margin: auto;
+}
+.pyindi-log-container {
+	border: 1px solid var(--bg-input-border);
+	background-color: var(--bg-input);
+	cursor: default;
+	height: 150px;
+	overflow: auto;
+	max-width: 100%;
+	border-radius: .25rem;
+	padding: 0 .75rem;
+	font-family:'Courier New', Courier, monospace;
+}
+.pyindi-log {
+	font-size: 0.8rem;
+	margin: 0;
+	line-height: 1.5;
+	color: var(--text-value)
+}
+.invalid {
+	border: 1px solid var(--invalid);
+}
+.invalid:focus {
+	border-color: var(--invalid);
+	box-shadow: 0 0 0 0.125rem var(--invalid-focus);
+}
+
 /* 
 https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
 When floating child in parent, the parent ignores them.
@@ -250,8 +364,22 @@ When floating child in parent, the parent ignores them.
 	user-select: none;
 	color: var(--bg-minmax);
 }
+.pyindi-device-header .minmax {
+	color: var(--bg-minmax-header);
+}
+.icon {
+	line-height: 1.5;
+	cursor: pointer;
+	user-select: none;
+	color: var(--bg-icon);
+}
 .hide {
 	display: none;
+}
+.tip {
+	color: var(--invalid);
+	width: 100%;
+	font-size: .8rem;
 }
 .blinking-busy {
   animation: blinker 1.5s linear infinite;
@@ -263,4 +391,7 @@ When floating child in parent, the parent ignores them.
   50% {
     opacity: 0;
   }
+}
+.retro {
+	font-family: 'Audiowide', monospace;
 }

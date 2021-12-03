@@ -24,6 +24,7 @@ var ws; // The persistent web socket connection
 var read_write = false; // The websocket will trigger this true if connected
 var setPropertyCallbacks = {} // Stores callbacks for properties
 var partial_doc = ""; // accumulate xml in pieces
+var logger; // Store element that logger is in
 
 document.addEventListener("DOMContentLoaded", () => {
   /* Initialize the list of types that updateProperties will handle */
@@ -38,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   console.log(`Accepting ${indi_types}`);
 
+  // Connect to logger
+  logger = document.getElementById("logger");
+  
   // create web server connection
   wsStart();
 })
@@ -64,7 +68,7 @@ const wsStart = () => {
     if (loc.port != READONLY_PORT) {
       read_write = true;
     }
-    const url = 'ws://' + loc.host + WS_PAGE;
+    const url = `ws://${loc.host}${WS_PAGE}`;
     console.log(url);
     ws = new WebSocket(url);
 
@@ -79,7 +83,7 @@ const wsStart = () => {
       for (var property in setPropertyCallbacks) {
         var callback = setPropertyCallbacks[property];
         if (callback) {
-          console.log ('requesting ' + property);
+          console.log(`Requesting ${property}`);
           setPropertyCallback(property, callback);
         }
       }
@@ -207,12 +211,12 @@ const setindi = (...theArgs) => {
     msgprefix = "Websocket send (not sent): ";
   }
 
-  showmsg(`${msgprefix}${setcmd}`);
+  showMessage(`${msgprefix}${setcmd}`);
 
   return;
 }
 
-const setPropertyCallback = (property, callback) => {
+const setPropertyCallback = (property, callback, init=false) => {
   /* Sets property callback
 
   Description
@@ -246,35 +250,34 @@ const setPropertyCallback = (property, callback) => {
   var devname = property.split(".");
   var device = devname[0];
   var name = devname[1];
-  var getprop = `<getProperties version="1.7" device="${device}"`;
+  var getprop = `<getProperties version="1.7" `;
   //var getprop = `<getProperties version="1.7" `;
 
-  /* if (device !== "*") {
+  if (device !== '*') {
     getprop += `device="${device}" `;
   }
-  
-  if (device !== "*" && name !== '*') {
-    getprop += `name="${name}" `;
-  } */
-
   if (name !== '*') {
-    getprop += ` name="${name}" `;
+    getprop += `name="${name}" `;
   }
 
   getprop += `/>\n`;
-  // Send over ws
-  wsSend(getprop);
 
   // Also ask for BLOBs, harmless if not
-  var getblob = `<enableBLOB device="${device}"`;
+  var getblob = `<enableBLOB`;
+  if (device !== '*') {
+    getblob += ` device="${device}" `;
+  }
   if (name != '*') {
     getblob += ` name="${name}"`
   }
 
   getblob += `>Also</enableBLOB>\n`;
 
-  // Send over ws
-  wsSend(getblob);
+  // Without this check it sends properties twice
+  if (!init) {
+    ws.send(getprop);
+    ws.send(getblob);
+  }
 
   return;
 };
@@ -464,9 +467,8 @@ const updateProperties = (xml_text) => {
       /*
       The rest of this was in a jquery each function and I don't know why because only one xml payload is delivered at a time. Maybe it was designed for multiple in the beginning then converted. For example, if there were more than one root node then this would only go over the first one. Keep this in mind if an error occurs during this part. That could be the fix.
       */
-      var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`];
-      
-      
+      var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`] || setPropertyCallbacks['*.*'];
+    
       if (callback) {
         var INDI = flattenIndiLess(root_node);
         callback(INDI);
@@ -508,9 +510,10 @@ const scrapeMessages = (partial_doc) => {
       var root_node = dom.documentElement; // Root node
 
       var msg = root_node.getAttribute("message");
-      
-      var msgprefix = "INDI message: "
-      showmsg(`${msgprefix}${msg}`);
+      var device = root_node.getAttribute("device");
+      var timestamp = root_node.getAttribute("timestamp");
+       
+      showINDIMessage(timestamp, device, msg);
 
       // Removes message from xml
       cp_partial_doc = cp_partial_doc.replace(match[0], "")
@@ -521,12 +524,30 @@ const scrapeMessages = (partial_doc) => {
   }
   return cp_partial_doc;
 }
-
-const showmsg = (msg) => {
-  /* Prints to console if INDI_DEBUG is true */
-  if (INDI_DEBUG) {
-    console.debug(msg);
+const showINDIMessage = (timestamp, device, message) => {
+  if (customGUI && !logger) {
+    showMessage(message);
+    return;
   }
+  
+  var p = document.createElement("p");
+  
+  p.classList.add("pyindi-log");
+  var loggerHeight = logger.scrollHeight;
 
+  var isScrolledToBottom = logger.scrollHeight - logger.clientHeight <= logger.scrollTop + 1;
+
+  // https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
+  p.textContent = `${timestamp} ${device} ${message}`
+  logger.appendChild(p);
+  if (isScrolledToBottom) {
+    logger.scrollTo(0, loggerHeight,);
+  }
+}
+
+const showMessage = (message) => {
+  /* Prints to the console if INDI_DEBUG is true */
+  INDI_DEBUG && console.info(message);
   return;
 }
+

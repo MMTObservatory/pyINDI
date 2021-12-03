@@ -9,18 +9,15 @@
 		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
 		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
 		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
-		<title>pyINDI</title>
+		<title>pyINDI Panel</title>
 		<!-- Load pyINDI scripts -->
 		<script src="/indi/static/js/indi.js"></script>
 		<script src="/indi/static/js/maps-indi.js"></script>
-		<script src="/indi/static/js/custom.js"></script>
 		<!-- Load pyINDI styling -->
 		<link rel="stylesheet" href="/indi/static/css/indi.css">
-		<!-- Custom GUI styling -->
-		<link rel="stylesheet" href="/indi/static/css/custom.css">
 		<script>
 			/* Constants */
-			const CUSTOM_GUI = false;
+			var CUSTOM_GUI = false; // Triggers to true if html is in body tag below
 
 			/* Globals */
 			var available = {} // Available elements to use for custom gui
@@ -41,47 +38,65 @@
 				-------
 				None
 				*/
-				CUSTOM_GUI && console.log('Custom gui selected');
 				start = new Date();
 				imgs = [];
-				document.documentElement.setAttribute("data-theme", "light");
 
+				// Check if using custom gui
+				// Setup one time settings here if custom GUI like dark mode
+
+				if (CUSTOM_GUI) {
+					console.log('Custom gui selected');
+				}
+				else {
+					buildpyINDI();
+				}
+				
+				// Tornado way of getting list
 				var devices = {% raw json_encode(device_name) %};
-				console.log(`Found ${devices.length} devices`);
-						
-				for (let device of devices) {
-					console.log(`Configuring device ${device}`);
-					setPropertyCallback(`${device}.*`, handleProperty);
+
+				// If has asterisk, grab all devices
+				if (devices.includes("*")) {
+					console.log(`Requesting all devices`);
+					setPropertyCallback('*.*', handleProperty, init=true);
+				}
+				else {
+					console.log(`Found ${devices.length} devices`);
+					for (let device of devices) {
+						console.log(`Configuring device ${device}`);
+						// Sets callback property for devices listed and init doesn't run first time through callback
+						setPropertyCallback(`${device}.*`, handleProperty, init=true);
+					}
 				}
 			}
 
-			const updateAvailable = (INDIvp, omit=false) => {
+			const updateAvailable = (INDI, omit=false) => {
 				/* Updates hash table of available vectors
 
 				Description
 				-----------
 				This function updates the available vectors to use when building
 				the gui or custom gui. The indentifier is built using the device 
-				name and the name because the name is unique per device. I wanted to use a group to generalize it more, however when not a "def" then the
+				name and the name because the name is unique per device. 
+				I wanted to use a group to generalize it more, however when not a "def" then the
 				group is not included. This works out though because we can narrow down
 				more of what to exclude.
 
 				Arguments
 				---------
-				INDIvp : Object that contains all information about the indi property
+				INDI : Object that contains all information about the indi property
 				omit   : If true, stores the value as false to omit from gui
 
 				Returns
 				-------
 				None
 				*/
-				var identifier = `${INDIvp.device}.${INDIvp.name}`;
+				var identifier = `${INDI.device}.${INDI.name}`;
 				available[identifier] = omit ? false : true;
 
 				return;
 			}
 
-			const handleProperty = (INDIvp) => {
+			const handleProperty = (INDI) => {
 				/* Handles incoming indi
 
 				Description
@@ -97,7 +112,7 @@
 
 				Arguments
 				---------
-				INDIvp   : Object that contains all information about the indi property
+				INDI : Object that contains all information about the indi property
 
 				Returns
 				-------
@@ -107,64 +122,50 @@
 
 				/*
 				If we want a custom gui, we need to build the html below in <body>.
-				In that, we should use a data-attribute so when a new INDIvp comes
-				in, we try to find the data-attribute. To start off, lets only use the
-				group for custom positioning because all children will automatically
-				be built there. After, we can focus on skipping group and only doing
-				the vectors. 
+				In that, we should use the vector ID and device ID so when a new INDI 
+				comes in, we try to find the id. To start off, lets only use the
+				vector for custom positioning.
 				*/
-				if (INDIvp.op === "def") {
+				if (INDI.op === "def") {
 					if (!CUSTOM_GUI) {
-						var device = newDevice(INDIvp);
-						var group = newGroup(INDIvp);
+						var device = newDevice(INDI);
+						var group = newGroup(INDI);
 
-						// Update
-						updateAvailable(INDIvp);
+						// Update table of available properties
+						updateAvailable(INDI);
 					}
 					else {
 						// Get the element to build the new group in
-						appendToSelector = `[data-gui="${INDIvp.device}.${INDIvp.group}"]`;
-						var appendTo = document.querySelector(appendToSelector);
+						var deviceSelector = `[data-custom-device="${INDI.device}"]`;
+						var vectorSelector = `[data-custom-vector="${INDI.name}"]`;
+
+						var appendToSelector = `${deviceSelector}${vectorSelector}`; 
+						var appendTo = document.querySelector(`${appendToSelector}`);
 
 						// If the placement doesn't exist, issue to console and return
 						if (!appendTo) {
-							console.debug(`Skipping ${INDIvp.device}.${INDIvp.group}.${INDIvp.name}`);
-							updateAvailable(INDIvp, omit=true);
+							console.debug(`Skipping ${INDI.device}.${INDI.group}.${INDI.name}`);
+							updateAvailable(INDI, omit=true);
 							return;
 						}
-						var group = newGroup(INDIvp, appendTo);
-						updateAvailable(INDIvp);
+						var vector = newVector(INDI, appendTo);
+						updateAvailable(INDI);
 					}
 				}
-				// Build properties
-				if (!available[`${INDIvp.device}.${INDIvp.name}`]) {
+				// Update properties
+				if (!available[`${INDI.device}.${INDI.name}`]) {
 					return;
 				}
 
-				switch (INDIvp.metainfo) {
-					case "nvp":
-						ele = newNumber(INDIvp);
-					break;
-					case "svp":
-						ele = newSwitch(INDIvp);
-					break;
-					case "tvp":
-						ele = newText(INDIvp);
-					break;
-					case "lvp":
-						ele = newLight(INDIvp);
-					break;
-					default:
-				}
+				var vector = newVector(INDI);
+				// Do whatever you want with vector element
 
-				return;
+        return;
 			}
 		</script>
 	</head>
 	<body>
-		<!-- Use this area to build custom GUIs and map in callback -->
-		<div data-gui="Dome Simulator.Main Control"></div>
+    
 	</body>
 	<script>document.body.addEventListener("load", main());</script>
 </html>
-
