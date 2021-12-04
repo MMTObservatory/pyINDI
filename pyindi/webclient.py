@@ -330,6 +330,28 @@ class INDIWebApp:
 
         self.mainloop.add_callback(self.client.connect)
 
+    def indi_handlers(self):
+        handlers = [] 
+        indiws_route = r"/indi/websocket"
+        indistatic_route = r"/indi/static/(.*)"
+        lastblob_route = r"/indi/blob/lastblob.([a-z]*)"
+
+        # Add the default page
+        handlers.append((r"/indi/index.html", DefaultIndex))
+
+        
+        handlers.append((lastblob_route, BlobRequestHandler))
+
+        # Insert the websocket handler.
+        handlers.insert(0, (indiws_route, INDIWebSocket))
+        
+        # Insert the static indi stuff. 
+        handlers.insert(0, (
+                indistatic_route, 
+                tornado.web.StaticFileHandler, 
+                {"path": self.static_path}))
+
+        return handlers
 
 
     def build_app(self, handlers=None, **settings):
