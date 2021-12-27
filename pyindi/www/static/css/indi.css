@@ -395,3 +395,50 @@ When floating child in parent, the parent ignores them.
 .retro {
 	font-family: 'Audiowide', monospace;
 }
+.pyindi-tooltip {
+	position: relative;
+	margin-left: 10px;
+	font-size: .75rem;
+	display: inline-block;
+}
+.pyindi-tooltip:before,
+.pyindi-tooltip:after {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+.pyindi-tooltip:after {
+	border-right: 6px solid transparent;
+	border-bottom: 6px solid var(--bg-nav); 
+  border-left: 6px solid transparent;
+  content: '';
+  height: 0;
+  top: 20px;
+  left: px;
+  width: 0;
+}
+.pyindi-tooltip:before {
+  background: var(--bg-nav);
+  border-radius: 2px;
+  color: #fff;
+  content: attr(data-title);
+  padding: 6px 10px;
+  top: 26px;
+	width: 200px;
+  white-space: wrap;
+}
+.pyindi-tooltip:after,
+.pyindi-tooltip:before {
+  transform: translate3d(0,-10px,0);
+  transition: all .15s ease-in-out;
+}
+.pyindi-tooltip:hover:after,
+.pyindi-tooltip:hover:before {
+  opacity: 1;
+  transform: translate3d(0,0,0);
+}
+.icon-tooltip {
+	font-weight: 900;
+	font-size: 1.125rem;
+}

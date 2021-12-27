@@ -60,6 +60,7 @@ Functions
 ---------
 - buildpyINDI              : Builds the generic pyINDI GUI
 - buildpyINDILogViewer     : Builds the window for viewing logs
+- buildTooltip             : Builds a generic tooltip for hints
 - buildNav                 : Builds the navbar for pyindi generic GUI
 - buildDevice              : builds div to hold new device
 - buildGroup               : builds group to hold new group
@@ -107,6 +108,23 @@ const buildpyINDILogViewer = () => {
 
 	logger.appendChild(p);
 	div.appendChild(logger);
+	return div;
+}
+
+const buildTooltip = (vector, tip) => {
+	/* Builds tooltip to append for tips */
+	var legend = vector.childNodes[0];
+	var div = document.createElement("div");
+	var i = document.createElement("i");
+
+	div.classList.add("pyindi-tooltip");
+	div.setAttribute("data-title", tip);
+	// Fontawesome classes and icon
+	i.classList.add("fas", "fa-question-circle", "icon-tooltip");
+	
+	div.appendChild(i);
+	legend.appendChild(div);
+
 	return div;
 }
 

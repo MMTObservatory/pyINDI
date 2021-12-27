@@ -150,22 +150,22 @@
 						}
 						var vector = newVector(INDI, appendTo);
 						updateAvailable(INDI);
+						// Handle vector for the first time here
+						
 					}
 				}
 				// Update properties
 				if (!available[`${INDI.device}.${INDI.name}`]) {
 					return;
 				}
-
+				// Handle vector every time it comes in
 				var vector = newVector(INDI);
-				// Do whatever you want with vector element
 
         return;
 			}
 		</script>
 	</head>
 	<body>
-    
 	</body>
 	<script>document.body.addEventListener("load", main());</script>
 </html>
