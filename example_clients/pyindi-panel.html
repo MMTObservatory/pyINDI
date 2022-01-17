@@ -13,153 +13,52 @@
 		<!-- Load pyINDI scripts -->
 		<script src="/indi/static/js/indi.js"></script>
 		<script src="/indi/static/js/maps-indi.js"></script>
+		<script src="/indi/static/js/constants.js"></script>
+		<script src="/indi/static/js/config.js"></script>
 		<!-- Load pyINDI styling -->
 		<link rel="stylesheet" href="/indi/static/css/indi.css">
 		<script>
 			/* Constants */
 			var CUSTOM_GUI = false; // Triggers to true if html is in body tag below
 
-			/* Globals */
-			var available = {} // Available elements to use for custom gui
 
+			/**
+			* Runs on load. Builds the default properties using a callback.
+			*/
 			const main = () => {
-				/* Runs on load
-				
-				Description
-				-----------
-				Builds with default properties using below callback. Change
-				to modify the callbacks.
-
-				Arguments
-				---------
-				None
-
-				Returns
-				-------
-				None
-				*/
-				start = new Date();
-				imgs = [];
-
-				// Check if using custom gui
-				// Setup one time settings here if custom GUI like dark mode
-
-				if (CUSTOM_GUI) {
-					console.log('Custom gui selected');
-				}
-				else {
-					buildpyINDI();
-				}
-				
 				// Tornado way of getting list
 				var devices = {% raw json_encode(device_name) %};
-
-				// If has asterisk, grab all devices
-				if (devices.includes("*")) {
-					console.log(`Requesting all devices`);
-					setPropertyCallback('*.*', handleProperty, init=true);
-				}
-				else {
-					console.log(`Found ${devices.length} devices`);
-					for (let device of devices) {
-						console.log(`Configuring device ${device}`);
-						// Sets callback property for devices listed and init doesn't run first time through callback
-						setPropertyCallback(`${device}.*`, handleProperty, init=true);
-					}
-				}
-			}
-
-			const updateAvailable = (INDI, omit=false) => {
-				/* Updates hash table of available vectors
-
-				Description
-				-----------
-				This function updates the available vectors to use when building
-				the gui or custom gui. The indentifier is built using the device 
-				name and the name because the name is unique per device. 
-				I wanted to use a group to generalize it more, however when not a "def" then the
-				group is not included. This works out though because we can narrow down
-				more of what to exclude.
-
-				Arguments
-				---------
-				INDI : Object that contains all information about the indi property
-				omit   : If true, stores the value as false to omit from gui
-
-				Returns
-				-------
-				None
-				*/
-				var identifier = `${INDI.device}.${INDI.name}`;
-				available[identifier] = omit ? false : true;
+				builder.init(devices);
 
 				return;
 			}
 
-			const handleProperty = (INDI) => {
-				/* Handles incoming indi
 
-				Description
-				-----------
-				This function will be called whenever an INDI property with the device 
-				{{ device_name }} is received. This is where users should modify the
-				code to append to specific objects.
-
-				If wanting to use a custom GUI, enable in the configuration and use 
-				appendTo for each grouping. If you assign the group to a specific 
-				location, all of the nested properties will populate in the group 
-				location.
-
-				Arguments
-				---------
-				INDI : Object that contains all information about the indi property
-
-				Returns
-				-------
-				None
-				*/
-				// If definition, create new group and device if needed
-
-				/*
-				If we want a custom gui, we need to build the html below in <body>.
-				In that, we should use the vector ID and device ID so when a new INDI 
-				comes in, we try to find the id. To start off, lets only use the
-				vector for custom positioning.
-				*/
-				if (INDI.op === "def") {
-					if (!CUSTOM_GUI) {
-						var device = newDevice(INDI);
-						var group = newGroup(INDI);
-
-						// Update table of available properties
-						updateAvailable(INDI);
+			/**
+			* This function will be called whenever an INDI property with the device 
+			*	{{ device_name }} is received. This is where users should modify the
+			*	code to append to specific objects.
+			*
+			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting 
+			* elements.
+			* @param {Object} indi Contains all information about INDI property
+			*/
+			const handleProperty = (indi) => {
+				if (indi.op === IndiOp.DEFINITION) {
+					if (!UserConfig.CUSTOM_GUI) {
+						updater.handle(indi);
 					}
 					else {
-						// Get the element to build the new group in
-						var deviceSelector = `[data-custom-device="${INDI.device}"]`;
-						var vectorSelector = `[data-custom-vector="${INDI.name}"]`;
-
-						var appendToSelector = `${deviceSelector}${vectorSelector}`; 
-						var appendTo = document.querySelector(`${appendToSelector}`);
-
-						// If the placement doesn't exist, issue to console and return
-						if (!appendTo) {
-							console.debug(`Skipping ${INDI.device}.${INDI.group}.${INDI.name}`);
-							updateAvailable(INDI, omit=true);
+						var vector = updater.custom(indi);
+						// If returned vector is null, bad selector
+						if (!vector) {
 							return;
 						}
-						var vector = newVector(INDI, appendTo);
-						updateAvailable(INDI);
 						// Handle vector for the first time here
-						
 					}
 				}
-				// Update properties
-				if (!available[`${INDI.device}.${INDI.name}`]) {
-					return;
-				}
 				// Handle vector every time it comes in
-				var vector = newVector(INDI);
+				var vector = updater.vector(indi);
 
         return;
 			}

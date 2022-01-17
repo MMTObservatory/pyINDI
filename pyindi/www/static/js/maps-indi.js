@@ -1,35 +1,14 @@
-/* Constants */
-const INDI_OPS = [
-  "set",
-  "def"
-]
-const INDI_TYPES = [
-  "Number",
-  "Text",
-  "Switch",
-  "Light",
-  "BLOB"
-]
-const INDI_DEBUG = true; // Turn on debugging
-const READONLY_PORT = 8081; // setindi() is muted when on this port
-const WS_PAGE = "/indi/websocket"; // Must match URL
-const WS_SEND_WAIT = 30 // millaseconds, how long to wait to resend
-const WS_RETRY = 1000 // millaseconds, how long to wait to reconnect
-const XML_START_REGEX = /<.e[twf]\S*Vector/; // accept <set <new <def <get
-const XML_MESSAGE_REGEX = /<message\s+.*\/>.*/g;
-
 /* Globals */
 var indi_types = ""; // All INDI types we accept
 var ws; // The persistent web socket connection
 var read_write = false; // The websocket will trigger this true if connected
 var setPropertyCallbacks = {} // Stores callbacks for properties
 var partial_doc = ""; // accumulate xml in pieces
-var logger; // Store element that logger is in
 
 document.addEventListener("DOMContentLoaded", () => {
   /* Initialize the list of types that updateProperties will handle */
-  INDI_OPS.forEach((op) => {
-    INDI_TYPES.forEach((type) => {
+  ApprovedOp.forEach((op) => {
+    ApprovedTypes.forEach((type) => {
       if (indi_types.length) {
         indi_types += ", "; // Append , and space if there already is part of str
       }
@@ -38,9 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
   })
 
   console.log(`Accepting ${indi_types}`);
-
-  // Connect to logger
-  logger = document.getElementById("logger");
   
   // create web server connection
   wsStart();
@@ -65,10 +41,10 @@ const wsStart = () => {
 
     // create web socket
     var loc = window.location;
-    if (loc.port != READONLY_PORT) {
+    if (loc.port != Config.READONLY_PORT) {
       read_write = true;
     }
-    const url = `ws://${loc.host}${WS_PAGE}`;
+    const url = `ws://${loc.host}${Config.WS_PAGE}`;
     console.log(url);
     ws = new WebSocket(url);
 
@@ -103,7 +79,7 @@ const wsStart = () => {
 
       // restart web socket
       ws = null;
-      setTimeout(() => {wsStart()}, WS_RETRY);
+      setTimeout(() => {wsStart()}, Config.WS_RETRY);
     };
 
     ws.onerror = (event) => {
@@ -136,7 +112,7 @@ const wsSend = (msg) => {
     ws.send(msg);
   }
   else {
-    setTimeout(() => {wsSend(msg);}, WS_SEND_WAIT);
+    setTimeout(() => {wsSend(msg);}, Config.WS_SEND_WAIT);
   }
 
   return;
@@ -418,7 +394,7 @@ const updateProperties = (xml_text) => {
     // Find first opening tag, done if none
     partial_doc = scrapeMessages(partial_doc);
 
-    var start_match = XML_START_REGEX.exec(partial_doc);
+    var start_match = XmlRegex.XML_START.exec(partial_doc);
 
     if (!start_match || start_match.index < 0) {
       return;
@@ -502,7 +478,7 @@ const scrapeMessages = (partial_doc) => {
   try {
     var cp_partial_doc = partial_doc;
 
-    while ((match = XML_MESSAGE_REGEX.exec(partial_doc))) {
+    while ((match = XmlRegex.XML_MESSAGE.exec(partial_doc))) {
       //TODO: We should check for device here.
       // Parse match
       const parser = new DOMParser();
@@ -525,29 +501,16 @@ const scrapeMessages = (partial_doc) => {
   return cp_partial_doc;
 }
 const showINDIMessage = (timestamp, device, message) => {
-  if (customGUI && !logger) {
+  if (UserConfig.CUSTOM_GUI && !logging.logger) {
     showMessage(message);
     return;
   }
-  
-  var p = document.createElement("p");
-  
-  p.classList.add("pyindi-log");
-  var loggerHeight = logger.scrollHeight;
-
-  var isScrolledToBottom = logger.scrollHeight - logger.clientHeight <= logger.scrollTop + 1;
-
-  // https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
-  p.textContent = `${timestamp} ${device} ${message}`
-  logger.appendChild(p);
-  if (isScrolledToBottom) {
-    logger.scrollTo(0, loggerHeight,);
-  }
+  logging.log(message, timestamp, device);
 }
 
 const showMessage = (message) => {
   /* Prints to the console if INDI_DEBUG is true */
-  INDI_DEBUG && console.info(message);
+  UserConfig.INDI_CONSOLE_DEBUG && console.info(message);
   return;
 }
 
