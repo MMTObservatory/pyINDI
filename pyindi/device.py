@@ -850,9 +850,13 @@ class device(ABC):
         self.mainloop.run_until_complete(future)
 
     
-    async def astart(self):
+    async def astart(self, *tasks):
 
-        """Start up in async mode"""
+        """Start up in async mode
+        Arg: tasks -> any coroutines that 
+        should be run concurantly with the
+        other device tasks.
+        """
 
         self.mainloop = asyncio.get_running_loop()
         self.reader, self.writer = await stdio()
@@ -860,7 +864,8 @@ class device(ABC):
         future = asyncio.gather(
             self.run(),
             self.toindiserver(),
-            self.repeat_queuer()
+            self.repeat_queuer(),
+            *tasks
         )
 
         await future
@@ -876,7 +881,7 @@ class device(ABC):
 
             except Exception as error:
                 sys.stderr.write(
-                    f"There was an exception the \
+                    f"There was an exception in the \
                     later decorated fxn {func}:")
 
                 sys.stderr.write(f"{error}")
@@ -884,41 +889,6 @@ class device(ABC):
                 traceback.print_exc(file=sys.stderr)
 
 
-#    def __init__(self, loop=None, config=None, name=None):
-#
-#        """
-#        Arguments:
-#        loop: the asyncio event loop
-#        config: the configureable info from ConfigParser
-#        name: Name of the device defaulting to name of the class
-#        """
-#
-#        if loop is None:
-#            self.mainloop = asyncio.get_event_loop()
-#        else:
-#            self.mainloop = loop
-#
-#        if name is None:
-#            self._devname = self.__class__.__name__
-#        else:
-#            self._devname = name
-#
-#        self.props = []
-#        self.config = config
-#        self.timer_queue = asyncio.Queue()
-#
-#        self.reader, self.writer = \
-#            self.mainloop.run_until_complete(stdio(loop=self.mainloop))
-#
-#        self.outq = asyncio.Queue()
-#        self.handles = []
-#
-#        self._once = True
-#
-#        # Not sure why but the default exception handler
-#        # halts the loops and never shows the traceback.
-#        # So overwrite the default.
-#        self.mainloop.set_exception_handler(self.exception)
 
     def exception(self, loop, context):
 
@@ -1194,7 +1164,7 @@ class device(ABC):
 
     def ISGetProperties(self, device):
         raise NotImplementedError(
-            f"Subclass of {self.__name__} must \
+            f"Subclass of {self} must \
                                   implement ISGetProperties")
 
     def IDMessage(self, msg: str,
@@ -1298,15 +1268,6 @@ class device(ABC):
 
 
                     instance.repeat_q.put_nowait(func)
-#                    try:
-#                        func(instance)
-#                    except Exception as error:
-#                        sys.stderr.write(
-#                            f"There was an exception the \
-#                            later decorated fxn {func}:")
-#                        sys.stderr.write(f"{error}")
-#                        sys.stderr.write("See traceback below.")
-#                        traceback.print_exc(file=sys.stderr)
 
                     # do it again in millis
                     cl = instance.mainloop.call_later(
