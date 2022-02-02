@@ -266,7 +266,7 @@ class IVectorProperty(ABC):
     @state.setter
     def state(self, val):
         if val not in list(IPState):
-            raise ValueError("{val} is not one of {list(IPState)}")
+            raise ValueError(f"{val} is not one of {list(IPState)}")
         for st in IPState:
             if st == val:
                 self._state = st
