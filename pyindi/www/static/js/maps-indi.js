@@ -159,7 +159,7 @@ const setindi = (...theArgs) => {
   }
 
   // Log to console if enabled.
-  UserConfig.INDI_CONSOLE_DEBUG && console.log(`${msgprefix}${setcmd}`);
+  Config.INDI_CONSOLE_DEBUG && console.log(`${msgprefix}${setcmd}`);
 
   return;
 }
@@ -411,7 +411,8 @@ const scrapeMessages = (partial_doc) => {
       var timestamp = root_node.getAttribute("timestamp");
       
       // Log message if enabled.
-      UserConfig.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${msg}`);
+      Config.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${msg}`);
+      logging.log(msg, timestamp, device);
 
       // Removes message from xml.
       cp_partial_doc = cp_partial_doc.replace(match[0], "")

@@ -1,5 +1,5 @@
-from .client import INDIClientSingleton as INDIClient
-from .client import INDIClientContainer
+from pyindi.client import INDIClientSingleton as INDIClient
+from pyindi.client import INDIClientContainer
 
 import tornado.web, tornado.websocket
 from pathlib import Path
@@ -48,57 +48,64 @@ ____________  |           ______V_____                      httpclients |       
 
 
 class INDIHandler(tornado.web.RequestHandler):
-    indihead = r"""
-        <script src="//code.jquery.com/jquery-1.12.4.js"></script>
-        <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    js9_head = """
+        <link type="text/css" rel="stylesheet" href="/indi/static/js9/js9support.css">
+        <link type="text/css" rel="stylesheet" href="/indi/static/js9/js9.css">
+        <link rel="apple-touch-icon" href="images/js9-apple-touch-icon.png">
+        <script type="text/javascript" src="/indi/static/js9/js9prefs.js"></script>
+        <script type="text/javascript" src="/indi/static/js9/js9support.min.js"></script>
+        <script type="text/javascript" src="/indi/static/js9/js9.min.js"></script>
+        <script type="text/javascript" src="/indi/static/js9/js9plugins.js"></script>
+    """
+    pyindi_head = """
+        <!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="apple-touch-icon" sizes="180x180" href="/indi/static/favicon/apple-touch-icon.png">
+		<link rel="shortcut icon" type="image/png" sizes="32x32" href="">
+		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
+		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
+		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
+		<!-- Load pyINDI scripts -->
+        <script src="/indi/static/js/constants.js"></script>
+		<script src="/indi/static/js/indi.js"></script>
+        <script src="/indi/static/js/builder-indi.js"></script>
+        <script src="/indi/static/js/updater-indi.js"></script>
+        <script src="/indi/static/js/logger-indi.js"></script>
+        <script src="/indi/static/js/utils-indi.js"></script>
+		<script src="/indi/static/js/maps-indi.js"></script>
+		<!-- Load pyINDI styling -->
+		<link rel="stylesheet" href="/indi/static/css/indi.css">
+    """
+    www_path = Path(__file__).parent / "www"
+    static_path = www_path / "static"
+    templates_path = www_path / "templates"
 
-        <!--These libraries are built with pyINDI
-        and are available at /static/ using
-        pyINDI's client libarary.-->
-    
-        <link rel="stylesheet" href="/static/indi/indi.css">
-        <script src="/static/indi/indi.js"></script>
-        <script src="/static/indi/utility.js"></script>
-        <script src="/static/indi/maps-indi.js"></script>
-
-        """
-    js9head = r"""
-          <link type="text/css" rel="stylesheet" href="/indi/static/js9/js9support.css">
-          <link type="text/css" rel="stylesheet" href="/indi/static/js9/js9.css">
-          <link rel="apple-touch-icon" href="images/js9-apple-touch-icon.png">
-          <script type="text/javascript" src="/indi/static/js9/js9prefs.js"></script>
-          <script type="text/javascript" src="/indi/static/js9/js9support.min.js"></script>
-          <script type="text/javascript" src="/indi/static/js9/js9.min.js"></script>
-          <script type="text/javascript" src="/indi/static/js9/js9plugins.js"></script>
-
-        """
-
-    static_path = Path(__file__).parent/"www/"
     def indi_render(self, *args, **kwargs):
-        """
-        
-        """
-        fname = args[0]
-        kwargs.update(indihead=self.indihead)
-        kwargs.update(js9head=self.js9head)
+        """Renders the handler."""
+        # Make available pyindi styling and js9
+        kwargs.update(pyindi_head=self.pyindi_head)
+        kwargs.update(js9_head=self.js9_head)
 
+        # Convert filename to string if Path
+        fname = args[0]
         if type(fname) != str:
             fname = str(fname)
 
         self.render(fname, **kwargs)
 
 
-
 class DefaultIndex(INDIHandler):
-
+    """Default indi panel view."""
     def get(self):
-        
-        self.indi_render( self.static_path/"index.html" )
+        """Renders default indi panel view with all devices queried."""
+        index_path = self.templates_path / "index.html"
+        title = "pyINDI Panel"
+        devices = ["*"]
+        self.indi_render(index_path, devices=devices, title=title)
 
 
 class INDIWebClient(INDIClient):
-
-
     def start(self, handle_blob, *args, **kwargs):
         super().start(*args, **kwargs)
         self.lastblob = {}
@@ -108,11 +115,13 @@ class INDIWebClient(INDIClient):
 
     
     async def xml_from_indiserver(self, data):
-        """
-        Called by parent class.
-        Send xml data to each http client
-        """
+        """Send XML data to each http client.
 
+        Parameters
+        ----------
+        data : str
+            XML data to send to client.
+        """
         for client in self.get_httpclients():
             client.write_message(data)
 
@@ -177,7 +186,6 @@ class BlobHandler(ContentHandler):
             except Exception as error:
                 logging.warning(f"Error with start of BLOB element {error}")
 
-
     def characters(self, content):
         """Read handle character data from the
         xml feed. For the BLOB's this data is 
@@ -189,8 +197,6 @@ class BlobHandler(ContentHandler):
 
             #if len(self.current_blob) > int(self.attr["enclen"]):
                 #raise RuntimeError("Too much BLOB data!")
-                
-
     
     def endElement(self, tag):
         """
@@ -294,42 +300,58 @@ class BlobRequestHandler(tornado.web.RequestHandler):
 
 
 class INDIWebApp:
+    """Takes indi client and builds into Tornado web application.
     """
-        This class takes the indiclient
-        and builds it into a tornado webapp
-        
-    """
-    # The files in this path will alway be available
-    # http://<HOST>/static/
-    static_path = Path(__file__).parent/"www/static"
+    # The files in this path will alway be available <http://<HOST>/static/>
+    www_path = Path(__file__).parent / "www"
+    static_path = www_path / "static"
+    templates_path = www_path / "templates"
+    
+    # Routes used by indi
+    indiws_route = "/indi/websocket"
+    indiindex_route = "/indi"
+    indistatic_route = r"/indi/static/(.*)"
+    inditemplates_route = r"/indi/templates/(.*)"
+    lastblob_route = r"/indi/blob/lastblob.([a-z]*)"
+    protected_routes = [
+        indiws_route,
+        indistatic_route,
+        inditemplates_route
+    ]
 
     def __init__(self, loop=None, webport=8888, indihost="localhost",
-            indiport=7624, handle_blob=None):
-        """
-        Arguments:
-        loop: The tornado IOLoop can not be an asyncio event loop.
-        webport: The port of the webserver. 
-        indihost: the name or IP address of the computer hosting the indi
-        server.
-        indiport: The port the indi server is running on. 
-        """
+                 indiport=7624, handle_blob=None):
+        """Initializes the tornado loop and starts the client.
 
+        Parameters
+        ----------
+        loop : `tornado.ioloop.IOLoop`, optional
+            The tornado IOLoop, by default None.
+        webport : int, optional
+            Port of the webserver, by default 8888.
+        indihost : str, optional
+            The name or IP address of the host for indi server, by default "localhost".
+        indiport : int, optional
+            Port of the indi server, by default 7624
+        handle_blob : bool, optional
+            Enable to handle blob data, by default None
+            
+        Notes
+        -----
+        - loop cannot be an asyncio event loop.
+        """
         self._handlers = None
         self.port = webport
         
-        
-
         if loop is None:
             loop = tornado.ioloop.IOLoop.current()
 
         self.mainloop = loop
 
         self.client = INDIWebClient()
-
         self.client.start(handle_blob, port=indiport, host=indihost)
-
         self.mainloop.add_callback(self.client.connect)
-
+        
     def indi_handlers(self):
         handlers = [] 
         indiws_route = r"/indi/websocket"
@@ -353,61 +375,47 @@ class INDIWebApp:
 
         return handlers
 
-
     def build_app(self, handlers=None, **settings):
+        """Builds the tornado web app and validates handlers.
 
-        """
-            build_app
-            Description:
-                This function builds the tornado web app.
-            Its arguments are whatever you would want to
-            give to tornado.web.Application instantiation.
-        """
+        Parameters
+        ----------
+        handlers : list, optional
+            Handler info like route and handler class, by default None.
 
-        indiws_route = r"/indi/websocket"
-        indistatic_route = r"/indi/static/(.*)"
-        lastblob_route = r"/indi/blob/lastblob.([a-z]*)"
-
-        # Add the default page
-        handlers.append((r"/indi/index.html", DefaultIndex))
-
+        Raises
+        ------
+        ValueError
+            Raises exception if route is protected indi route.
+        """        
+        # Validate supplied handlers and check for root
+        has_root = False
+        root = ("/", DefaultIndex)
         
-        handlers.append((lastblob_route, BlobRequestHandler))
-
-        hasroot = False
-        for hdl in handlers:
-            if indiws_route == hdl[0]:
-                raise ValueError(f"{indiws_route} route is used by pyindi. Please choose another.")
-
-            elif indistatic_route == hdl[0]:
-                raise ValueError(f"{indistatic_route} route is used by pyindi. Please choose another.")
-
-            if r'/' == hdl[0]:
-                hasroot = False
-
-        if not hasroot:
-        # Make a page at root if we don't have one. 
-            handlers.append((r'/', DefaultIndex))
+        if handlers is None:
+            handlers = []
             
+        for hdl in handlers:
+            if hdl[0] in self.protected_routes:
+                raise ValueError(f"{hdl[0]} route is used by pyindi. Please choose another.")
 
+            if hdl[0] == "/":
+                has_root = True
 
+        # If doesn't have root, include default
+        if not has_root:
+            handlers.append(root)
+            
+        # Insert the websocket handler and static
+        handlers.append((self.indiindex_route, DefaultIndex))
+        handlers.append((self.lastblob_route, BlobRequestHandler))
+        handlers.append((self.indiws_route, INDIWebSocket))
+        handlers.append((self.indistatic_route, tornado.web.StaticFileHandler, 
+                            {"path": self.static_path}))
 
-        # Insert the websocket handler.
-        handlers.insert(0, (indiws_route, INDIWebSocket))
-        
-        # Insert the static indi stuff. 
-        handlers.insert(0, (
-                indistatic_route, 
-                tornado.web.StaticFileHandler, 
-                {"path": self.static_path}))
-
-        self.app = tornado.web.Application(
-                handlers,
-                **settings
-                )
-
+        # Build app and start loop
+        self.app = tornado.web.Application(handlers, **settings)
         self.app.listen(self.port)
-
         self.mainloop.start()
 
 
