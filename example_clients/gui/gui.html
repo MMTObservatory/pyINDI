@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		{% raw pyindi_head %}
+		<title>GUI</title>
+		<script>
+			/**
+			* Runs on load. Builds the default properties using a callback.
+			*/
+			const main = () => {
+				var devices = {% raw json_encode(devices) %};
+				initialize(devices);
+				return;
+			}
+
+			/**
+			* This function will be called whenever an INDI property with the device 
+			*	{{ devices }} is received. This is where users should modify the
+			*	code to append to specific objects.
+			*
+			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting 
+			* elements.
+			* @param {Object} indi Contains all information about INDI property
+			*/
+			const handleProperty = (indi) => {
+        // If definition property, build it
+				if (indi.op === IndiOp.DEFINITION) {
+          var vector = updater.custom(indi);
+          // If returned vector is null, then bad selector in the <body> or not found
+          if (!vector) {
+            return;
+          }
+          // Handle vector for the first time here
+				}
+				// Handle vector every time it comes in
+				var vector = updater.vector(indi);
+        return;
+			}
+		</script>
+	</head>
+	<body>
+    <p>{{ example_variable }}</p>
+    <!-- Insert elements to use for custom GUI -->
+    <div data-custom-device="DEVICE NAME" data-custom-vector="VECTOR NAME"></div>
+	</body>
+	<script>document.body.addEventListener("load", main());</script>
+</html>
