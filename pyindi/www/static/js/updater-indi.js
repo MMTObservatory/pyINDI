@@ -36,7 +36,6 @@
 	 */
 	device(indi, appendTo = null) {
 		var deviceSelector = generateId.device(indi);
-
 		// If vpselector is empty, build
 		if (!document.querySelector(`#${deviceSelector}`)) {
 			console.debug(`Creating new device=${indi.device}`);
@@ -85,12 +84,10 @@
 	 * @param {Object} indi Contains all information about INDI property.
 	 */
 	handle(indi) {
-		var device = this.device(indi);
-		var group = this.group(indi);
-
-		// Update available
+    var device = this.device(indi);
+    var group = this.group(indi);
+    
 		this.setAvailable(indi);
-
 		return;
 	},
 
@@ -123,7 +120,6 @@
 				break;
 			default:
 		}
-
 		return vector;
 	},
 

@@ -52,7 +52,11 @@
 	 * @returns {HTMLDivElement} The constructed tooltip.
 	 */
 	tooltip(element, tip) {
+    // Check if tooltip already exists
 		var legend = element.childNodes[0];
+    if (legend.querySelector(".pyindi-tooltip")) {
+      return;
+    }
 		var div = document.createElement("div");
 		var i = document.createElement("i");
 
@@ -174,7 +178,6 @@
 		header.appendChild(i);
 		header.appendChild(p);
 		div.appendChild(header);
-
 		return div;
 	},
 
