@@ -376,12 +376,12 @@ const updateProperties = (xml_text) => {
       var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`] || setPropertyCallbacks['*.*'];
     
       if (callback) {
-        var INDI = flattenIndiLess(root_node);
-        callback(INDI);
+        var indi = flattenIndiLess(root_node);
+        callback(indi);
       }
     }
     catch (e) {
-      console.warn(`Parse failed: ${e}`);
+      console.warn(`Parse failed: ${e} ${device} ${name}`);
       return;
     }
   }

@@ -14,27 +14,36 @@
 	 * @param {String} device The device name.
 	 */
 	log(message, timestamp = "", device = "") {
+    // If logger doesn't exist, try to find on page with default ID "logger"
 		if (!this.logger) {
+      // Try to connect to logger once and issue warning if cannot
 			if (!this.is_warned) {
-				console.warn("Logger not initialized.")
+        let found_logger = document.getElementById("logger");
+        let msg = "Logger not found, create a div with id \"logger\""
+        !found_logger ? console.warn(msg) : this.logger = found_logger
+        this.is_warned = true;
 			}
 			return;
 		}
 		// Build log message
 		var p = document.createElement("p");
-  
 		p.classList.add("pyindi-log");
-		var loggerHeight = this.logger.scrollHeight;
-
-		// https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
-		var isScrolledToBottom = this.logger.scrollHeight - this.logger.clientHeight <= this.logger.scrollTop + 1;
-
 		p.textContent = `${timestamp} ${device} ${message}`
+
+    // Keep log size small by removing old log lines
+    while (this.logger.children.length >= 200) {
+      this.logger.removeChild(this.logger.firstChild)
+    }
+
+    // Calculate auto-scroll to new messages
+    var isScrolledToBottom = this.logger.scrollHeight - this.logger.clientHeight <= this.logger.scrollTop + 1;
+    var loggerHeight = this.logger.scrollHeight;
+		// https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
 		this.logger.appendChild(p);
 		if (isScrolledToBottom) {
 			this.logger.scrollTo(0, loggerHeight,);
 		}
 
-		return 
+		return;
 	}
 };
