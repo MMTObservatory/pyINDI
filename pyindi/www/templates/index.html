@@ -14,21 +14,34 @@
 			}
 
 			/**
-			* This function will be called whenever an INDI property with the device 
+			* This function will be called whenever an INDI property with the device
 			*	{{ devices }} is received. This is where users should modify the
 			*	code to append to specific objects.
 			*
-			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting 
+			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting
 			* elements.
 			* @param {Object} indi Contains all information about INDI property
 			*/
 			const handleProperty = (indi) => {
-				if (indi.op === IndiOp.DEFINITION) {
-					updater.handle(indi);
-					// Handle vector for the first time here
-				}
-				// Handle vector every time it comes in
-				var vector = updater.vector(indi);
+        let htmlElement = handle(indi);
+
+        // Bad selector, meaning the custom GUI selector not found
+        if (!htmlElement) {
+          return;
+        }
+
+        if (indi.op === IndiOp.DEFINITION) {
+          // Only update once (on definition)
+          // Use for adding tooltips or modifying the look once
+        }
+        else if (indi.op === IndiOp.SET) {
+          // Update everytime new values come in
+          // Use for updating labels with values
+        }
+        else {
+          console.warn(`Indi definition: ${indi.op} not found`)
+        }
+
         return;
 			}
 		</script>

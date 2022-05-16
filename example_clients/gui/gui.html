@@ -2,38 +2,46 @@
 <html lang="en">
 	<head>
 		{% raw pyindi_head %}
-		<title>GUI</title>
+		<title>{{ title }}</title>
 		<script>
 			/**
 			* Runs on load. Builds the default properties using a callback.
 			*/
 			const main = () => {
 				var devices = {% raw json_encode(devices) %};
-				initialize(devices);
+				initialize(devices, customGui=true);
 				return;
 			}
 
 			/**
-			* This function will be called whenever an INDI property with the device 
+			* This function will be called whenever an INDI property with the device
 			*	{{ devices }} is received. This is where users should modify the
 			*	code to append to specific objects.
 			*
-			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting 
+			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting
 			* elements.
 			* @param {Object} indi Contains all information about INDI property
 			*/
 			const handleProperty = (indi) => {
-        // If definition property, build it
-				if (indi.op === IndiOp.DEFINITION) {
-          var vector = updater.custom(indi);
-          // If returned vector is null, then bad selector in the <body> or not found
-          if (!vector) {
-            return;
-          }
-          // Handle vector for the first time here
-				}
-				// Handle vector every time it comes in
-				var vector = updater.vector(indi);
+        let htmlElement = handle(indi);
+
+        // Bad selector, meaning the custom GUI selector not found
+        if (!htmlElement) {
+          return;
+        }
+
+        if (indi.op === IndiOp.DEFINITION) {
+          // Only update once (on definition)
+          // Use for adding tooltips or modifying the look once
+        }
+        else if (indi.op === IndiOp.SET) {
+          // Update everytime new values come in
+          // Use for updating labels with values
+        }
+        else {
+          console.warn(`Indi definition: ${indi.op} not found`)
+        }
+
         return;
 			}
 		</script>

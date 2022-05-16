@@ -66,7 +66,7 @@ const utilities = {
 	noSpaces(str) {
 		return str.replace(/ /g, '_');
 	},
-	
+
 	/**
 	 * Swaps spaces with "_" and removes special charactors.
 	 * @param {String} str The string to remove special characters and spaces.
@@ -123,3 +123,58 @@ const utilities = {
 	}
 };
 
+
+/**
+ * Contains methods to convert from a state to another.
+ * @namespace
+ */
+ const converter = {
+	/**
+	 * Converts INDI state to a CSS color styling.
+	 * @param {String} indiState The current INDI state.
+	 * @returns {Object} Styling to apply.
+	 */
+	indiToCss(indiState) {
+		var state = IndiStates["Unknown"] // Default return.
+		if (IndiStates.hasOwnProperty(indiState)) {
+			state = IndiStates[indiState];
+		}
+		else {
+			console.warn(`${indiState} is not valid INDI state, should be ${Object.keys(IndiStates)}`);
+		}
+
+		return state
+	},
+
+	/**
+	 * Converts INDI state to blinking state for emergency.
+	 * @param {Object} indiState The current INDI state.
+	 * @returns {String} The styling to apply.
+	 */
+	indiToBlink(indiState) {
+		var blink = null;
+		if (IndiBlinks.hasOwnProperty(indiState)) {
+			blink = IndiBlinks[indiState];
+		}
+
+		return blink
+	},
+
+	/**
+	 * Converts switch to html element.
+	 * @param {String} indiRule INDI rule to apply to switch.
+	 * @returns {String} String describing the switch type, radio or checkbox.
+	 */
+	indiSwitchToSelector(indiRule) {
+		var sw = "radio"; // Default return
+
+		if (IndiSwitchRules.hasOwnProperty(indiRule)) {
+			sw = IndiSwitchRules[indiRule];
+		}
+		else {
+			console.warn(`${indiRule} is not valid INDI rule, should be ${Object.keys(IndiSwitchRules)}`);
+		}
+
+		return sw
+	},
+};
