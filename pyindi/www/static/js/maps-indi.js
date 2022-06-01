@@ -16,6 +16,23 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   })
 
+  /** *
+  * This bit of code adds the delProperty tag to list of accpeted 
+  * INDI types. Functionally this does nothing because I went with 
+  * the scrapeDeleteProperties similar to how messages are handled
+  * The delProperty is scraped long before the indi_types are checked
+  * if this PR is approved we should delete this bit and the ApprovedTags
+  * array in the constants.js. 
+  * 
+  * Scott S. 6/1/2022
+  */
+  ApprovedTags.forEach((tag) => {
+    if (indi_types.length) {
+        indi_types += ", "; // Append , and space if there already is part of str
+      }
+      indi_types += `${tag}`;
+
+  })
   console.log(`Accepting ${indi_types}`);
   
   // create web server connection
@@ -329,11 +346,11 @@ const updateProperties = (xml_text) => {
   }
   // Append next chunk
   partial_doc += xml_text; 
-
   // Process any/all complete INDI messages in partial_doc
   while (true) {
     // Find first opening tag, done if none
     partial_doc = scrapeMessages(partial_doc);
+    partial_doc = scrapeDeleteProperty(partial_doc);
 
     var start_match = XmlRegex.XML_START.exec(partial_doc);
 
@@ -366,6 +383,7 @@ const updateProperties = (xml_text) => {
       var device = root_node.getAttribute("device");
       var name = root_node.getAttribute("name");
       // Check if root name is in list of indi_types
+
       if (!indi_types.split(', ').includes(root_name)) {
         console.warn(`Bad type: ${root_name}`);
         return;
@@ -387,6 +405,40 @@ const updateProperties = (xml_text) => {
   }
 
   return;
+}
+
+/**
+ * Function that scrapes the incoming xml for delProperty tags
+ * debugging is enabled.
+ * @param {XMLDocument} partial_doc XML text from INDI.
+ * @returns {XMLDocument} Copy of the partial document put in.
+ */
+const scrapeDeleteProperty = (partial_doc) => {
+  try {
+     var cp_partial_doc = partial_doc;
+
+    while ((match = XmlRegex.XML_DELPROPERTY.exec(partial_doc))) {
+      // Parse match
+      const parser = new DOMParser();
+      var dom = parser.parseFromString(match, "application/xml");
+      var root_node = dom.documentElement; // Root node
+
+
+      var device = root_node.getAttribute("device");
+      var name = root_node.getAttribute("name");
+      var timestamp = root_node.getAttribute("timestamp");
+
+      // Call the delete handler. 
+      updater.delete(device, name);
+
+      // Removes delProperty from xml.
+      cp_partial_doc = cp_partial_doc.replace(match[0], "")   
+    }
+  }
+  catch (e) {
+    console.warn(`Trouble parsing delete: ${e}`);
+  }
+  return cp_partial_doc;
 }
 
 /**

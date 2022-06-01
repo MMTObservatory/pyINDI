@@ -294,6 +294,29 @@
 		var vector = updater.vector(indi, appendTo);
 
 		return vector;
+	},
+	/**
+	 * Handles the delProperty tag. 
+	 * @param {String} device name of indi device.
+	 * @param {String} name name of indi property.
+	 *
+	 */
+	delete(device, name) {
+		if(Config.CUSTOM_GUI) {
+		var deviceSelector = `[data-custom-device="${device}"]`;
+		var vectorSelector = `[data-custom-vector="${name}"]`;
+		}
+		else {
+
+			var deviceSelector = `[data-device="${device}"]`;
+			var vectorSelector = `[data-vector="${name}"]`;
+		}
+		var selector = `${deviceSelector}${vectorSelector}`; 
+
+
+		var ele = document.querySelector(`${selector}`);
+		if(ele)
+			ele.classList.add('pyindi-deleted');
 	}
 };
 
