@@ -429,7 +429,11 @@ const scrapeDeleteProperty = (partial_doc) => {
       var timestamp = root_node.getAttribute("timestamp");
 
       // Call the delete handler. 
-      updater.delete(device, name);
+      var indi = {};
+      indi.device = device;
+      indi.name = name;
+      indi.timestamp = timestamp;
+      updater.delete(indi);
 
       // Removes delProperty from xml.
       cp_partial_doc = cp_partial_doc.replace(match[0], "")   
