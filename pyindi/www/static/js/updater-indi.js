@@ -301,18 +301,8 @@
 	 * @param {String} name name of indi property.
 	 *
 	 */
-	delete(device, name) {
-		if(Config.CUSTOM_GUI) {
-		var deviceSelector = `[data-custom-device="${device}"]`;
-		var vectorSelector = `[data-custom-vector="${name}"]`;
-		}
-		else {
-
-			var deviceSelector = `[data-device="${device}"]`;
-			var vectorSelector = `[data-vector="${name}"]`;
-		}
-        delete(indi) {
-        var selector;
+	delete(indi) {
+		var selector;
         if (builder.customGui) {
           var deviceSelector = `[data-custom-device="${device}"]`;
  		  var vectorSelector = `[data-custom-vector="${name}"]`;
@@ -320,7 +310,7 @@
  		}
  		else {
  		  selector = `#${generateId.vector(indi)}`;
-
+		}
 
 		var ele = document.querySelector(`${selector}`);
 		if(ele)
