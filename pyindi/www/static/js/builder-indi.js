@@ -358,10 +358,7 @@
 				if (event.key === "Enter") {
 
 					event.preventDefault() // TODO Test if needed
-					if(utilities.parentVectorIsDeleted(event.target)) {
-						//Do nothing if vector received delProperty.
-						return;
-					}
+
 					let value = event.target.value;
 					setindi("Text", generateId.indiXml(indi), property.name, value);
 				}
@@ -436,10 +433,7 @@
 			wo.addEventListener("keyup", (event) => {
 				if (event.key === "Enter") {
 					// Test if ok
-					if(utilities.parentVectorIsDeleted(event.target))
-					{//Do nothing if vector received delProperty.
-						return;
-					}
+
 					let min = parseFloat(wo.getAttribute("data-min"));
 					let max = parseFloat(wo.getAttribute("data-max"));
 					let value = event.target.value;
@@ -500,10 +494,6 @@
 			
 			// Create event listeners for input button
 			input.addEventListener("change", (event) => {
-				if (utilities.parentVectorIsDeleted(event.target)){
-					//Do nothing if vector received a delProperty.
-					return;
-				}
 				let name = event.target.value
 				let value = event.target.checked ? "On" : "Off"
 				setindi("Switch", generateId.indiXml(indi), name, value);
