@@ -311,7 +311,15 @@
 			var deviceSelector = `[data-device="${device}"]`;
 			var vectorSelector = `[data-vector="${name}"]`;
 		}
-		var selector = `${deviceSelector}${vectorSelector}`; 
+        delete(indi) {
+        var selector;
+        if (builder.customGui) {
+          var deviceSelector = `[data-custom-device="${device}"]`;
+ 		  var vectorSelector = `[data-custom-vector="${name}"]`;
+ 		  selector = `${deviceSelector}${vectorSelector}`;
+ 		}
+ 		else {
+ 		  selector = `#${generateId.vector(indi)}`;
 
 
 		var ele = document.querySelector(`${selector}`);
