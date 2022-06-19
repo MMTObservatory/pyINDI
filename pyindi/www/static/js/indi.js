@@ -60,7 +60,19 @@ const handle = (indi) => {
   else if (indi.op == IndiOp.SET) {
     htmlElement = updater.vector(indi);
   }
-  // TODO DELETE etc.
+  // For delete and message, if we assign htmlElement, users will get element
+  else if (indi.op == IndiOp.DELETE) {
+    console.debug(`Deleting ${generateId.vector(indi)}`)
+    updater.delete(indi);
+  }
+  else if (indi.op == IndiOp.MESSAGE) {
+    var message = indi.message;
+    var timestamp = indi.timestamp;
+    var device = indi.device;
+
+    Config.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${message}`);
+    logging.log(message, timestamp, device);
+  }
 
   return htmlElement;
 }

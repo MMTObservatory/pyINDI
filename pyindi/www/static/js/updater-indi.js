@@ -4,7 +4,7 @@
  * element with new data.
  * @namespace
  */
- const updater = {
+const updater = {
 	available: {},
 
 	/**
@@ -296,24 +296,28 @@
 		return vector;
 	},
 	/**
-	 * Handles the delProperty tag. 
+	 * Handles the delProperty tag.
 	 * @param {String} device name of indi device.
 	 * @param {String} name name of indi property.
 	 *
 	 */
 	delete(indi) {
 		var selector;
-        if (builder.customGui) {
-          var deviceSelector = `[data-custom-device="${device}"]`;
+    if (builder.customGui) {
+      var deviceSelector = `[data-custom-device="${device}"]`;
  		  var vectorSelector = `[data-custom-vector="${name}"]`;
  		  selector = `${deviceSelector}${vectorSelector}`;
  		}
+    // Select using ID
  		else {
  		  selector = `#${generateId.vector(indi)}`;
 		}
 
-		var ele = document.querySelector(`${selector}`);
-		if(ele)
-			ele.classList.add('pyindi-deleted');
-	}
+		var vector = document.querySelector(`${selector}`);
+		if (vector) {
+			vector.classList.add('pyindi-deleted');
+	  }
+
+    return vector;
+  }
 };
