@@ -120,6 +120,18 @@ const utilities = {
 				outStr = numStr
 		}
 		return outStr;
+	},
+
+	/**
+	 * Given an input, returs the parent fieldset vector
+	 * @param {HTMLElement} ele The number to format.
+	 * @returns {HTMLElement} THe parent fieldset vector
+	 */
+	parentVectorIsDeleted(ele) {
+		while (!ele.classList.contains("pyindi-vector")) {
+			ele = ele.parentElement
+		}
+		return ele.classList.contains("pyindi-deleted")
 	}
 };
 

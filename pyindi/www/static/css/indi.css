@@ -442,3 +442,9 @@ When floating child in parent, the parent ignores them.
 	font-weight: 900;
 	font-size: 1rem;
 }
+
+.pyindi-deleted {
+	opacity: 0.25;
+	pointer-events: none;
+
+}

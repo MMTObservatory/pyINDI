@@ -294,5 +294,26 @@
 		var vector = updater.vector(indi, appendTo);
 
 		return vector;
+	},
+	/**
+	 * Handles the delProperty tag. 
+	 * @param {String} device name of indi device.
+	 * @param {String} name name of indi property.
+	 *
+	 */
+	delete(indi) {
+		var selector;
+        if (builder.customGui) {
+          var deviceSelector = `[data-custom-device="${device}"]`;
+ 		  var vectorSelector = `[data-custom-vector="${name}"]`;
+ 		  selector = `${deviceSelector}${vectorSelector}`;
+ 		}
+ 		else {
+ 		  selector = `#${generateId.vector(indi)}`;
+		}
+
+		var ele = document.querySelector(`${selector}`);
+		if(ele)
+			ele.classList.add('pyindi-deleted');
 	}
 };

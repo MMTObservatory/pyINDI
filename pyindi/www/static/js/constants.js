@@ -84,6 +84,15 @@ const ApprovedTypes = [
   "Light",
   "BLOB"
 ]
+
+/** 
+ * pyINDI approved xml tags.
+ * @enum {String}
+ * 
+*/
+const ApprovedTags = [
+	"delProperty"
+]
 /**
  * XML Parsing configuration
  * @enum {Regex}
@@ -91,6 +100,7 @@ const ApprovedTypes = [
 const XmlRegex = {
   XML_START: /<.e[twf]\S*Vector/, // Accept <set <new <def <get
   XML_MESSAGE: /<message\s+.*\/>.*/g, // Parse messages
+  XML_DELPROPERTY: /<delProperty\s.*\/>/g // Parse delProperty
 }
 /**
  * Default configuration for backup.

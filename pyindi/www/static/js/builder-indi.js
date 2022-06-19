@@ -275,6 +275,14 @@
 				document.querySelector(group).appendChild(html);
 			}
 		}
+		else {
+			//If we get here and the item has been deleted previously
+			// we should undelete by removing the class.
+			var vector = document.getElementById(vectorSelector);
+			vector.classList.remove("pyindi-deleted");
+		}
+
+
 
 		return;
 	},
@@ -348,7 +356,9 @@
 			// If "Enter" is pressed on writeonly area, send new text to indi
 			wo.addEventListener("keyup", (event) => {
 				if (event.key === "Enter") {
+
 					event.preventDefault() // TODO Test if needed
+
 					let value = event.target.value;
 					setindi("Text", generateId.indiXml(indi), property.name, value);
 				}
@@ -423,6 +433,7 @@
 			wo.addEventListener("keyup", (event) => {
 				if (event.key === "Enter") {
 					// Test if ok
+
 					let min = parseFloat(wo.getAttribute("data-min"));
 					let max = parseFloat(wo.getAttribute("data-max"));
 					let value = event.target.value;
