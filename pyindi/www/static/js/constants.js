@@ -62,6 +62,8 @@ const IndiOp = {
 	SET: "set",
 	NEW: "new",
 	GET: "get",
+  DELETE: "del",
+  MESSAGE: "mes",
 }
 
 /* Constants */
@@ -71,7 +73,7 @@ const IndiOp = {
  */
 const ApprovedOp = [
   "set",
-  "def"
+  "def",
 ]
 /**
  * pyINDI approved properties.
@@ -85,22 +87,21 @@ const ApprovedTypes = [
   "BLOB"
 ]
 
-/** 
+/**
  * pyINDI approved xml tags.
  * @enum {String}
- * 
+ *
 */
 const ApprovedTags = [
-	"delProperty"
+	"delProperty",
+  "message"
 ]
 /**
  * XML Parsing configuration
  * @enum {Regex}
  */
 const XmlRegex = {
-  XML_START: /<.e[twf]\S*Vector/, // Accept <set <new <def <get
-  XML_MESSAGE: /<message\s+.*\/>.*/g, // Parse messages
-  XML_DELPROPERTY: /<delProperty\s.*\/>/g // Parse delProperty
+  XML_START: /<*\S*(Vector|delProperty|message)/, // Get groups and vectors
 }
 /**
  * Default configuration for backup.
@@ -112,7 +113,7 @@ const XmlRegex = {
   LOGGING_WELCOME_MESSAGE: "INDI messages & logs displayed below", // Message to display at start of log
   INDI_CONSOLE_DEBUG: false, // Prints INDI mesages to the console
   READONLY_PORT: 8081, // setindi() is muted when on this port
-  WS_PAGE: "/indi/websocket", // Websocket url 
+  WS_PAGE: "/indi/websocket", // Websocket url
   WS_SEND_WAIT: 30, // Millaseconds, how long to wait to resend
   WS_RETRY: 1000, // Millaseconds, how long to wait to reconnect
 }

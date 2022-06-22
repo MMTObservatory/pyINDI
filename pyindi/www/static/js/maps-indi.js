@@ -15,34 +15,22 @@ document.addEventListener("DOMContentLoaded", () => {
       indi_types += `${op}${type}Vector`;
     })
   })
-
-  /** *
-  * This bit of code adds the delProperty tag to list of accpeted 
-  * INDI types. Functionally this does nothing because I went with 
-  * the scrapeDeleteProperties similar to how messages are handled
-  * The delProperty is scraped long before the indi_types are checked
-  * if this PR is approved we should delete this bit and the ApprovedTags
-  * array in the constants.js. 
-  * 
-  * Scott S. 6/1/2022
-  */
   ApprovedTags.forEach((tag) => {
     if (indi_types.length) {
         indi_types += ", "; // Append , and space if there already is part of str
       }
       indi_types += `${tag}`;
-
   })
   console.log(`Accepting ${indi_types}`);
-  
+
   // create web server connection
   wsStart();
 })
 
 /**
  * Creates websocket connection. Responsible for event listeners for websocket.
- * If websocket closes will try again in WS_RETRY millaseconds. Error codes 
- * aren't worried about because we never get information from websocket errors 
+ * If websocket closes will try again in WS_RETRY millaseconds. Error codes
+ * aren't worried about because we never get information from websocket errors
  * due to security risks.
  */
 const wsStart = () => {
@@ -118,14 +106,14 @@ const wsSend = (msg) => {
 }
 
 /**
- * Sets an indi property. The first parameter must indicate the property data 
- * type, which is either Number, Text, Switch, or Light. The second parameter 
- * must indicate the INDI device and property name as a string separated by a 
- * period, e.g.: "Telescope.Position". The remaining parameters must be INDI 
+ * Sets an indi property. The first parameter must indicate the property data
+ * type, which is either Number, Text, Switch, or Light. The second parameter
+ * must indicate the INDI device and property name as a string separated by a
+ * period, e.g.: "Telescope.Position". The remaining parameters must be INDI
  * property element-value pairs.
- * 
+ *
  * The message is only sent if READ_WRITE is true.
- * 
+ *
  * @example
  * setIndi("Number", "Telescope.Position", "RA", "2 31 49", "Dec", "89 15.84");
  * This is sent as:
@@ -169,7 +157,7 @@ const setindi = (...theArgs) => {
     // Send xml
     wsSend(xml);
     msgprefix = "Websocket send: ";
-  } 
+  }
   else {
     alert("All commands are disabled in Read-Only mode");
     msgprefix = "Websocket send (not sent): ";
@@ -182,21 +170,21 @@ const setindi = (...theArgs) => {
 }
 
 /**
- * API function for setting up a callback function when a given INDI property 
- * arrives. Also requests these properties from the indiserver. This only 
- * supports one callback per property per page. Properties are specified as 
+ * API function for setting up a callback function when a given INDI property
+ * arrives. Also requests these properties from the indiserver. This only
+ * supports one callback per property per page. Properties are specified as
  * INDI device and property name separated by a period, e.g.:
- * "Telescope.Position". If property name is '*', eg 'Telescope.*', then ALL 
- * properties with the given device will be called. Property callbacks must be 
- * a javascript function that takes the property mapped as a javascript object 
+ * "Telescope.Position". If property name is '*', eg 'Telescope.*', then ALL
+ * properties with the given device will be called. Property callbacks must be
+ * a javascript function that takes the property mapped as a javascript object
  * parameter.
  * @param {String} property Property name.
  * @param {Function} callback Function to apply on property.
- * @param {Boolean} init If false, sends get property and get blob. 
+ * @param {Boolean} init If false, sends get property and get blob.
  */
 const setPropertyCallback = (property, callback, init=false) => {
   setPropertyCallbacks[property] = callback;
-  
+
   // Request this property
   var devname = property.split(".");
   var device = devname[0];
@@ -236,10 +224,10 @@ const setPropertyCallback = (property, callback, init=false) => {
 };
 
 /**
- * Flattens an INDI property's XML element into a javascript object. This 
- * copies the flattenIndi function but uses a nesting approach (less 
+ * Flattens an INDI property's XML element into a javascript object. This
+ * copies the flattenIndi function but uses a nesting approach (less
  * flattened). Note that step, min, max attributes and the value for Properties
- *  of type Number are converted to numeric type, all others are string type. 
+ * of type Number are converted to numeric type, all others are string type.
  * Also, BLOBs are already unpacked from base64.
  * @param {XMLDocument} xml The parsed xml.
  * @returns {Object} Contains all information from INDI property.
@@ -254,17 +242,16 @@ function flattenIndiLess(xml) {
 
   var isnum = false;
   var isblob = false;
-
   if (xml.nodeName.includes("Number")) {
     isnum = true;
-    indi.metainfo = "nvp"; 
+    indi.metainfo = "nvp";
   }
-  else if (xml.nodeName.includes("Blob")) {
+  else if (xml.nodeName.includes("BLOB")) {
     isblob = true;
     indi.metainfo = "bvp";
   }
   else if (xml.nodeName.includes("Text")) {
-    indi.metainfo = "tvp";	
+    indi.metainfo = "tvp";
   }
   else if (xml.nodeName.includes("Light")) {
     indi.metainfo = "lvp";
@@ -279,14 +266,13 @@ function flattenIndiLess(xml) {
   // Build indi
   for (var i = 0; i < xml.attributes.length; i++) {
     var attr = xml.attributes[i];
-    indi[attr.name] = attr.value;	
+    indi[attr.name] = attr.value;
   }
 
 	children = []
 	var i = 0;
   var child_nodes = xml.children;
-  for (var j=0; j<child_nodes.length; j++) 
-  {
+  for (var j=0; j<child_nodes.length; j++) {
     var child = child_nodes[j];
     var name = child.getAttribute("name");
 
@@ -316,7 +302,7 @@ function flattenIndiLess(xml) {
         }
         else if (isblob) {
           // Clean base64
-          indi[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, "")); 
+          indi[name] = window.atob(val.replace (/[^A-Za-z0-9+/=]/g, ""));
         }
         else {
           indi[name] = val.trim();
@@ -330,12 +316,11 @@ function flattenIndiLess(xml) {
     indi.values = children;
     i++;
   }
-
   return indi;
 }
 
 /**
- * Function which fires callbacks interested in the given received INDI 
+ * Function which fires callbacks interested in the given received INDI
  * messages. The given text can be a fragment or contain more than one complete
  * document.
  * @param {String} xml_text XML text from INDI
@@ -345,33 +330,37 @@ const updateProperties = (xml_text) => {
     return;
   }
   // Append next chunk
-  partial_doc += xml_text; 
-  // Process any/all complete INDI messages in partial_doc
+  partial_doc += xml_text;
+
   while (true) {
     // Find first opening tag, done if none
-    partial_doc = scrapeMessages(partial_doc);
-    partial_doc = scrapeDeleteProperty(partial_doc);
-
     var start_match = XmlRegex.XML_START.exec(partial_doc);
-
     if (!start_match || start_match.index < 0) {
       return;
     }
 
     // Find next matching closing tag, done if none
     // [0] is the matched string
-    var end_xml_str = `${start_match[0].replace("<", "</")}>`; 
+    // [1] is the group string
+    var end_xml_str = "";
+    // Handle the approved tags which end in "/>"
+    if (ApprovedTags.includes(start_match[1])) {
+      end_xml_str = "/>";
+    }
+    // Handle *Vector tags, which end with </*Vector
+    else if (start_match[1] === "Vector") {
+      end_xml_str = `${start_match[0].replace("<", "</")}>`;
+    }
     var end_idx = partial_doc.indexOf(end_xml_str, start_match.index);
     if (end_idx < 0) {
+      // No end index, finished...
       return;
     }
     var end_after_idx = end_idx+end_xml_str.length;
 
     // Extract property xml and remove from partial_doc
     var xml_doc = partial_doc.substring(start_match.index, end_after_idx);
-			
     partial_doc = partial_doc.substring(end_after_idx);
-    
     try {
       const parser = new DOMParser();
       var dom = parser.parseFromString(xml_doc, "application/xml");
@@ -382,8 +371,8 @@ const updateProperties = (xml_text) => {
       var root_name = root_node.nodeName; // Root name
       var device = root_node.getAttribute("device");
       var name = root_node.getAttribute("name");
-      // Check if root name is in list of indi_types
 
+      // Check if root name is in list of indi_types
       if (!indi_types.split(', ').includes(root_name)) {
         console.warn(`Bad type: ${root_name}`);
         return;
@@ -392,7 +381,6 @@ const updateProperties = (xml_text) => {
       // Gets function from handleProperty callback in client.html
       // If property doesn't exist specified then use general
       var callback = setPropertyCallbacks[`${device}.${name}`] || setPropertyCallbacks[`${device}.*`] || setPropertyCallbacks['*.*'];
-    
       if (callback) {
         var indi = flattenIndiLess(root_node);
         callback(indi);
@@ -403,79 +391,5 @@ const updateProperties = (xml_text) => {
       return;
     }
   }
-
   return;
-}
-
-/**
- * Function that scrapes the incoming xml for delProperty tags
- * debugging is enabled.
- * @param {XMLDocument} partial_doc XML text from INDI.
- * @returns {XMLDocument} Copy of the partial document put in.
- */
-const scrapeDeleteProperty = (partial_doc) => {
-  try {
-     var cp_partial_doc = partial_doc;
-
-    while ((match = XmlRegex.XML_DELPROPERTY.exec(partial_doc))) {
-      // Parse match
-      const parser = new DOMParser();
-      var dom = parser.parseFromString(match, "application/xml");
-      var root_node = dom.documentElement; // Root node
-
-
-      var device = root_node.getAttribute("device");
-      var name = root_node.getAttribute("name");
-      var timestamp = root_node.getAttribute("timestamp");
-
-      // Call the delete handler. 
-      var indi = {};
-      indi.device = device;
-      indi.name = name;
-      indi.timestamp = timestamp;
-      updater.delete(indi);
-
-      // Removes delProperty from xml.
-      cp_partial_doc = cp_partial_doc.replace(match[0], "")   
-    }
-  }
-  catch (e) {
-    console.warn(`Trouble parsing delete: ${e}`);
-  }
-  return cp_partial_doc;
-}
-
-/**
- * Function that scrapes the incoming xml for messages and prints to console if
- * debugging is enabled.
- * @param {XMLDocument} partial_doc XML text from INDI.
- * @returns {XMLDocument} Copy of the partial document put in.
- */
-const scrapeMessages = (partial_doc) => {
-  try {
-    var cp_partial_doc = partial_doc;
-
-    while ((match = XmlRegex.XML_MESSAGE.exec(partial_doc))) {
-      //TODO: We should check for device here.
-      // Parse match
-      const parser = new DOMParser();
-      var dom = parser.parseFromString(match, "application/xml");
-      var root_node = dom.documentElement; // Root node
-
-      var msg = root_node.getAttribute("message");
-      var device = root_node.getAttribute("device");
-      var timestamp = root_node.getAttribute("timestamp");
-      
-      // Log message if enabled.
-      Config.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${msg}`);
-      logging.log(msg, timestamp, device);
-
-      // Removes message from xml.
-      cp_partial_doc = cp_partial_doc.replace(match[0], "")
-    }
-  }
-  catch (e) {
-    console.warn(`Trouble parsing message: ${e}`);
-  }
-  return cp_partial_doc;
 }

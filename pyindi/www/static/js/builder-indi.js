@@ -64,7 +64,7 @@
 		div.setAttribute("data-title", tip);
 		// Fontawesome classes and icon
 		i.classList.add("fas", "fa-question-circle", "icon-tooltip");
-		
+
 		div.appendChild(i);
 		legend.appendChild(div);
 
@@ -167,7 +167,7 @@
 			let group = document.querySelector(`div.pyindi-group[data-group="${indi.group}"][data-device="${indi.device}"]`);
 			utilities.hideSibling(group);
 		})
-		
+
 		// Build label for device
 		var p = document.createElement("p");
 
@@ -193,21 +193,21 @@
 		div.setAttribute("data-group", indi.group);
 		div.id = generateId.group(indi);
 		var parent = document.querySelector(`#${generateId.device(indi)}`);
-	
+
 		div.classList.add("pyindi-group");
 		// If custom GUI don't do this but device has hidden class added for new groups
 		if (!this.customGui && parent.classList.contains("hidden")) {
 			div.classList.add("hide");
 		}
-	
+
 		// Build header group
 		var header = document.createElement("div");
 		header.classList.add("pyindi-group-header");
-	
+
 		// Build icon for min/max
 		var i = document.createElement("i");
 		i.classList.add("fas", "fa-minus-circle", "minmax"); // fontawesome
-	
+
 		// Handle the minimize and maximize button click
 		i.addEventListener("click", (event) => {
 			if (event.target.classList.contains("fa-minus-circle")) {
@@ -218,23 +218,23 @@
 				event.target.classList.add("fa-minus-circle");
 				event.target.classList.remove("fa-plus-circle");
 			}
-			
+
 			// Get first child then hide all children in group
 			let vector = document.querySelector(`fieldset[data-group="${indi.group}"][data-device="${indi.device}"]`);
 			utilities.hideSibling(vector);
-	
+
 		})
-		
+
 		// Build the title for group
 		var p = document.createElement("p");
 		p.textContent = indi.group;
 		p.classList.add("pyindi-h2");
-	
+
 		// Append all
 		header.appendChild(i);
 		header.appendChild(p);
 		div.appendChild(header);
-	
+
 		return div;
 	},
 
@@ -248,7 +248,7 @@
 		if (!document.getElementById(vectorSelector)) {
 			console.debug(`Creating new ${indi.metainfo}=${generateId.vector(indi)}`);
 			var html = this.vector(indi);
-	
+
 			switch (indi.metainfo) {
 				case "nvp":
 					html = this.numbers(indi, html);
@@ -265,7 +265,7 @@
 				default:
 					console.warn(`indi metainfo=${indi.metainfo} not recognized!`)
 			}
-	
+
 			// Append to designated spot unless null then append to group
 			if (appendTo) {
 				appendTo.appendChild(html);
@@ -277,13 +277,13 @@
 		}
 		else {
 			//If we get here and the item has been deleted previously
-			// we should undelete by removing the class. 
+			// we should undelete by removing the class.
 			var vector = document.getElementById(vectorSelector);
 			vector.classList.remove("pyindi-deleted");
 		}
-		
 
-	
+
+
 		return;
 	},
 
@@ -300,22 +300,22 @@
 		fieldset.setAttribute("data-device", indi.device);
 		fieldset.setAttribute("data-group", indi.group);
 		fieldset.setAttribute("data-vector", indi.name);
-	
+
 		// Create legend for fieldset
 		var legend = document.createElement("legend");
-	
+
 		// Create span led in legend for indistate
 		var led = document.createElement("span");
 		led.classList.add("led");
-	
+
 		// Create text node for legend to not overwrite the led span
 		var text = document.createTextNode(indi.label);
-	
+
 		// Build fieldset by appending all
 		legend.appendChild(led);
 		legend.appendChild(text);
 		fieldset.appendChild(legend);
-	
+
 		return fieldset;
 	},
 
@@ -329,30 +329,30 @@
 		indi.values.forEach((property) => {
 			// Create div that the indi text row will exist
 			var div = document.createElement("div");
-			
+
 			var id = generateId.property(indi, property);
 			div.id = id;
 			div.classList.add("fix-div", "pyindi-row");
-	
+
 			// Create label for indi text row
 			var label = document.createElement("label");
 			label.textContent = property.label;
 			label.classList.add("pyindi-property-label", "pyindi-col");
 			label.htmlFor = `${id}__input`;
-	
+
 			div.appendChild(label);
-	
+
 			// Build ro and wo
 			var ro = document.createElement("label");
-	
+
 			ro.readOnly = true;
 			ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
 			ro.textContent = property.value;
-	
+
 			var wo = document.createElement("input");
 			wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col");
 			wo.id = `${id}__input`;
-	
+
 			// If "Enter" is pressed on writeonly area, send new text to indi
 			wo.addEventListener("keyup", (event) => {
 				if (event.key === "Enter") {
@@ -363,13 +363,13 @@
 					setindi("Text", generateId.indiXml(indi), property.name, value);
 				}
 			});
-	
+
 			// Determine if it is readonly, writeonly, or both and append
 			div = this.readWrite(indi.perm, div, ro, wo);
-	
+
 			// Append the div to the fieldset
 			appendTo.appendChild(div);
-	
+
 		});
 		return appendTo;
 	},
@@ -384,31 +384,31 @@
 		indi.values.forEach((property) => {
 			// Create div that the indi labal, ro, and wo will exist in
 			var div = document.createElement("div");
-	
+
 			var id = generateId.property(indi, property);
 			div.id = id;
 			div.setAttribute("data-format", property.format);
-	
+
 			div.classList.add("fix-div", "pyindi-row");
-	
+
 			// Create label for indi text row
 			var label = document.createElement("label");
 			label.textContent = property.label;
 			label.classList.add("pyindi-property-label", "pyindi-col");
 			label.htmlFor = `${id}__input`;
-	
+
 			div.appendChild(label);
-	
+
 			// Build ro and wo
 			var ro = document.createElement("label"); // Make textarea for no resize
 			ro.textContent = property.value;
 			ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
-	
+
 			var wo = document.createElement("input");
 			wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col")
 			wo.id = `${id}__input`;
 			wo.defaultValue = 0;
-	
+
 			// Add min and max data attributes
 			var tipStr = '';
 			if (property.hasOwnProperty("min")) {
@@ -419,13 +419,13 @@
 				wo.setAttribute("data-max", property.max);
 				tipStr += `Maximum value = ${property.max} `;
 			}
-	
+
 			// Display invalid for numbers out of range
 			var tip = document.createElement("div");
 			tip.textContent = tipStr;
 			tip.id = `${id}__tip`;
 			tip.classList.add("hide", "text-right", "tip");
-	
+
 			wo.addEventListener("blur", (event) => {
 				wo.value.length == 0 ? wo.value = 0 : ""; // Fill in 0 if empty
 			})
@@ -449,15 +449,15 @@
 					}
 				}
 			});
-	
+
 			// Determine if it is readonly, writeonly, or both and append
 			div = this.readWrite(indi.perm, div, ro, wo);
-			
-	
+
+
 			// Append the tip to div and div to the fieldset
 			div.appendChild(tip);
 			appendTo.appendChild(div);
-	
+
 		});
 		return appendTo;
 	},
@@ -474,37 +474,37 @@
 		indi.values.forEach((property) => {
 			var span = document.createElement("span");
 			var id = generateId.property(indi, property);
-	
+
 			// Create label for button text
 			var label = document.createElement("label")
 			label.classList.add("pyindi-switch-label");
 			label.htmlFor = id;
 			label.textContent = property.label
-	
+
 			// Create button
 			var input = document.createElement("input");
 			input.type = type;
 			input.id = id;
 			input.name = utilities.noSpecialCharacters(indi.name);
-	
+
 			input.classList.add("pyindi-switch-input");
 			input.value = utilities.noSpecialCharacters(property.name);
-	
+
 			input.checked = property.value === "On" ? true : false;
-			
+
 			// Create event listeners for input button
 			input.addEventListener("change", (event) => {
 				let name = event.target.value
 				let value = event.target.checked ? "On" : "Off"
 				setindi("Switch", generateId.indiXml(indi), name, value);
 			})
-			
+
 			// Append all
 			span.appendChild(input);
 			span.appendChild(label);
 			appendTo.appendChild(span);
 		})
-	
+
 		return appendTo;
 	},
 
@@ -519,17 +519,17 @@
 			var span = document.createElement("span"); // To store each light in
 			var id = generateId.property(indi, property);
 			var label = document.createElement("label");
-	
+
 			label.classList.add("pyindi-light-label");
 			label.id = id;
 			label.textContent = property.label;
 			label.style.backgroundColor = converter.indiToCss(property.value);
-	
+
 			// Append all
 			span.appendChild(label)
 			appendTo.appendChild(span);
 		});
-	
+
 		return appendTo;
 	},
 
@@ -556,7 +556,7 @@
 				break;
 			default:
 		}
-	
+
 		return appendTo;
 	},
 };

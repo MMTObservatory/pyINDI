@@ -26,7 +26,7 @@
 			return;
 		}
 		// Build log message
-		var p = document.createElement("p");
+		let p = document.createElement("p");
 		p.classList.add("pyindi-log");
 		p.textContent = `${timestamp} ${device} ${message}`
 
@@ -36,8 +36,8 @@
     }
 
     // Calculate auto-scroll to new messages
-    var isScrolledToBottom = this.logger.scrollHeight - this.logger.clientHeight <= this.logger.scrollTop + 1;
-    var loggerHeight = this.logger.scrollHeight;
+    let isScrolledToBottom = this.logger.scrollHeight - this.logger.clientHeight <= this.logger.scrollTop + 1;
+    let loggerHeight = this.logger.scrollHeight;
 		// https://stackoverflow.com/questions/25505778/automatically-scroll-down-chat-div
 		this.logger.appendChild(p);
 		if (isScrolledToBottom) {

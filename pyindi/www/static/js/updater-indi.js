@@ -4,12 +4,12 @@
  * element with new data.
  * @namespace
  */
- const updater = {
+const updater = {
 	available: {},
 
 	/**
 	 * Updates what indi properties are available or to be omitted.
-	 * @param {Object} indi Contains all information about INDI property. 
+	 * @param {Object} indi Contains all information about INDI property.
 	 * @param {Boolean=} omit If true, add flag to omit this property.
 	 */
 	setAvailable(indi, omit = false) {
@@ -62,10 +62,10 @@
 		// If vpselector is empty, build
 		if (!document.querySelector(`#${groupSelector}`)) {
 			console.debug(`Creating new group=${indi.device}-${indi.group}`);
-	
+
 			// Doesn't exists, build and add attributes and classes
 			var html = builder.group(indi);
-	
+
 			if (appendTo != null) {
 				appendTo.appendChild(html);
 			}
@@ -75,7 +75,7 @@
 				document.querySelector(`#${parentSelector}`).appendChild(html);
 			}
 		}
-		
+
 		return document.getElementById(groupSelector);
 	},
 
@@ -86,7 +86,7 @@
 	handle(indi) {
     var device = this.device(indi);
     var group = this.group(indi);
-    
+
 		this.setAvailable(indi);
 		return;
 	},
@@ -130,25 +130,25 @@
 	 * @returns {HTMLElement} The element that was updated.
 	 */
 	texts(indi, appendTo = null) {
-		var vectorSelector = generateId.vector(indi);	
+		var vectorSelector = generateId.vector(indi);
 		builder.handle(vectorSelector, indi, appendTo);
-		
+
 		// Update values from indi
 		indi.values.forEach((property) => {
 			var propertySelector = generateId.property(indi, property);
 			var parent = document.querySelector(`#${propertySelector}`);
 			var ro = document.querySelector(`#${propertySelector} .pyindi-ro`);
-	
+
 			// Handle case if wo only, then ro will not exist
 			if (ro) {
 				// Handle null content
 				ro.textContent = utilities.isNull(property.value) ? "" : property.value
 			}
 		})
-	
+
 		// Update LED color on indistate
 		this.led(indi);
-	
+
 		return document.getElementById(vectorSelector);
 	},
 
@@ -161,25 +161,25 @@
 	numbers(indi, appendTo = null) {
 		var vectorSelector = generateId.vector(indi);
 		builder.handle(vectorSelector, indi, appendTo);
-		
+
 		// Update values from indi
 		indi.values.forEach((property) => {
 			var propertySelector = generateId.property(indi, property);
 			var parent = document.querySelector(`#${propertySelector}`);
 			var ro = document.querySelector(`#${propertySelector} .pyindi-ro`);
-	
+
 			// Handle case if wo only, then ro will not exist
 			if (ro) {
 				var format = parent.getAttribute("data-format");
 				var value = utilities.formatNumber(property.value, format);
-	
+
 				ro.textContent = value;
 			}
 		})
-	
+
 		// Update LED color on indistate
 		this.led(indi);
-	
+
 		return document.getElementById(vectorSelector)
 	},
 
@@ -222,22 +222,22 @@
 	lights(indi, appendTo = null) {
 		var vectorSelector = generateId.vector(indi);
 		builder.handle(vectorSelector, indi, appendTo);
-		
+
 		// Update values from indi
 		indi.values.forEach((property) => {
 			var propertySelector = generateId.property(indi, property);
 			var light = document.querySelector(`#${propertySelector}`);
-	
+
 			// Update the color of the light depending on indistate
 			var colors = converter.indiToCss(property.value);
 			light.style.backgroundColor = colors["background-color"]
 			light.style.color = colors["color"]
-	
+
 			// Assign class for blinking if enabled
 			if (Config.BLINKING_BUSY_ALERT_LIGHTS) {
 				let blink = converter.indiToBlink(property.value);
 				if (!blink) {
-					// No blink so remove 
+					// No blink so remove
 					light.classList.remove("blinking-busy", "blinking-alert")
 				}
 				else if (blink === "blinking-busy") {
@@ -250,10 +250,10 @@
 				}
 			}
 		});
-	
+
 		// Update LED color on indistate
 		this.led(indi);
-	
+
 		return document.getElementById(vectorSelector);
 	},
 
@@ -279,7 +279,7 @@
 		var deviceSelector = `[data-custom-device="${indi.device}"]`;
 		var vectorSelector = `[data-custom-vector="${indi.name}"]`;
 
-		var appendToSelector = `${deviceSelector}${vectorSelector}`; 
+		var appendToSelector = `${deviceSelector}${vectorSelector}`;
 		var appendTo = document.querySelector(`${appendToSelector}`);
 
 		// If it doesn't exist, return undefined.
@@ -296,79 +296,28 @@
 		return vector;
 	},
 	/**
-	 * Handles the delProperty tag. 
+	 * Handles the delProperty tag.
 	 * @param {String} device name of indi device.
 	 * @param {String} name name of indi property.
 	 *
 	 */
 	delete(indi) {
 		var selector;
-        if (builder.customGui) {
-          var deviceSelector = `[data-custom-device="${device}"]`;
+    if (builder.customGui) {
+      var deviceSelector = `[data-custom-device="${device}"]`;
  		  var vectorSelector = `[data-custom-vector="${name}"]`;
  		  selector = `${deviceSelector}${vectorSelector}`;
  		}
+    // Select using ID
  		else {
  		  selector = `#${generateId.vector(indi)}`;
 		}
 
-		var ele = document.querySelector(`${selector}`);
-		if(ele)
-			ele.classList.add('pyindi-deleted');
-	}
-};
+		var vector = document.querySelector(`${selector}`);
+		if (vector) {
+			vector.classList.add('pyindi-deleted');
+	  }
 
-/**
- * Contains methods to convert from a state to another.
- * @namespace
- */
-const converter = {
-	/**
-	 * Converts INDI state to a CSS color styling.
-	 * @param {String} indiState The current INDI state.
-	 * @returns {Object} Styling to apply. 
-	 */
-	indiToCss(indiState) {
-		var state = IndiStates["Unknown"] // Default return.
-		if (IndiStates.hasOwnProperty(indiState)) {
-			state = IndiStates[indiState];
-		}
-		else {
-			console.warn(`${indiState} is not valid INDI state, should be ${Object.keys(IndiStates)}`);
-		}
-		
-		return state
-	},
-
-	/**
-	 * Converts INDI state to blinking state for emergency.
-	 * @param {Object} indiState The current INDI state.
-	 * @returns {String} The styling to apply.
-	 */
-	indiToBlink(indiState) {
-		var blink = null;
-		if (IndiBlinks.hasOwnProperty(indiState)) {
-			blink = IndiBlinks[indiState];
-		}
-
-		return blink
-	},
-
-	/**
-	 * Converts switch to html element.
-	 * @param {String} indiRule INDI rule to apply to switch.
-	 * @returns {String} String describing the switch type, radio or checkbox.
-	 */
-	indiSwitchToSelector(indiRule) {
-		var sw = "radio"; // Default return
-
-		if (IndiSwitchRules.hasOwnProperty(indiRule)) {
-			sw = IndiSwitchRules[indiRule];
-		}
-		else {
-			console.warn(`${indiRule} is not valid INDI rule, should be ${Object.keys(IndiSwitchRules)}`);
-		}
-
-		return sw
-	},
+    return vector;
+  }
 };

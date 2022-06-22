@@ -59,7 +59,7 @@
 	--invalid: #FF5252;
 	--invalid-focus: #FF8A80;
 	--indistate-unknown: magenta;
-	--primary-light: #B388FF; 
+	--primary-light: #B388FF;
 	--primary: #7C4DFF;
 	--primary-dark: #651FFF;
 	--text-header-h1: #fff;
@@ -88,7 +88,6 @@
 	--bg-light: #616161;
 	--bg-icon: #fff;
 	--bg-switch-press: #424242;
-	
 }
 .text-right {
 	text-align: right;
@@ -324,17 +323,17 @@ body {
 	box-shadow: 0 0 0 0.125rem var(--invalid-focus);
 }
 
-/* 
+/*
 https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
 When floating child in parent, the parent ignores them.
 */
 .fix-div:after {
-	content: " "; 
+	content: " ";
 	display: block;
 	clear: both;
 }
 .pyindi-number-div:after {
-	content: " "; 
+	content: " ";
 	display: block;
 	clear: both;
 }
@@ -410,7 +409,7 @@ When floating child in parent, the parent ignores them.
 }
 .pyindi-tooltip:after {
 	border-right: 6px solid transparent;
-	border-bottom: 6px solid var(--bg-nav); 
+	border-bottom: 6px solid var(--bg-nav);
   border-left: 6px solid transparent;
   content: '';
   height: 0;
