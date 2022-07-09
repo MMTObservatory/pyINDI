@@ -80,7 +80,7 @@
 		nav.classList.add("pyindi-nav");
 
 		var div = document.createElement("div");
-		div.classList.add("pyindi-row");
+		div.classList.add("row");
 
 		// Create link to source code for users to file issues
 		var link = document.createElement("a");
@@ -109,7 +109,7 @@
 		// Build three nav items for navbar
 		for (let i = 0; i < 3; i++) {
 			let navItem = document.createElement("div");
-			navItem.classList.add("pyindi-col", "pyindi-h4")
+			navItem.classList.add("col", "pyindi-h4")
 			switch (i) {
 				case 0:
 					navItem.appendChild(link);
@@ -306,7 +306,7 @@
 
 		// Create span led in legend for indistate
 		var led = document.createElement("span");
-		led.classList.add("led");
+		led.classList.add("pyindi-led");
 
 		// Create text node for legend to not overwrite the led span
 		var text = document.createTextNode(indi.label);
@@ -332,12 +332,12 @@
 
 			var id = generateId.property(indi, property);
 			div.id = id;
-			div.classList.add("fix-div", "pyindi-row");
+			div.classList.add("fix-div", "row");
 
 			// Create label for indi text row
 			var label = document.createElement("label");
 			label.textContent = property.label;
-			label.classList.add("pyindi-property-label", "pyindi-col");
+			label.classList.add("pyindi-property-label", "col");
 			label.htmlFor = `${id}__input`;
 
 			div.appendChild(label);
@@ -346,11 +346,11 @@
 			var ro = document.createElement("label");
 
 			ro.readOnly = true;
-			ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
+			ro.classList.add("pyindi-property", "pyindi-ro", "col");
 			ro.textContent = property.value;
 
 			var wo = document.createElement("input");
-			wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col");
+			wo.classList.add("pyindi-property", "pyindi-wo", "col");
 			wo.id = `${id}__input`;
 
 			// If "Enter" is pressed on writeonly area, send new text to indi
@@ -389,12 +389,12 @@
 			div.id = id;
 			div.setAttribute("data-format", property.format);
 
-			div.classList.add("fix-div", "pyindi-row");
+			div.classList.add("fix-div", "row");
 
 			// Create label for indi text row
 			var label = document.createElement("label");
 			label.textContent = property.label;
-			label.classList.add("pyindi-property-label", "pyindi-col");
+			label.classList.add("pyindi-property-label", "col");
 			label.htmlFor = `${id}__input`;
 
 			div.appendChild(label);
@@ -402,10 +402,10 @@
 			// Build ro and wo
 			var ro = document.createElement("label"); // Make textarea for no resize
 			ro.textContent = property.value;
-			ro.classList.add("pyindi-property", "pyindi-ro", "pyindi-col");
+			ro.classList.add("pyindi-property", "pyindi-ro", "col");
 
 			var wo = document.createElement("input");
-			wo.classList.add("pyindi-property", "pyindi-wo", "pyindi-col")
+			wo.classList.add("pyindi-property", "pyindi-wo", "col")
 			wo.id = `${id}__input`;
 			wo.defaultValue = 0;
 

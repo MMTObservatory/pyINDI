@@ -164,7 +164,7 @@ const setindi = (...theArgs) => {
   }
 
   // Log to console if enabled.
-  Config.INDI_CONSOLE_DEBUG && console.log(`${msgprefix}${setcmd}`);
+  Config.CONSOLE_DEBUG && console.log(`${msgprefix}${setcmd}`);
 
   return;
 }

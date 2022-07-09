@@ -13,8 +13,8 @@ const updater = {
 	 * @param {Boolean=} omit If true, add flag to omit this property.
 	 */
 	setAvailable(indi, omit = false) {
-		var identifier = `${indi.device}.${indi.name}`;
-		this.available[identifier] = omit ? false : true;
+		var identifier = generateId.vector(indi);
+		this.available[identifier] = !omit;
 
 		return;
 	},
@@ -25,7 +25,7 @@ const updater = {
 	 * @returns {Boolean} True if property is available, false if not.
 	 */
 	isAvailable(indi) {
-		return this.available[`${indi.device}.${indi.name}`];
+		return this.available[generateId.vector(indi)];
 	},
 
 	/**
@@ -263,7 +263,7 @@ const updater = {
 	 */
 	led(indi) {
 		var vectorSelector = generateId.vector(indi);
-		var led = document.querySelector(`#${vectorSelector} .led`)
+		var led = document.querySelector(`#${vectorSelector} .pyindi-led`)
 		led.style.backgroundColor = converter.indiToCss(indi.state)["background-color"];
 
 		return;

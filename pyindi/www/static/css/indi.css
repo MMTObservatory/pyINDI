@@ -89,6 +89,16 @@
 	--bg-icon: #fff;
 	--bg-switch-press: #424242;
 }
+legend {
+	font-size: 1.125rem;
+	font-weight: 700;
+	margin-bottom: .25rem;
+	color: var(--text-header-h3);
+}
+body {
+	font-family: sans-serif;
+	background-color: var(--bg-body);
+}
 .text-right {
 	text-align: right;
 }
@@ -97,6 +107,57 @@
 }
 .text-center {
 	text-align: center;
+}
+.invalid {
+	border: 1px solid var(--invalid);
+}
+.invalid:focus {
+	border-color: var(--invalid);
+	box-shadow: 0 0 0 0.125rem var(--invalid-focus);
+}
+.minmax {
+	margin-right: 10px;
+	line-height: 1.5;
+	font-size: 1.25rem;
+	cursor: pointer;
+	user-select: none;
+	color: var(--bg-minmax);
+}
+.icon {
+	line-height: 1.5;
+	cursor: pointer;
+	user-select: none;
+	color: var(--bg-icon);
+}
+.hide {
+	display: none;
+}
+.tip {
+	color: var(--invalid);
+	width: 100%;
+	font-size: .8rem;
+}
+.row {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	width: 100%;
+}
+.col {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+}
+@media screen and (max-width: 560px) {
+	.pyindi-property-label.col {
+		flex: 50%;
+	}
+	.pyindi-ro.col {
+		flex: 50%;
+	}
+	.pyindi-wo.col {
+		flex: 100%;
+	}
 }
 .pyindi-hr {
 	height: 1px;
@@ -126,29 +187,6 @@
 	padding: 1rem .75rem;
 	display: block;
 	background-color: var(--bg-device-header);
-}
-.pyindi-row {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	width: 100%;
-}
-.pyindi-col {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-}
-
-@media screen and (max-width: 560px) {
-	.pyindi-property-label.pyindi-col {
-		flex: 50%;
-	}
-	.pyindi-ro.pyindi-col {
-		flex: 50%;
-	}
-	.pyindi-wo.pyindi-col {
-		flex: 100%;
-	}
 }
 .pyindi-h1 {
 	font-weight: 700;
@@ -217,7 +255,6 @@
 	overflow: visible;
 	background-color: var(--bg-switch);
 	margin: .25rem .125rem;
-	/* box-shadow:  0 1px 3px hsla(0, 0%, 0%, 0.2); */
 	color: var(--text-switch);
 	margin-right: .5rem;
 }
@@ -240,18 +277,6 @@
 	clip: rect(0,0,0,0);
 	pointer-events: none;
 }
-/* This should be used for when the button is active like radio button */
-legend {
-	font-size: 1.125rem;
-	font-weight: 700;
-	margin-bottom: .25rem;
-	color: var(--text-header-h3);
-}
-body {
-	font-family: sans-serif;
-	background-color: var(--bg-body);
-}
-
 .pyindi-vector {
 	background-color: inherit;
 	border: none;
@@ -315,14 +340,6 @@ body {
 	line-height: 1.5;
 	color: var(--text-value)
 }
-.invalid {
-	border: 1px solid var(--invalid);
-}
-.invalid:focus {
-	border-color: var(--invalid);
-	box-shadow: 0 0 0 0.125rem var(--invalid-focus);
-}
-
 /*
 https://stackoverflow.com/questions/12540436/height-of-parent-div-is-zero-even-if-it-has-child-with-finite-heights
 When floating child in parent, the parent ignores them.
@@ -347,7 +364,7 @@ When floating child in parent, the parent ignores them.
 	width: 14rem;
 	color: var(--text-label);
 }
-.led {
+.pyindi-led {
 	margin-right: 5px;
 	margin-top: 2px;
 	float: left;
@@ -355,30 +372,8 @@ When floating child in parent, the parent ignores them.
 	height: 12px;
 	border-radius: 50%;
 }
-.minmax {
-	margin-right: 10px;
-	line-height: 1.5;
-	font-size: 1.25rem;
-	cursor: pointer;
-	user-select: none;
-	color: var(--bg-minmax);
-}
 .pyindi-device-header .minmax {
 	color: var(--bg-minmax-header);
-}
-.icon {
-	line-height: 1.5;
-	cursor: pointer;
-	user-select: none;
-	color: var(--bg-icon);
-}
-.hide {
-	display: none;
-}
-.tip {
-	color: var(--invalid);
-	width: 100%;
-	font-size: .8rem;
 }
 .blinking-busy {
   animation: blinker 1.5s linear infinite;
@@ -390,9 +385,6 @@ When floating child in parent, the parent ignores them.
   50% {
     opacity: 0;
   }
-}
-.retro {
-	font-family: 'Audiowide', monospace;
 }
 .pyindi-tooltip {
 	position: relative;
@@ -441,9 +433,7 @@ When floating child in parent, the parent ignores them.
 	font-weight: 900;
 	font-size: 1rem;
 }
-
 .pyindi-deleted {
 	opacity: 0.25;
 	pointer-events: none;
-
 }
