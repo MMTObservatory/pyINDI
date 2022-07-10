@@ -304,9 +304,11 @@ const updater = {
 	delete(indi) {
 		var selector;
     if (builder.customGui) {
-      var deviceSelector = `[data-custom-device="${device}"]`;
- 		  var vectorSelector = `[data-custom-vector="${name}"]`;
- 		  selector = `${deviceSelector}${vectorSelector}`;
+      var deviceSelector = `[data-custom-device="${indi.device}"]`;
+ 		  var vectorSelector = `[data-custom-vector="${indi.name}"]`;
+
+      // Need to select the fieldset not the div
+ 		  selector = `${deviceSelector}${vectorSelector} > fieldset`;
  		}
     // Select using ID
  		else {

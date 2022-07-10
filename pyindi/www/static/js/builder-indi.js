@@ -276,7 +276,7 @@
 			}
 		}
 		else {
-			//If we get here and the item has been deleted previously
+			// If we get here and the item has been deleted previously
 			// we should undelete by removing the class.
 			var vector = document.getElementById(vectorSelector);
 			vector.classList.remove("pyindi-deleted");

@@ -39,8 +39,27 @@ const initialize = (devices, customGui=true) => {
  */
 const handle = (indi) => {
   var htmlElement;
+  // Handle message and delete first
+  // For delete and message, if we assign htmlElement, users will get element
+  if (indi.op === IndiOp.MESSAGE) {
+    var message = indi.message;
+    var timestamp = indi.timestamp;
+    var device = indi.device;
 
-  if (indi.op === IndiOp.DEFINITION) {
+    Config.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${message}`);
+    logging.log(message, timestamp, device);
+
+    return;
+  }
+
+  else if (indi.op === IndiOp.DELETE) {
+    console.debug(`Deleting ${generateId.vector(indi)}`)
+    updater.delete(indi);
+
+    return;
+  }
+
+  else if (indi.op === IndiOp.DEFINITION) {
     // Handle a custom GUI
     if (builder.customGui) {
       htmlElement = updater.custom(indi);
@@ -56,22 +75,15 @@ const handle = (indi) => {
     // During a definition, still need to update the vector values
     htmlElement = updater.vector(indi);
   }
-  // Only update values if set
-  else if (indi.op == IndiOp.SET) {
-    htmlElement = updater.vector(indi);
-  }
-  // For delete and message, if we assign htmlElement, users will get element
-  else if (indi.op == IndiOp.DELETE) {
-    console.debug(`Deleting ${generateId.vector(indi)}`)
-    updater.delete(indi);
-  }
-  else if (indi.op == IndiOp.MESSAGE) {
-    var message = indi.message;
-    var timestamp = indi.timestamp;
-    var device = indi.device;
 
-    Config.INDI_CONSOLE_DEBUG && console.log(`${timestamp} ${device} ${message}`);
-    logging.log(message, timestamp, device);
+  // Check if indi vector was added
+  if (!updater.isAvailable(indi)) {
+    return;
+  }
+
+  // Only update values if set
+  if (indi.op == IndiOp.SET) {
+    htmlElement = updater.vector(indi);
   }
 
   return htmlElement;
