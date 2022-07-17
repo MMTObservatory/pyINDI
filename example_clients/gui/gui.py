@@ -4,11 +4,11 @@ from pathlib import Path
 from pyindi.webclient import INDIWebApp, INDIHandler
 
 # Configuration
-WEBPORT = 5905 # The port for the web app
-INDIPORT = 7624 # The indiserver port
-INDIHOST = "localhost" # Where the indiserver is running
-DEVICES = ["*"] # All devices is called by an asterisk
-CURRENT_DIR = Path.cwd() # The current directory
+WEBPORT = 5905  # The port for the web app
+INDIPORT = 7624  # The indiserver port
+INDIHOST = "localhost"  # Where the indiserver is running
+DEVICES = ["*"]  # All devices is called by an asterisk
+CURRENT_DIR = Path.cwd()  # The current directory
 TEMPLATE = "gui.html"
 
 

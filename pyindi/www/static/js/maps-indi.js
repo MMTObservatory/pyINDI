@@ -387,6 +387,7 @@ const updateProperties = (xml_text) => {
       }
     }
     catch (e) {
+      console.log(indi)
       console.warn(`Parse failed: ${e} ${device} ${name}`);
       return;
     }
