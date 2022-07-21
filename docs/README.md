@@ -8,6 +8,7 @@
 
 [![Powered by AstroPy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org)
 [![python 3.7+](http://img.shields.io/badge/python-3.7+-green.svg?style=flat)]()
+[![frontend tests](https://github.com/MMTObservatory/pyINDI/actions/workflows/jest.yml/badge.svg?branch=jest-workflow&event=push)](https://github.com/MMTObservatory/pyINDI/actions/workflows/jest.yml)
 
 </div>
 

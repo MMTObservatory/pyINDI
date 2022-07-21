@@ -1,0 +1,12 @@
+{
+  "name": "pyindi",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module"
+}

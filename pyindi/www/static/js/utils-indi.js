@@ -190,3 +190,7 @@ const utilities = {
 		return sw
 	},
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+  module.exports = { generateId, utilities, converter };
+}
