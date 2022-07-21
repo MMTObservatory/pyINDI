@@ -84,6 +84,7 @@ const updater = {
 	 * @param {Object} indi Contains all information about INDI property.
 	 */
 	handle(indi) {
+    console.log(indi)
     var device = this.device(indi);
     var group = this.group(indi);
 

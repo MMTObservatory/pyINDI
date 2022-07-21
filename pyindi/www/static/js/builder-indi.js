@@ -2,7 +2,7 @@
  * Contains all functions to build pyINDI interface and properties
  * @namespace
  */
- const builder = {
+const builder = {
 	customGui: true,
 
 	/**

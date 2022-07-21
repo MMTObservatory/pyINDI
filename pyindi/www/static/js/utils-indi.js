@@ -5,7 +5,7 @@
  * between vectors and their properties.
  * @namespace
  */
- const generateId = {
+const generateId = {
 	/**
 	 * Generates device ID with no special characters or spaces.
 	 * @param {Object} indi Contains all information about INDI property.
@@ -190,3 +190,7 @@ const utilities = {
 		return sw
 	},
 };
+
+if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
+  module.exports = { generateId, utilities, converter };
+}
