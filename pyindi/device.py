@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 from lxml import etree
 import asyncio
 import sys
@@ -325,6 +324,7 @@ class IVectorProperty(ABC):
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
         for prop in self.iprops:
+            logging.warning(prop)
             ele.append(prop.Set())
 
         if msg is not None:
@@ -759,11 +759,30 @@ class IBLOB(IProperty):
         self.data = None
 
     @property
-    def value(self):
-        return base64.b64encode(self.data).decode()
+    def value(self) -> str:
+        """Setter for value property. The information pointed to by this
+        property is stored as binary data and returned as base64
+
+        Returns
+        -------
+        str
+            base64 encoded data from the blob
+        """
+
+        if self.data is None:
+            b64data = ""
+        else:
+            try:
+                b64data = base64.b64encode(self.data).decode()
+            except TypeError:
+                b64data = ""
+                logging.warning(f"Could not convert {type(self.data)} to base64")
+
+        return b64data
+
 
     @value.setter
-    def value(self, val):
+    def value(self, val: bytes):
         if type(val) != bytes:
             raise ValueError(f"""IBLOB value must by bytes type""")
 

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		{% raw pyindi_head %}
+		{% raw js9_head %}
+
+		<title>{{ title }}</title>
+		<script>
+				/**
+			* Runs on load. Builds the default properties using a callback.
+			*/
+			const main = () => {
+				var devices = {% raw json_encode(devices) %};
+				initialize(devices, customGui=true);
+				return;
+			}
+
+			/**
+			* This function will be called whenever an INDI property with the device
+			*	{{ devices }} is received. This is where users should modify the
+			*	code to append to specific objects.
+			*
+			*	If wanting to use a custom GUI, enable in the configuration and provide the correct syntax for selecting
+			* elements.
+			* @param {Object} indi Contains all information about INDI property
+			*/
+			const handleProperty = (indi) => {
+        let htmlElement = handle(indi);
+
+        // Bad selector, meaning the custom GUI selector not found
+        // Want to check if not delProperty, message, or BLOB before issuing tip
+        if (!htmlElement) {
+		  let isBLOB = indi.metainfo === "bvp"
+          if (ApprovedOp.includes(indi.op) && !isBLOB) {
+            tag_str = `<div data-custom-vector="${indi.name}" data-custom-device="${indi.device}"/>`;
+            console.debug(`Selector not found. To add vector to page use ${tag_str}`);
+
+          }
+		  else if(isBLOB)
+		  {
+			if(indi.jpg_blob != undefined)
+			{
+				let img = document.getElementById("jpg_img");
+				img.src = `data:image/jpg;base64,${btoa(indi.jpg_blob)}`
+			}
+
+			if(indi.fits_blob != undefined)
+			{
+				JS9.Load(indi.fits_blob)
+			}
+		  }
+          
+          return;
+		  
+        }
+
+        if (indi.op === IndiOp.DEFINITION) {
+          // Only update once (on definition)
+          // Use for adding tooltips or modifying the look once
+		  
+        }
+        else if (indi.op === IndiOp.SET) {
+          // Update everytime new values come in
+          // Use for updating labels with values
+        }
+        else {
+          console.warn(`Indi definition: ${indi.op} not found`)
+        }
+
+        return;
+			}
+		</script>
+		<style>
+			.grid-container 
+			{
+				display:grid;
+				gap:5px;
+			}
+			#logger 
+			{
+				grid-row-start:1;
+				grid-row-end:1;
+				grid-column-start:2;
+				grid-column-end:2;
+				border:1px solid black;
+				width:600px;
+				margin:20px;
+
+			}	
+
+			#img_container
+			{
+				grid-row-start:1;
+				grid-row-end:1;
+				grid-column-start:3;
+				grid-column-end:3;
+
+			}
+
+			
+			#spacer_left
+			{
+				grid-row-start:1;
+				grid-row-end:1;
+				grid-column-start:1;
+				grid-column-end:1;
+
+			}
+			#spacer_right
+			{
+				grid-row-start:1;
+				grid-row-end:1;
+				grid-column-start:4;
+				grid-column-end:4;
+
+			}
+
+		</style>
+	</head>
+	<body>
+    <!-- Insert elements to use for custom GUI -->
+		<div data-custom-device="BLOBDevice" data-custom-vector="img"></div>
+		<hr>
+		<div class="grid-container">
+
+
+			<div id="spacer_left"></div>
+			<div id="logger"></div>
+
+			<div id="jpg_container">42
+			</div>
+			<div id="img_container">
+				<div id="fits">
+					<h3>FITS</h3>
+					<span id="container">
+					<div class="JS9Menubar" data-width="300px"></div>
+					<div class="JS9" data-width="300px" data-height="300px"></div>
+					<div style="margin-top: 2px;"></div>
+					<div class="JS9Colorbar" data-width="300px"></div>
+					</span>
+				</div>
+				<h3>JPG</h3>
+				<img id="jpg_img" width=300 height=300>
+			</div>
+			<div id="spacer_right"></div>
+			
+					
+		</div>
+	</body>
+	<script>document.body.addEventListener("load", main());</script>
+</html>
