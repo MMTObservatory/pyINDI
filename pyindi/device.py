@@ -53,13 +53,24 @@ async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
             lambda: asyncio.StreamReaderProtocol(reader, loop=loop),
             sys.stdin)
 
-        writer_transport, writer_protocol = await loop.connect_write_pipe(
-            lambda: asyncio.streams.FlowControlMixin(loop=loop),
-            os.fdopen(sys.stdout.fileno(), 'wb'))
-        writer = asyncio.streams.StreamWriter(
-            writer_transport, writer_protocol, None, loop)
+#        writer_transport, writer_protocol = await loop.connect_write_pipe(
+#            lambda: asyncio.streams.FlowControlMixin(loop=loop),
+#            os.fdopen(sys.stdout.fileno(), 'wb'))
+#        writer = asyncio.streams.StreamWriter(
+#            writer_transport, writer_protocol, None, loop)
+        writer = sys.stdout
     return reader, writer
 
+async def stdout():
+
+    loop = asyncio.get_event_loop()
+    writer_transport, writer_protocol = await loop.connect_write_pipe(
+        lambda: asyncio.streams.FlowControlMixin(loop=loop),
+        os.fdopen(sys.stdout.fileno(), 'wb'))
+    writer = asyncio.streams.StreamWriter(
+        writer_transport, writer_protocol, None, loop)
+
+    return writer
 
 def printa(msg: Union[str, bytes]):
     """
@@ -696,7 +707,6 @@ class ISwitch(IProperty):
                  label: str = None):
 
         super().__init__(name, label)
-        print(f"{name} = {state}")
         self._state = state
 
     @property
@@ -919,9 +929,12 @@ class device(ABC):
             output = await self.outq.get()
 
             logging.debug(output.decode())
+            #print(output.decode())
+            self.writer.write(output.decode())
+            self.writer.flush()
+                
 
-            self.writer.write(output)
-            await self.writer.drain()
+
 
     async def run(self):
         """
