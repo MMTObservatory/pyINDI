@@ -31,7 +31,6 @@ now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
 
 
-
 async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
     """
     Collect the stdio as async streams. This is a shameless
@@ -61,21 +60,14 @@ async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
         writer = sys.stdout
     return reader, writer
 
-async def stdout():
 
-    loop = asyncio.get_event_loop()
-    writer_transport, writer_protocol = await loop.connect_write_pipe(
-        lambda: asyncio.streams.FlowControlMixin(loop=loop),
-        os.fdopen(sys.stdout.fileno(), 'wb'))
-    writer = asyncio.streams.StreamWriter(
-        writer_transport, writer_protocol, None, loop)
 
-    return writer
+
 
 def printa(msg: Union[str, bytes]):
     """
     This was the old way of writing to stdout
-    We use the stdio fxn now. 
+    We use the stdio fxn now.
     """
 
     if type(msg) == bytes:
@@ -235,8 +227,8 @@ class IVectorProperty(ABC):
     INDI Vector asbstractions
 
     TODO: Any member of any subclass of this class should
-    be handled by setter and getter decorators. 
-    
+    be handled by setter and getter decorators.
+
     """
     dtd = etree.DTD(
         (Path(__file__).parent / "data/indi.dtd").open())
@@ -244,7 +236,6 @@ class IVectorProperty(ABC):
     def __init__(self,
                  device: str, name: str, state: IPState,
                  label: str = None, group: str = None):
-
 
         self.device = device
         self.name = name
@@ -537,7 +528,7 @@ class INumber(IProperty):
     def value(self, val):
         try:
             self._value = float(val)
-        except Exception as err:
+        except Exception:
             raise ValueError(f"""INumber value must be a number not {val}""")
 
 
@@ -588,7 +579,7 @@ class IText(IProperty):
     def value(self, val):
         try:
             self.text = str(val)
-        except Exception as err:
+        except Exception:
             raise ValueError(f"""IText value must be str not {val}""")
 
 
@@ -655,7 +646,7 @@ class ISwitchVector(IVectorProperty):
                  perm: IPerm,
                  timeout: float = 0,
                  label: str = None,
-                 group: str = None, 
+                 group: str = None,
                  timestamp: str = None):
         """
          ## Arguments:
@@ -740,7 +731,7 @@ class IBLOBVector(IVectorProperty):
                  perm: IPerm,
                  label: str = None,
                  timeout: str = None,
-                 group: str = None, 
+                 group: str = None,
                  timestamp: str = None):
         """
          ## Arguments:
@@ -775,7 +766,7 @@ class IBLOB(IProperty):
     @value.setter
     def value(self, val):
         if type(val) != bytes:
-            raise ValueError(f"""IBLOB value must by bytes type""")
+            raise ValueError("""IBLOB value must by bytes type""")
 
         self.size = len(val)
         self.data = val
@@ -784,26 +775,24 @@ class IBLOB(IProperty):
 class device(ABC):
     """
     Handle the stdin/stdout xml.
-    
+
 
     Thoughts on Concurrency:
     Concurrency in this class is handled via asyncio.
     Its individual methods are NOT threadsafe and each
-    call should be executed in the same thread. If your 
-    device requires lots of IO bound calls, as most 
+    call should be executed in the same thread. If your
+    device requires lots of IO bound calls, as most
     devices will, it is recommended that you also use
-    asyncio to handle concurrency. If your device 
+    asyncio to handle concurrency. If your device
     hase CPU bound activities it is recommended that you
     use a multi processing paradigm.
 
     Either way you should use the mainloop member
-    of this class to utilize concurrency. With IO 
+    of this class to utilize concurrency. With IO
     bound calls, use the many available futures/task
-    methods. With CPU bound you should use 
-    self.mainloop.run_in_executor to run tasks 
-    in a process pool. 
-    
-    
+    methods. With CPU bound you should use
+    self.mainloop.run_in_executor to run tasks
+    in a process pool.
     """
 
     _registrants = []
@@ -817,7 +806,6 @@ class device(ABC):
         config: the configureable info from ConfigParser
         name: Name of the device defaulting to name of the class
         """
-
 
         self.props = []
         self.config = config
@@ -837,17 +825,17 @@ class device(ABC):
 
         self.mainloop = loop
 
-    def start(self): 
+    def start(self):
         """
         Start up the mainloop, grab the stdio and run the xml reader.
         This method can hide the asynchronicity from subclasses. Simply
         instantiate the subclass and call this method in the same thread
-        and you never have to know that this is asyncio. 
+        and you never have to know that this is asyncio.
 
         It is probably better to use the astart function but that requires
         astart
         """
-   
+
         self.mainloop = asyncio.get_event_loop()
         self.reader, self.writer = self.mainloop.run_until_complete(stdio())
         self.running = True
@@ -859,11 +847,10 @@ class device(ABC):
 
         self.mainloop.run_until_complete(future)
 
-    
     async def astart(self, *tasks):
 
         """Start up in async mode
-        Arg: tasks -> any coroutines that 
+        Arg: tasks -> any coroutines that
         should be run concurantly with the
         other device tasks.
         """
@@ -898,8 +885,6 @@ class device(ABC):
                 sys.stderr.write("See traceback below.")
                 traceback.print_exc(file=sys.stderr)
 
-
-
     def exception(self, loop, context):
 
         raise context['exception']
@@ -922,19 +907,14 @@ class device(ABC):
     def __repr__(self):
         return f"<{self.name()}>"
 
-    
     async def toindiserver(self):
 
         while self.running:
             output = await self.outq.get()
 
             logging.debug(output.decode())
-            #print(output.decode())
             self.writer.write(output.decode())
             self.writer.flush()
-                
-
-
 
     async def run(self):
         """
@@ -942,7 +922,7 @@ class device(ABC):
 
         TODO: Create a real condition for the
         while loop. IT would be nice to be able
-        to shutdown gracefully. 
+        to shutdown gracefully.
         """
 
         inp = ""
@@ -956,7 +936,7 @@ class device(ABC):
 
             except etree.XMLSyntaxError as error:
                 # This is not the best way to check
-                # for completed xml. 
+                # for completed xml.
                 logging.debug(f"Could not parse xml {error} {inp}")
                 continue
 
@@ -982,7 +962,6 @@ class device(ABC):
                 else:
                     await self.asyncInitProperties()
 
-
                 if self._once:
                     # This is where the `repeat` decorated
                     # functions are called the first time
@@ -994,7 +973,7 @@ class device(ABC):
                         initiate_callback()
 
                     self._once = False
-            
+
             elif xml.attrib['name'] in self._NewPropertyMethods:
                 names = [ele.attrib["name"] for ele in xml]
                 if "Number" in xml.tag:
@@ -1003,12 +982,12 @@ class device(ABC):
                     values = [str(ele.text.strip()) for ele in xml]
 
                 self._NewPropertyMethods[xml.attrib['name']](
-                        self,
-                        xml.attrib["device"],
-                        xml.attrib['name'],
-                        values,
-                        names
-                        )
+                    self,
+                    xml.attrib["device"],
+                    xml.attrib['name'],
+                    values,
+                    names
+                )
 
             elif xml.tag == "newNumberVector":
 
@@ -1017,8 +996,8 @@ class device(ABC):
                     values = [float(ele.text.strip()) for ele in xml]
                     self.ISNewNumber(
                         xml.attrib["device"],
-                        xml.attrib["name"], 
-                        values, 
+                        xml.attrib["name"],
+                        values,
                         names)
 
                 except Exception as error:
@@ -1041,12 +1020,12 @@ class device(ABC):
             elif xml.tag == "newSwitchVector":
                 try:
                     names = [ele.attrib["name"] for ele in xml]
-                    #values = [ISState.fromstring(ele.text) for ele in xml]
+                    # values = [ISState.fromstring(ele.text) for ele in xml]
                     values = [str(ele.text).strip() for ele in xml]
                     self.ISNewSwitch(
                         xml.attrib["device"],
-                        xml.attrib["name"], 
-                        values, 
+                        xml.attrib["name"],
+                        values,
                         names)
                 except Exception as error:
                     logging.debug(f"{error}")
@@ -1058,12 +1037,11 @@ class device(ABC):
         pass
 
     async def asyncInitProperties(self, device=None):
-        """This function is called after the getProperties tags is 
+        """This function is called after the getProperties tags is
         recieved at the same time as initProperties. Override it
         to start async tasks to be run in the event loop."""
 
         pass
-
 
     def IEAddTimer(self, millisecs: int, funct_or_coroutine: Callable, *args):
         """
@@ -1087,19 +1065,19 @@ class device(ABC):
 
     def buildSkeleton(self, skelfile):
         """
-        Build properties from a skeleton File.. 
+        Build properties from a skeleton File.
         args:
             skelfile: string path to skeleton
             file.
         """
 
         ok_tags = (
-                "defSwitchVector",
-                "defTextVector",
-                "defNumberVector",
-                "defBLOBVector",
-                "defLightVector",
-                )
+            "defSwitchVector",
+            "defTextVector",
+            "defNumberVector",
+            "defBLOBVector",
+            "defLightVector",
+        )
 
         with open(skelfile) as skfd:
             xmlstr = skfd.read()
@@ -1111,7 +1089,7 @@ class device(ABC):
                 continue
             properties = []
             for prop in xml_def.getchildren():
-                
+
                 att = prop.attrib
                 att.update({'value': prop.text.strip()})
                 properties.append(att)
@@ -1124,7 +1102,6 @@ class device(ABC):
                 raise
             self.IDDef(ivec)
 
-
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
             "Device driver must \
@@ -1132,7 +1109,7 @@ class device(ABC):
 
     def IUFind(self, name, device=None, group=None):
         """
-        Find and return the vector property by name. 
+        Find and return the vector property by name.
 
         Modeled after the IUFindXXX set of equations
         [see here](http://www.indilib.org/api/group__\
@@ -1155,8 +1132,8 @@ class device(ABC):
 
     def IUUpdate(self, device, name, values, names, Set=False):
         """
-        Update the indi vector property. It looks up 
-        the indi vector by device name and property name. 
+        Update the indi vector property. It looks up
+        the indi vector by device name and property name.
         Args:
             device -> name of the device
             name -> name of the vector property
@@ -1180,10 +1157,22 @@ class device(ABC):
             f"Subclass of {self} must \
                                   implement ISGetProperties")
 
-    def IDMessage(self, msg: str,
-                  timestamp: Union[str, datetime.datetime, None] = None,
-                  msgtype: Union["INFO", "WARN", "DEBUG"]="INFO"):
+    def IDMessage(
+        self, msg: str,
+        timestamp: Union[str, datetime.datetime, None] = None,
+        msgtype: str = "INFO"
+    ):
+        """Send a message to the client
 
+        Parameters
+        ----------
+        msg : str
+            The text of the message
+        timestamp : Union[str, datetime.datetime, None], optional
+            timestamp of the message, by default None
+        msgtype : str, optional
+            one of "DEBUG", "INFO", "WARN", by default "INFO"
+        """
         if type(timestamp) == datetime.datetime:
             timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -1193,7 +1182,7 @@ class device(ABC):
         xml = f'<message message="[{msgtype}] {msg}" '
         xml += f'timestamp="{timestamp}" '
         xml += f'device="{self.name()}"/> '
-    
+
         self.outq.put_nowait(xml.encode())
         # self.writer.write(xml.encode())
 
@@ -1203,8 +1192,8 @@ class device(ABC):
     def IDSetText(self, t: ITextVector, msg=None):
         self.IDSet(t, msg)
 
-    def IDSetLight(self, l: ILightVector, msg=None):
-        self.IDSet(l, msg)
+    def IDSetLight(self, ll: ILightVector, msg=None):
+        self.IDSet(ll, msg)
 
     def IDSetSwitch(self, s: ISwitchVector, msg=None):
         self.IDSet(s, msg)
@@ -1225,8 +1214,8 @@ class device(ABC):
 
         if prop.device != self._devname:
             raise ValueError(
-                    f"INDI prop {prop.name} device does not match this device, {prop.device} {self._devname}"
-                    )
+                f"INDI prop {prop.name} device does not match this device, {prop.device} {self._devname}"
+            )
 
         if prop not in self.props:
             self.props.append(prop)
@@ -1244,8 +1233,6 @@ class device(ABC):
             return func
 
         return get_function
-
-
 
     @classmethod
     def repeat(cls, millis: int):
@@ -1279,7 +1266,6 @@ class device(ABC):
                     """Call the function but make sure
                     we have error handling with the traceback"""
 
-
                     instance.repeat_q.put_nowait(func)
 
                     # do it again in millis
@@ -1287,7 +1273,7 @@ class device(ABC):
                         millis / 1000.0,
                         call_with_error_handling)
                     instance.handles.append(cl)
-                    return 
+                    return
 
                 # The below line calls the wrapped
                 # function for the first time
@@ -1296,7 +1282,7 @@ class device(ABC):
                     call_with_error_handling)
 
                 instance.handles.append(cl)
-                return 
+                return
 
             return get_instance
 
@@ -1370,5 +1356,3 @@ class device(ABC):
             raise ValueError(message)
 
         return vec
-
-
