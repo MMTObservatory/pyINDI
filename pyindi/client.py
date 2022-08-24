@@ -10,20 +10,21 @@ asyncio.gather function. This task is read_from_indiserver.
 xml_to_indiserver is called from the websocket class when a message
 comes in.
 
-INDIClient runs two tasks that are infinite loops and run 
+INDIClient runs two tasks that are infinite loops and run
 in parallel with the asyncio.gather function. These
-tasks, read_from_indiserver and write_to_indiserver, are 
-explained in the class diagram below. 
+tasks, read_from_indiserver and write_to_indiserver, are
+explained in the class diagram below.
 
 To build an INDIClient application sublcass INDIClient and override
 the xml_from_indiserver to retrieve data from the indiserver and
 use the xml_to_indiserver method to send data to the indiserver. An
-example of this is in webclient.py in this package.  
+example of this is in webclient.py in this package.
 """
+
 
 class INDIConn:
     """Async class to manage the connection to indiserver
-    
+
     Connection class to manage the connection to indiserver.
 
     Attributes
@@ -45,7 +46,7 @@ class INDIConn:
 
     async def connect(self, host, port):
         """Connects to a ip and port
-        
+
         Parameters
         ----------
         host : string
@@ -69,14 +70,14 @@ class INDIConn:
             logging.debug('Socket timeout trying to connect')
             raise
         except ConnectionRefusedError:
-            logging.debug(f'indiserver is not on')
+            logging.debug('indiserver is not on')
             raise
-        
+
         return None
 
     async def disconnect(self):
         """Disconnect from the ip and port
-        
+
         If conneceted, will close the writer and wait for it to close.
         Then will reset the writer and reader stream handlers.
 
@@ -98,10 +99,10 @@ class INDIConn:
             self.reset()
 
         return None
-        
+
     def reset(self):
         """Resets the stream parameters
-        
+
         Parameters
         ----------
         None
@@ -121,7 +122,7 @@ class INDIConn:
 
     async def send_msg(self, msg):
         """Sends a message over the connection
-        
+
         Parameters
         ----------
         msg : string
@@ -137,10 +138,10 @@ class INDIConn:
         await self.writer.drain()
 
         return None
-        
+
     async def recv_msg(self):
         """Receives a message over the connection
-        
+
         Parameters
         ----------
         None
@@ -157,12 +158,13 @@ class INDIConn:
 
         return response.decode()
 
+
 class INDIClient:
-    """Async class that sends 
-    
-    Connection class to manage the connection to indiserver. This class 
-    sends/recvs INDI data to/from the indiserver tcp/ip socket. See the 
-    above diagram for help understanding its data flow. 
+    """Async class that sends
+
+    Connection class to manage the connection to indiserver. This class
+    sends/recvs INDI data to/from the indiserver tcp/ip socket. See the
+    above diagram for help understanding its data flow.
 
     Attributes
     ----------
@@ -170,14 +172,14 @@ class INDIClient:
     """
     def start(self, host="localhost", port=7624):
         """Initializes the client
-        
+
         Parameters
         ----------
         host : string
             Host IP address to connect to for indiserver
         port : int
             Port to connect to for indiserver
-        
+
         Returns
         -------
         None
@@ -191,7 +193,7 @@ class INDIClient:
         """Attempt to connect to the indiserver in a loop
 
         Once connected, reads from indiserver. Only exits if there is an
-        exception and if so, disconnects, clears tasks, and tries to 
+        exception and if so, disconnects, clears tasks, and tries to
         reconnect in 2 seconds. Repeat this until connects.
 
         Parameters
@@ -203,7 +205,7 @@ class INDIClient:
         None
         """
         while True:
-            
+
             task = None
             await self.disconnect()
 
@@ -222,7 +224,7 @@ class INDIClient:
                     raise exc
 
                 logging.debug("INDI client tasks finished. indiserver crash?")
-                
+
             except Exception as error:
                 logging.debug(f"INDIClient connect error {error}")
 
@@ -237,7 +239,7 @@ class INDIClient:
 
     async def disconnect(self):
         """Disconnects from client when issue
-        
+
         Parameters
         ----------
         None
@@ -249,9 +251,9 @@ class INDIClient:
         if self.is_connected:
             await self.conn.disconnect()
             self.conn = None
-        
+
         return None
-            
+
     @property
     def is_connected(self):
         """Checks if it is connected"""
@@ -259,7 +261,7 @@ class INDIClient:
 
     async def read_from_indiserver(self):
         """Reads in xml from indiserver from the driver
-        
+
         indidriver -> indiserver -> this function
 
         Parameters
@@ -273,7 +275,7 @@ class INDIClient:
         while self.is_connected:
             response = await self.conn.recv_msg()
             await self.xml_from_indiserver(response)
-        
+
         logging.warning("Finished reading from indiserver")
         return None
 
@@ -291,11 +293,11 @@ class INDIClient:
         -------
         None
         """
-        raise NotImplemented("Implement using a subclass!")
+        raise NotImplementedError("Implement using a subclass!")
 
     async def xml_to_indiserver(self, msg):
         """Write to indiserver
-        
+
         Starting from websocket
         websocket -> xml_to_indiserver -> indiserver -> indidriver
         Called from webclient.py class INDIWebSocket
@@ -304,7 +306,7 @@ class INDIClient:
         ----------
         msg : string
             XML string to send to indiserver
-        
+
         Returns
         -------
         None
@@ -314,7 +316,7 @@ class INDIClient:
                 await self.conn.send_msg(msg)
 
             except Exception as error:
-                logging.debug(f"Connection was lost, could not write to indiserver")
+                logging.debug(f"Connection was lost, could not write to indiserver: {error}")
                 self.disconnect()
                 raise
 
@@ -323,12 +325,13 @@ class INDIClient:
 
         return None
 
+
 class INDIClientSingleton(INDIClient):
     """
     INDIClient as a singleton. This works well
-    if you only want one client and you want 
+    if you only want one client and you want
     to be able to easily access that client
-    by simple instantiation. 
+    by simple instantiation.
     """
 
     _instance = None
@@ -341,6 +344,7 @@ class INDIClientSingleton(INDIClient):
             cls._instance = super().__new__(cls)
         return cls._instance
 
+
 class INDIClientContainer:
     def __new__(cls, *args, **kwargs):
         """
@@ -351,20 +355,20 @@ class INDIClientContainer:
             cls._instance._clients = []
 
         return cls._instance
-            
+
     def create_client(self, *args, **kwargs):
         if "client_class" in kwargs:
             if issubclass(kwargs["client_class"], INDIClient):
                 client_class = kwargs["client_class"]
                 del kwargs["client_class"]
             else:
-                raise TypeError(f"client_class must be subclass of INDIClient.")
+                raise TypeError("client_class must be subclass of INDIClient.")
         else:
             client_class = INDIClient
 
         client = client_class()
         client.start(*args, **kwargs)
-        
+
         self._clients.append(client)
 
         return client
@@ -373,8 +377,6 @@ class INDIClientContainer:
         self._clients.append(client)
 
         return None
-     
+
     def __getitem__(self, key):
         return self._clients[key]
-        
-

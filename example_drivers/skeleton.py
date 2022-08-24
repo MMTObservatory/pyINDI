@@ -1,9 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 from pathlib import Path
 import random
 sys.path.insert(0, str(Path.cwd().parent))
 from pyindi.device import device
+import logging
+
+
+logging.basicConfig(filename='device.log', level=logging.DEBUG)
 
 """
 This file uses a skeleton xml file to initialize and
@@ -85,27 +89,27 @@ class SkeletonDevice(device):
                 self.IDMessage(f"IUUpdate error: {error}")
                 raise
 
-    @device.repeat(1000)
-    def do_repeate(self):
-
-        self.IDMessage('Running repeat function')
-
-        """
-        This function is called after the first get
-        properties is initiated and then every 1000ms 
-        after that. 
-        """
-
-        conn = self.__getitem__("CONNECTION")
-        if conn["CONNECT"].value == 'Off':
-            return
-
-        states = ('Alert', 'Busy', 'Idle', 'Ok')
-        lights = self.IUFind('Light Property')
-
-        for light in lights:
-            light.value = random.choice(states)
-        self.IDSet(lights)
+#    @device.repeat(1000)
+#    def do_repeate(self):
+#
+#        self.IDMessage('Running repeat function')
+#
+#        """
+#        This function is called after the first get
+#        properties is initiated and then every 1000ms 
+#        after that. 
+#        """
+#
+#        conn = self.__getitem__("CONNECTION")
+#        if conn["CONNECT"].value == 'Off':
+#            return
+#
+#        states = ('Alert', 'Busy', 'Idle', 'Ok')
+#        lights = self.IUFind('Light Property')
+#
+#        for light in lights:
+#            light.value = random.choice(states)
+#        self.IDSet(lights)
 
 
 sk = SkeletonDevice()

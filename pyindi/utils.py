@@ -14,7 +14,7 @@ class XMLFeeder:
             handler = XMLHandler()
 
         self.parser = ExpatParser()
-        self.parser.setContentHandler( handler )
+        self.parser.setContentHandler(handler)
 
         # we need to fake a root element
         self.parser.feed("<root>")
@@ -29,7 +29,6 @@ class XMLHandler(ContentHandler):
     reading = False
     current_blob = None
 
-
     def __init__(self):
         self._watched = {}
         self._isWatching = False
@@ -42,24 +41,23 @@ class XMLHandler(ContentHandler):
 
         super().__init__()
 
-
     # circular reference
     def set_parent(self, parent):
         self.parent = parent
-    
 
     def watch_property(self, device, name, callback=None):
+        def default_callback(ele):
+            print(ele)
+
         if callback is None:
-            callback = lambda ele:print(ele)
+            callback = default_callback
         logging.debug(f"watching property {device}.{name}")
         self._watched[f"{device}.{name}"] = callback
-
 
     def watch_all(self, device, callback=None):
         self._watchAll = True
         if callback is not None:
             self._watched['f{device}.*'] = callback
-
 
     def startElement(self, tag, attr):
         logging.debug(f"tag is {tag}")
@@ -77,21 +75,20 @@ class XMLHandler(ContentHandler):
 
         if tag[:3] in ("def", "set"):
             if 'device' not in attr.keys():
-                return 
+                return
             device = attr.getValue('device')
             name = attr.getValue('name')
             try:
                 group = attr.getValue('group')
-            except Exception as error:
+            except Exception:
                 group = None
 
             self._currentKey = f"{device}.{name}"
 
-            
             if device not in self._groups:
                 self._groups[device] = [group]
                 self.new_device(device)
-                
+
             else:
                 if group is None:
                     pass
@@ -109,31 +106,27 @@ class XMLHandler(ContentHandler):
                 self.currentElement = self.rootElement
                 self._isWatching = True
                 self._currentKey = f'{device}.*'
-                
-        elif tag == "message":
-            #logging.debug(f"we have a message {message.attrib['message']}")
-            self.currentMessage = etree.Element(tag, **dict(attr))
 
+        elif tag == "message":
+            # logging.debug(f"we have a message {message.attrib['message']}")
+            self.currentMessage = etree.Element(tag, **dict(attr))
 
     def characters(self, content):
         if self._isWatching:
             if self.currentElement.text is None:
 
-                self.currentElement.text=content
+                self.currentElement.text = content
             else:
-                self.currentElement.text+=content
-                
+                self.currentElement.text += content
 
-    
     def endElement(self, tag):
         if self._isWatching:
-            
-            
+
             if tag == self.rootElement.tag:
-                
+
                 device = self.rootElement.attrib['device']
                 name = self.rootElement.attrib['name']
-                key=f"{device}.{name}"
+                key = f"{device}.{name}"
 
                 if self._currentKey == key:
                     pass
@@ -147,7 +140,7 @@ class XMLHandler(ContentHandler):
                 except Exception as error:
                     print(f"{key} callback gave error: {error}")
                     raise
-                self._isWatching=False
+                self._isWatching = False
 
             elif tag == self.currentElement.tag:
                 self.currentElement = self.rootElement
@@ -156,9 +149,6 @@ class XMLHandler(ContentHandler):
             logging.debug("MESSAGE IS ...")
             self.parent.new_message(self.currentMessage)
             self.currentMessage = None
-
-
-
 
     def new_device(self, device):
         self.parent.new_device(device)
@@ -172,19 +162,18 @@ class INDIEvents(INDIClientSingleton):
     Pythonic way of handling INDI xml events
     like def:
     new device, new group and or new property
-    or updating a property with set. 
+    or updating a property with set.
     """
 
     # these are here because the
     # classmethods need to see them.
-    handler=XMLHandler()
-    feeder=XMLFeeder(handler)
+    handler = XMLHandler()
+    feeder = XMLFeeder(handler)
     call_on_init = []
 
+    def __init__(self):
 
-    def __init__(self):   
-
-        # Make the XMLHandler aware of 
+        # Make the XMLHandler aware of
         # the INDIHandle client so it can
         # call INDHandle methods corresponding
         # to XML events.
@@ -192,12 +181,10 @@ class INDIEvents(INDIClientSingleton):
         for fxn in self.call_on_init:
             fxn(self)
 
-
     async def xml_from_indiserver(self, data):
         logging.debug(f"New data from indiserver {data[:20]}")
         self.feeder.write_message(data)
 
-    
     async def connection(self, timeout=0):
         if timeout > 0:
             start = time.time()
@@ -213,10 +200,7 @@ class INDIEvents(INDIClientSingleton):
                 else:
                     await asyncio.sleep(0.25)
 
-
-
     async def getProperties(self, device='', name=None):
-
 
         if name is None:
             xml = f"<getProperties version='1.7' device='{device}'/>\n"
@@ -225,14 +209,13 @@ class INDIEvents(INDIClientSingleton):
 
         await self.xml_to_indiserver(xml)
 
-
     def watch(self, device, name, callback=None):
         print(f"calling watch_property {device}.{name}")
         self.handler.watch_property(device, name, callback)
 
     def devices(self):
         return self.hander._devices
-    
+
     def groups(self):
         return self.hander._groups
 
@@ -243,7 +226,7 @@ class INDIEvents(INDIClientSingleton):
         logging.debug(f"Ignoring new group {group}")
 
     def new_msg(self, message):
-        logging.debug(f"Ignoring new message {msg}")
+        logging.debug(f"Ignoring new message {message}")
 
 #    @classmethod
 #    def new_device(cls, fxn):
@@ -256,9 +239,11 @@ class INDIEvents(INDIClientSingleton):
     @classmethod
     def handle_property(cls, device, name):
         print("defining add_callback")
+
         def add_callback(fxn):
             def init(self):
-                with_inst = lambda ele : fxn(self, ele)
+                def with_inst(ele):
+                    return fxn(self, ele)
                 cls.handler.watch_property(device, name, with_inst)
             cls.call_on_init.append(init)
 
@@ -272,18 +257,17 @@ class INDIEvents(INDIClientSingleton):
             for child in ele:
                 props.append(
                     dict(
-                        tag = child.tag,
-                        attrib = child.attrib,
-                        text = child.text
+                        tag=child.tag,
+                        attrib=child.attrib,
+                        text=child.text
                     )
                 )
 
         return dict(
-                tag = ele.tag,
-                attrib = ele.attrib,
-                props = props
-                )
+            tag=ele.tag,
+            attrib=ele.attrib,
+            props=props
+        )
 
     def setindi(self, device, name, values, names):
         pass
-

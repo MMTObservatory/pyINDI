@@ -1,27 +1,24 @@
 from pyindi.client import INDIClientSingleton as INDIClient
-from pyindi.client import INDIClientContainer
-
-import tornado.web, tornado.websocket
+import tornado.web
+import tornado.websocket
 from pathlib import Path
-import asyncio
 from xml.sax import ContentHandler
 from xml.sax.expatreader import ExpatParser
 import logging
-from io import StringIO, BytesIO
+from io import StringIO
 from base64 import b64decode
-
 """
     This module contains classes and methods to build an INDI
-    client webapp. The data flow in this program is a bit 
-    confusing. This is made worse because of the somewhat 
+    client webapp. The data flow in this program is a bit
+    confusing. This is made worse because of the somewhat
     ambiguous terms of server and client. Hopefully this flowchart
     will help:
-    
+
 
         Overall INDI server/client to webpage scheme
         --------------------------------------------
-       
-              _____________________________________________________________________       
+
+              _____________________________________________________________________
               | webclient.py                                                      |
               | ------------                  ___________                         |
               |                 _____get()____|to_indiQ |<---put()-------         |
@@ -38,12 +35,12 @@ ____________  |           ______V_____                      httpclients |       
               |         _____________            ____________                     |
               |         |BlobHandler|<--feed()---|BlobClient|                     |
               |         -------------            ------------                     |
-              ---------------------------------------------------------------------    
-    
+              ---------------------------------------------------------------------
+
     In this module, the raw xml data is sent to the webpage to be parsed.
     In parallel, the blobclient parses the xml looking only for blob data.
     This allows us to do useful things with the blob data like save fits
-    files to disk. 
+    files to disk.
 """
 
 
@@ -59,23 +56,23 @@ class INDIHandler(tornado.web.RequestHandler):
     """
     pyindi_head = """
         <!-- Required meta tags -->
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="apple-touch-icon" sizes="180x180" href="/indi/static/favicon/apple-touch-icon.png">
-		<link rel="shortcut icon" type="image/png" sizes="32x32" href="">
-		<link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
-		<link rel="manifest" href="/indi/static/favicon/site.webmanifest">
-		<link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
-		<!-- Load pyINDI scripts -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="apple-touch-icon" sizes="180x180" href="/indi/static/favicon/apple-touch-icon.png">
+        <link rel="shortcut icon" type="image/png" sizes="32x32" href="">
+        <link rel="shortcut icon" type="image/png" sizes="16x16" href="/indi/static/favicon/favicon-16x16.png">
+        <link rel="manifest" href="/indi/static/favicon/site.webmanifest">
+        <link href="/indi/static/fontawesome/css/all.css" rel="stylesheet">
+        <!-- Load pyINDI scripts -->
         <script src="/indi/static/js/constants.js"></script>
-		<script src="/indi/static/js/indi.js"></script>
+        <script src="/indi/static/js/indi.js"></script>
         <script src="/indi/static/js/builder-indi.js"></script>
         <script src="/indi/static/js/updater-indi.js"></script>
         <script src="/indi/static/js/logger-indi.js"></script>
         <script src="/indi/static/js/utils-indi.js"></script>
-		<script src="/indi/static/js/maps-indi.js"></script>
-		<!-- Load pyINDI styling -->
-		<link rel="stylesheet" href="/indi/static/css/indi.css">
+        <script src="/indi/static/js/maps-indi.js"></script>
+        <!-- Load pyINDI styling -->
+        <link rel="stylesheet" href="/indi/static/css/indi.css">
     """
     www_path = Path(__file__).parent / "www"
     static_path = www_path / "static"
@@ -113,7 +110,6 @@ class INDIWebClient(INDIClient):
         self.httpclients.add(BlobClient())
         self.blob_handler = handle_blob
 
-    
     async def xml_from_indiserver(self, data):
         """Send XML data to each http client.
 
@@ -132,32 +128,32 @@ class INDIWebClient(INDIClient):
     def add_httpclient(self, client):
         self.httpclients.add(client)
 
-
     def remove_client(self, client):
         self.httpclients.remove(client)
 
     # Blob stuff
     def put_blob(self, bindata, **attr):
-        
-        self.lastblob.update({"data":bindata})
+
+        self.lastblob.update({"data": bindata})
         self.lastblob.update(attr)
         self.handle_blob(self.lastblob)
 
     def handle_blob(self, blob):
         if self.blob_handler is None:
             warning = f"""
-                Blob {blob['name']} is not being handled. 
-                This is probably not what you want. 
-                Override the handle_blob method to 
+                Blob {blob['name']} is not being handled.
+                This is probably not what you want.
+                Override the handle_blob method to
                 change this behavior."""
 
             logging.warning(warning)
-        
+
         else:
             self.blob_handler(blob)
 
     def get_blob(self):
         return self.lastblob
+
 
 class BlobHandler(ContentHandler):
 
@@ -177,7 +173,7 @@ class BlobHandler(ContentHandler):
         if tag == "oneBLOB":
             try:
                 logging.debug(f"we have a blob! {tag} {dict(attr)}")
-                
+
                 self.reading = True
                 self.current_blob = StringIO()
                 self.attr = dict(attr)
@@ -188,50 +184,45 @@ class BlobHandler(ContentHandler):
 
     def characters(self, content):
         """Read handle character data from the
-        xml feed. For the BLOB's this data is 
-        base64 encoded. We write this to an 
+        xml feed. For the BLOB's this data is
+        base64 encoded. We write this to an
         in memory file for later processing."""
         if self.reading:
-
             self.current_blob.write(content.strip())
 
-            #if len(self.current_blob) > int(self.attr["enclen"]):
-                #raise RuntimeError("Too much BLOB data!")
-    
     def endElement(self, tag):
         """
             Called when the end tag is reached.
             This is where we finish processing
             the BLOB.
         """
-        
+
         if "blob" in tag.lower():
             logging.debug(f"end tag {tag}")
 
         if tag == "oneBLOB":
             try:
-                logging.debug(f"BLOB finished ")
+                logging.debug("BLOB finished ")
                 self.reading = False
                 self.current_blob.seek(0)
-                
-                # Convert to raw binary. 
+
+                # Convert to raw binary.
                 bindata = b64decode(self.current_blob.read())
-                
+
                 self.indiclient.put_blob(bindata, **self.attr)
 
             except Exception as error:
                 logging.warning(f"Error putting blob {error}")
-                
-            
+
 
 class BlobClient:
 
-    """Sometimes it is necessary to understand the 
-    incoming INDI information on the serverside as 
+    """Sometimes it is necessary to understand the
+    incoming INDI information on the serverside as
     opposed to sending the raw information to the
-    httpclient. 
-    
-    
+    httpclient.
+
+
     Here we would like to extract BLOB data so that
     it can be saved to disk. To do this we feed the
     xml to the ExpatParser which uses BlobHandler to
@@ -240,7 +231,7 @@ class BlobClient:
 
     def __init__(self):
         self.parser = ExpatParser()
-        self.parser.setContentHandler( BlobHandler() )
+        self.parser.setContentHandler(BlobHandler())
 
         # we need to fake a root element
         self.parser.feed("<root>")
@@ -251,18 +242,17 @@ class BlobClient:
 
 class INDIWebSocket(tornado.websocket.WebSocketHandler):
     """
-    This class handles the websocket traffic and 
+    This class handles the websocket traffic and
     registers new http clients with the INDIWebClient class
     """
 
     def __init__(self, *args, **kwargs):
         self.client = INDIWebClient()
         super().__init__(*args, **kwargs)
-    
+
     def open(self):
         logging.debug(f"We have a client {self}")
         self.client.add_httpclient(self)
-
 
     async def on_message(self, message):
         logging.debug(f"we have message {message}")
@@ -272,31 +262,27 @@ class INDIWebSocket(tornado.websocket.WebSocketHandler):
         logging.debug(f"closing ws connection {self}")
         self.client.httpclients.remove(self)
 
-       
 
 class BlobRequestHandler(tornado.web.RequestHandler):
     indiclient = INDIWebClient()
 
     def get(self, ftype):
-        
+
         # Meta data only
         blob = self.indiclient.get_blob()
         if blob is None:
             self.write({"Error": "No blob data. Perhaps we have not received one yet."})
-            return 
+            return
         if ftype == 'json':
-            meta = {k:v for k,v in blob.items() if k != "data"}
-            meta.update({'type':str(type(blob['data']))})
+            meta = {k: v for k, v in blob.items() if k != "data"}
+            meta.update({'type': str(type(blob['data']))})
             self.write(meta)
         elif ftype == 'raw':
-            
+
             self.write(blob['data'])
         else:
             resp = {"Error": f"Can not understand file type {ftype}"}
-            resp.update({k:v for k,v in blob.items() if k != "data"})
-
-        
-
+            resp.update({k: v for k, v in blob.items() if k != "data"})
 
 
 class INDIWebApp:
@@ -306,7 +292,7 @@ class INDIWebApp:
     www_path = Path(__file__).parent / "www"
     static_path = www_path / "static"
     templates_path = www_path / "templates"
-    
+
     # Routes used by indi
     indiws_route = "/indi/websocket"
     indiindex_route = "/indi"
@@ -335,14 +321,14 @@ class INDIWebApp:
             Port of the indi server, by default 7624
         handle_blob : bool, optional
             Enable to handle blob data, by default None
-            
+
         Notes
         -----
         - loop cannot be an asyncio event loop.
         """
         self._handlers = None
         self.port = webport
-        
+
         if loop is None:
             loop = tornado.ioloop.IOLoop.current()
 
@@ -351,9 +337,9 @@ class INDIWebApp:
         self.client = INDIWebClient()
         self.client.start(handle_blob, port=indiport, host=indihost)
         self.mainloop.add_callback(self.client.connect)
-        
+
     def indi_handlers(self):
-        handlers = [] 
+        handlers = []
         indiws_route = r"/indi/websocket"
         indistatic_route = r"/indi/static/(.*)"
         lastblob_route = r"/indi/blob/lastblob.([a-z]*)"
@@ -361,17 +347,20 @@ class INDIWebApp:
         # Add the default page
         handlers.append((r"/indi/index.html", DefaultIndex))
 
-        
         handlers.append((lastblob_route, BlobRequestHandler))
 
         # Insert the websocket handler.
         handlers.insert(0, (indiws_route, INDIWebSocket))
-        
-        # Insert the static indi stuff. 
-        handlers.insert(0, (
-                indistatic_route, 
-                tornado.web.StaticFileHandler, 
-                {"path": self.static_path}))
+
+        # Insert the static indi stuff.
+        handlers.insert(
+            0,
+            (
+                indistatic_route,
+                tornado.web.StaticFileHandler,
+                {"path": self.static_path}
+            )
+        )
 
         return handlers
 
@@ -387,14 +376,14 @@ class INDIWebApp:
         ------
         ValueError
             Raises exception if route is protected indi route.
-        """        
+        """
         # Validate supplied handlers and check for root
         has_root = False
         root = ("/", DefaultIndex)
-        
+
         if handlers is None:
             handlers = []
-            
+
         for hdl in handlers:
             if hdl[0] in self.protected_routes:
                 raise ValueError(f"{hdl[0]} route is used by pyindi. Please choose another.")
@@ -405,18 +394,20 @@ class INDIWebApp:
         # If doesn't have root, include default
         if not has_root:
             handlers.append(root)
-            
+
         # Insert the websocket handler and static
         handlers.append((self.indiindex_route, DefaultIndex))
         handlers.append((self.lastblob_route, BlobRequestHandler))
         handlers.append((self.indiws_route, INDIWebSocket))
-        handlers.append((self.indistatic_route, tornado.web.StaticFileHandler, 
-                            {"path": self.static_path}))
+        handlers.append(
+            (
+                self.indistatic_route,
+                tornado.web.StaticFileHandler,
+                {"path": self.static_path}
+            )
+        )
 
         # Build app and start loop
         self.app = tornado.web.Application(handlers, **settings)
         self.app.listen(self.port)
         self.mainloop.start()
-
-
-
