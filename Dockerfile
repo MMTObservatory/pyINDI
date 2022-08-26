@@ -1,9 +1,13 @@
-FROM python:3.8.2-buster
+FROM python:latest
 
-MAINTAINER Scott Swindell "sswindell@mmto.org"
-COPY . .  
 RUN apt-get update
-RUN apt-get -y install \
-	cmake g++ libindi-dev indi-bin libnova-dev zlib1g-dev
-RUN pip install 'scipy' 
-RUN pip install -e .[all]
+RUN apt install -y software-properties-common # apt-add-repository
+RUN apt-add-repository ppa:mutlaqja && \ 
+	apt-get -y install indi-bin
+
+COPY . .  
+RUN pip install --update pip && \
+	pip install -e .[all]
+ENV INDISKELFILE=./example_drivers/skeleton.xml
+
+CMD indiserver ./example_drivers/skeleton.py

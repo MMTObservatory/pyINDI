@@ -1,11 +1,12 @@
-include README.rst
+include README.md
 include CHANGES.rst
 include setup.cfg
 include LICENSE.rst
 include pyproject.toml
 
 recursive-include pyindi *.pyx *.c *.pxd
-recursive-include pyindi/www/*
+recursive-include pyindi/www/ *.py
+recursive-include pyindi/tests/ *.py
 recursive-include docs *
 recursive-include licenses *
 recursive-include scripts *

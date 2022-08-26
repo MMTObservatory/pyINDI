@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import sys
-from pathlib import Path
-import random
+import logging
 sys.path.insert(0, str(Path.cwd().parent))
 from pyindi.device import device
-import logging
 
 
 logging.basicConfig(filename='device.log', level=logging.DEBUG)
@@ -27,7 +25,11 @@ class SkeletonDevice(device):
     def initProperties(self):
         """Build the vector properties from
         the skeleton file."""
-        self.buildSkeleton("skeleton.xml")
+        skelfile = os.environ.get("INDISKELFILE")
+        if skelfile is None:
+            skelfile = "skeleton.xml"
+
+        self.buildSkeleton(skelfile)
 
     def ISNewText(self, device, name, names, values):
         """A new text vector has been updated from 
