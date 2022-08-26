@@ -8,7 +8,6 @@ import logging
 import datetime
 from enum import Enum
 from typing import Union, Callable
-import os
 import base64
 
 from abc import ABC
@@ -59,9 +58,6 @@ async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
 #            writer_transport, writer_protocol, None, loop)
         writer = sys.stdout
     return reader, writer
-
-
-
 
 
 def printa(msg: Union[str, bytes]):
