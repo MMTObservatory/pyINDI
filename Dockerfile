@@ -6,7 +6,7 @@ RUN apt-add-repository ppa:mutlaqja && \
 	apt-get -y install indi-bin
 
 COPY . .  
-RUN pip install --update pip && \
+RUN pip install --upgrade pip && \
 	pip install -e .[all]
 ENV INDISKELFILE=./example_drivers/skeleton.xml
 
