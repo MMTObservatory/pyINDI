@@ -5,9 +5,14 @@
 name: Python Tests
 
 on:
+  workflow_run:
+    workflows: [docker]
+    types:
+      - completed
   push:
     branches:
-    - master 
+    - master
+    - actions
   pull_request:
     branches: 
     - master
@@ -15,11 +20,7 @@ on:
 jobs:
 
   matrix_tests:
-    on:
-      workflow_run:
-        workflows: [docker]
-        types:
-          - completed
+
     runs-on: ${{ matrix.os }}
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     strategy:
