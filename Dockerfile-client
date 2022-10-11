@@ -1,0 +1,13 @@
+FROM python:latest
+
+RUN apt-get update
+RUN apt install -y software-properties-common # apt-add-repository
+RUN apt-add-repository ppa:mutlaqja && \ 
+	apt-get -y install indi-bin
+
+COPY . .  
+RUN pip install --upgrade pip && \
+	pip install -e .[all]
+ENV INDISKELFILE=./example_drivers/skeleton.xml
+
+CMD cd example_clients/gui/ && python gui.py
