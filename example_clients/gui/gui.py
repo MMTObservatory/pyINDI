@@ -34,11 +34,11 @@ DEVICEJSON = os.environ.get("INDIDEVICEJSON", devicejson) # The device json file
 DEVICES = json.loads(DEVICEJSON)
 
 CURRENT_DIR = Path(__file__).parent # The current directory
-TEMPLATE_DIR = os.environ.get("INDITEMPLATEDIR", None) # The template directory
+TEMPLATE_DIR = Path(os.environ.get("INDITEMPLATEDIR", None)) # The template directory
 if TEMPLATE_DIR is None:
     TEMPLATE_DIR = CURRENT_DIR
 
-TEMPLATE = os.environ.get("INDITEMPLATEFILE", "gui.html") # The template file
+TEMPLATE = Path(os.environ.get("INDITEMPLATEFILE", "gui.html")) # The template file
 
 
 
