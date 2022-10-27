@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='INDI Web Client')
 parser.add_argument('--indihost', type=str, default='localhost', help="INDI host")
 parser.add_argument('--indiport', type=str, default="7624", help="INDI port")
 parser.add_argument('--webport', type=str, default="5905", help="Web port")
-parser.add_argument('--tempdir', type=str, default=None, help="Template directory")
+parser.add_argument('--tempdir', type=str, default="", help="Template directory")
 parser.add_argument('--template', type=str, default=None, help="Template file")
 parser.add_argument('--devices', type=str, default=None, help="comma separated list of devices")
 
@@ -35,7 +35,7 @@ DEVICES = json.loads(DEVICEJSON)
 
 CURRENT_DIR = Path(__file__).parent # The current directory
 TEMPLATE_DIR = Path(os.environ.get("INDITEMPLATEDIR", args.tempdir)) # The template directory
-if TEMPLATE_DIR is None:
+if TEMPLATE_DIR == "":
     TEMPLATE_DIR = CURRENT_DIR
 
 TEMPLATE = Path(os.environ.get("INDITEMPLATEFILE", "gui.html")) # The template file
