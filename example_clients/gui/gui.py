@@ -34,7 +34,7 @@ DEVICEJSON = os.environ.get("INDIDEVICEJSON", devicejson) # The device json file
 DEVICES = json.loads(DEVICEJSON)
 
 CURRENT_DIR = Path(__file__).parent # The current directory
-TEMPLATE_DIR = Path(os.environ.get("INDITEMPLATEDIR", None)) # The template directory
+TEMPLATE_DIR = Path(os.environ.get("INDITEMPLATEDIR", args.tempdir)) # The template directory
 if TEMPLATE_DIR is None:
     TEMPLATE_DIR = CURRENT_DIR
 
@@ -46,7 +46,7 @@ TEMPLATE = Path(os.environ.get("INDITEMPLATEFILE", "gui.html")) # The template f
 class GUI(INDIHandler):
     def get(self):
         # Pass additional variables to appear in the html template
-        self.indi_render(TEMPLATE_DIR / TEMPLATE, devices=DEVICES, 
+        self.indi_render(Path(TEMPLATE_DIR) / TEMPLATE, devices=DEVICES, 
                          example_variable="Hello World")
 
 web_app = INDIWebApp(webport=WEBPORT, indihost=INDIHOST, indiport=INDIPORT)
