@@ -13,7 +13,7 @@ authors = [
     {name = "Scott Swindell", email = "sswindell@mmto.org"},
     {name = "Dan Avner"},
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
     "lxml",
     "pillow",
