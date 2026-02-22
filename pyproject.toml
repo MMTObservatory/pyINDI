@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest-astropy"]
+test = ["pytest"]
 docs = ["sphinx-astropy"]
 
 [project.urls]
@@ -37,22 +37,14 @@ pyindi = ["data/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["pyindi", "docs"]
-astropy_header = true
-doctest_plus = "enabled"
-text_file_format = "rst"
-addopts = "--doctest-rst"
 
 [tool.coverage.run]
 omit = [
-    "pyindi/_astropy_init*",
-    "pyindi/conftest.py",
     "pyindi/*setup_package*",
     "pyindi/tests/*",
     "pyindi/*/tests/*",
     "pyindi/extern/*",
     "pyindi/version*",
-    "*/pyindi/_astropy_init*",
-    "*/pyindi/conftest.py",
     "*/pyindi/*setup_package*",
     "*/pyindi/tests/*",
     "*/pyindi/*/tests/*",
