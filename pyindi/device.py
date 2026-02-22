@@ -30,7 +30,7 @@ now = datetime.datetime.now()
 timestr = now.strftime("%H%M%S-%a")
 
 
-async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
+async def stdio(limit=asyncio.streams._DEFAULT_LIMIT):
     """
     Collect the stdio as async streams. This is a shameless
     ctrl-c ctrl-v of this stackoverflow:
@@ -38,17 +38,16 @@ async def stdio(limit=asyncio.streams._DEFAULT_LIMIT, loop=None):
             create-asyncio-stream-reader-writer-for-stdin-stdout
     """
 
-    if loop is None:
-        loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     if sys.platform == 'win32':
         # Windows does not support async stdio operations
         reader = WinIO(loop)
         writer = WinIO(loop)
     else:
-        reader = asyncio.StreamReader(limit=limit, loop=loop)
+        reader = asyncio.StreamReader(limit=limit)
         await loop.connect_read_pipe(
-            lambda: asyncio.StreamReaderProtocol(reader, loop=loop),
+            lambda: asyncio.StreamReaderProtocol(reader),
             sys.stdin)
 
 #        writer_transport, writer_protocol = await loop.connect_write_pipe(
@@ -69,7 +68,7 @@ def printa(msg: Union[str, bytes]):
     We use the stdio fxn now.
     """
 
-    if type(msg) == bytes:
+    if isinstance(msg, bytes):
         msg = msg.decode()
     sys.stdout.write(msg)
     sys.stdout.flush()
@@ -784,7 +783,7 @@ class IBLOB(IProperty):
 
     @value.setter
     def value(self, val: bytes):
-        if type(val) != bytes:
+        if not isinstance(val, bytes):
             raise ValueError("""IBLOB value must by bytes type""")
 
         self.size = len(val)
@@ -855,7 +854,8 @@ class device(ABC):
         astart
         """
 
-        self.mainloop = asyncio.get_event_loop()
+        self.mainloop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.mainloop)
         self.reader, self.writer = self.mainloop.run_until_complete(stdio())
         self.running = True
         future = asyncio.gather(
@@ -1102,12 +1102,12 @@ class device(ABC):
             xmlstr = skfd.read()
             xml = etree.fromstring(xmlstr)
 
-        for xml_def in xml.getchildren():
+        for xml_def in xml:
             if xml_def.tag not in ok_tags:
                 # Ignore anything not a vector definition.
                 continue
             properties = []
-            for prop in xml_def.getchildren():
+            for prop in xml_def:
 
                 att = prop.attrib
                 att.update({'value': prop.text.strip()})
@@ -1192,7 +1192,7 @@ class device(ABC):
         msgtype : str, optional
             one of "DEBUG", "INFO", "WARN", by default "INFO"
         """
-        if type(timestamp) == datetime.datetime:
+        if isinstance(timestamp, datetime.datetime):
             timestamp = timestamp.strftime("%Y-%m-%dT%H:%M:%S")
 
         elif timestamp is None:
