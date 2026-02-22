@@ -1,0 +1,12 @@
+FROM python:3.14-slim
+
+ARG VERSION=0.0.0
+ENV SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install --no-cache-dir .
+
+EXPOSE 7624 8888
