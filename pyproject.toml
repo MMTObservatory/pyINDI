@@ -1,10 +1,64 @@
 [build-system]
+requires = ["setuptools", "setuptools_scm", "wheel"]
+build-backend = "setuptools.build_meta"
 
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel",
-            "extension-helpers",
-            "oldest-supported-numpy",
-            "cython"]
+[project]
+name = "pyindi"
+dynamic = ["version"]
+description = "Native python INDI driver library using asyncio."
+readme = "README.rst"
+license = {file = "licenses/LICENSE.rst"}
+authors = [
+    {name = "TE Pickering"},
+    {name = "Scott Swindell", email = "sswindell@mmto.org"},
+    {name = "Dan Avner"},
+]
+requires-python = ">=3.12"
+dependencies = [
+    "lxml",
+    "pillow",
+    "tornado",
+]
 
-build-backend = 'setuptools.build_meta'
+[project.optional-dependencies]
+test = ["pytest"]
+docs = ["sphinx-astropy"]
+
+[project.urls]
+Homepage = "https://github.com/mmtobservatory/pyindi"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+pyindi = ["data/*"]
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+testpaths = ["pyindi", "docs"]
+
+[tool.coverage.run]
+omit = [
+    "pyindi/*setup_package*",
+    "pyindi/tests/*",
+    "pyindi/*/tests/*",
+    "pyindi/extern/*",
+    "pyindi/version*",
+    "*/pyindi/*setup_package*",
+    "*/pyindi/tests/*",
+    "*/pyindi/*/tests/*",
+    "*/pyindi/extern/*",
+    "*/pyindi/version*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "except ImportError",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    'def main\(.*\):',
+    "pragma: py{ignore_python_version}",
+    "def _ipython_key_completions_",
+]

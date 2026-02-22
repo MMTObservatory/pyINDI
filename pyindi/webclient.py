@@ -89,7 +89,7 @@ class INDIHandler(tornado.web.RequestHandler):
 
         # Convert filename to string if Path
         fname = args[0]
-        if type(fname) != str:
+        if not isinstance(fname, str):
             fname = str(fname)
 
         self.render(fname, **kwargs)

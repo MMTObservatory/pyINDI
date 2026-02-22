@@ -151,8 +151,7 @@ class mount( INDIDevice.device ):
                 port=self.config["DEFAULT"]["mysql_port"],
                                       user=self.config["DEFAULT"]['mysql_user'],
                                       password=self.config["DEFAULT"]['mysql_host'],
-                                      db=self.config["DEFAULT"]["mysql_dbname"],
-                                      loop=self.mainloop)
+                                      db=self.config["DEFAULT"]["mysql_dbname"])
 
         async with conn.cursor() as cur:
             expr = f"{cols[0]}"
