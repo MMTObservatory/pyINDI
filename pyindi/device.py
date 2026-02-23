@@ -281,9 +281,8 @@ class IVectorProperty(ABC):
         tagname = "def" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
         if tagname not in dtd_elements:
-            raise AttributeError(
-                "{tagname} not defined in \
-                                 Document Type Definition")
+            raise AttributeError(f"{tagname} not defined in Document Type "
+                                 "Definition")
 
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
@@ -315,9 +314,8 @@ class IVectorProperty(ABC):
         tagname = "set" + self.tagcontext
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
         if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
+            raise AttributeError(f"{tagname} not defined in Document Type "
+                                 "Definition")
 
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
@@ -325,7 +323,7 @@ class IVectorProperty(ABC):
             if hasattr(self, attribute.name):
                 ele.set(attribute.name, str(getattr(self, attribute.name)))
         for prop in self.iprops:
-            logging.warning(prop)
+            logging.debug(prop)
             ele.append(prop.Set())
 
         if msg is not None:
@@ -393,9 +391,8 @@ class IProperty:
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
 
         if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
+            raise AttributeError(f"{tagname} not defined in Document Type "
+                                 "Definition")
 
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
@@ -414,9 +411,8 @@ class IProperty:
         dtd_elements = {tag.name: tag for tag in self.dtd.iterelements()}
 
         if tagname not in dtd_elements:
-            raise AttributeError(
-                f"{tagname} not defined in \
-                                 Document Type Definition")
+            raise AttributeError(f"{tagname} not defined in Document Type "
+                                 "Definition")
 
         ele_definition = dtd_elements[tagname]
         ele = etree.Element(ele_definition.name)
@@ -441,10 +437,8 @@ class IProperty:
         elif isinstance(self, IBLOB):
             return self.data
 
-        raise TypeError(f"""value method must be called with INumber,
-        IText, ILight, ISwitch or IBLOB not {type(self)}
-        {isinstance(self, INumber)}
-        """)
+        raise TypeError(f"value method must be called with INumber, IText,"
+                        f" ILight, ISwitch or IBLOB not {type(self)}")
 
     @value.setter
     def value(self, val):
@@ -461,14 +455,8 @@ class IProperty:
         elif isinstance(self, IBLOB):
             self.data = val
         else:
-            raise TypeError(f"""
-        value method must be called with INumber, IText,
-        ILight, ISwitch or IBLOB not {type(self)} {self}
-        {isinstance(self, INumber)} {self.tagcontext}
-        {type(self) == INumber}
-        {self.tagcontext == "Switch"}
-        {self.__class__ == ISwitch}
-        """)
+            raise TypeError("value method must be called with INumber, IText,"
+                            f" ILight, ISwitch or IBLOB, not {type(self)}")
 
 
 class INumberVector(IVectorProperty):
@@ -854,8 +842,9 @@ class device(ABC):
         astart
         """
 
-        self.mainloop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.mainloop)
+        if self.mainloop is None:
+            self.mainloop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.mainloop)
         self.reader, self.writer = self.mainloop.run_until_complete(stdio())
         self.running = True
         future = asyncio.gather(
@@ -874,7 +863,8 @@ class device(ABC):
         other device tasks.
         """
 
-        self.mainloop = asyncio.get_running_loop()
+        if self.mainloop is None:
+            self.mainloop = asyncio.get_event_loop()
         self.reader, self.writer = await stdio()
         self.running = True
         future = asyncio.gather(
@@ -896,12 +886,9 @@ class device(ABC):
                     func(self)
 
             except Exception as error:
-                sys.stderr.write(
-                    f"There was an exception in the \
-                    later decorated fxn {func}:")
-
-                sys.stderr.write(f"{error}")
-                sys.stderr.write("See traceback below.")
+                sys.stderr.write("There was an exception in the later "
+                                 f"decorated fxn {func}:\n{error}\nSee "
+                                 "traceback below.")
                 traceback.print_exc(file=sys.stderr)
 
     def exception(self, loop, context):
@@ -1115,16 +1102,15 @@ class device(ABC):
             try:
                 ivec = self.vectorFactory(xml_def.tag, xml_def.attrib, properties)
             except Exception as error:
-                logging.error(f"The following error was caused by this xml tag \
-                        \n {etree.tostring(xml_def)}")
+                logging.error("The following error was caused by this xml tag:"
+                              f"\n{etree.tostring(xml_def).decode()}")
                 logging.error(error)
                 raise
             self.IDDef(ivec)
 
     def ISNewNumber(self, dev: str, name: str, values: list, names: list):
         raise NotImplementedError(
-            "Device driver must \
-                                  overload ISNewNumber method.")
+            "Device driver must overload ISNewNumber method.")
 
     def IUFind(self, name, device=None, group=None):
         """
@@ -1172,9 +1158,8 @@ class device(ABC):
         return vp
 
     def ISGetProperties(self, device):
-        raise NotImplementedError(
-            f"Subclass of {self} must \
-                                  implement ISGetProperties")
+        raise NotImplementedError(f"Subclass of {self} must implement "
+                                  "ISGetProperties")
 
     def IDMessage(
         self, msg: str,
@@ -1198,11 +1183,11 @@ class device(ABC):
         elif timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-        xml = f'<message message="[{msgtype}] {msg}" '
-        xml += f'timestamp="{timestamp}" '
-        xml += f'device="{self.name()}"/> '
-
-        self.outq.put_nowait(xml.encode())
+        xml = etree.Element("message",
+                            attrib={"message": f"[{msgtype}] {msg}",
+                                    "timestamp": timestamp,
+                                    "device": self.name()})
+        self.outq.put_nowait(etree.tostring(xml))
         # self.writer.write(xml.encode())
 
     def IDSetNumber(self, n: INumberVector, msg=None):
@@ -1370,8 +1355,8 @@ class device(ABC):
                 vec.tp.append(iprop)
 
         else:
-            message = f"vector_type argument must be a string containing \
-            Light, Number, Switch, Text or BLOB not {vector_type}"
-            raise ValueError(message)
+            raise ValueError("vector_type argument must be a string containing"
+                             " Light, Number, Switch, Text or BLOB, not "
+                             f"{vector_type}")
 
         return vec
