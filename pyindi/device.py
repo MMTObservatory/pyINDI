@@ -761,7 +761,7 @@ class IBLOB(IProperty):
             b64data = ""
         else:
             try:
-                b64data = base64.b64encode(self.data).decode()
+                b64data = base64.encodebytes(self.data).decode()
             except TypeError:
                 b64data = ""
                 logging.warning(f"Could not convert {type(self.data)} to base64")
