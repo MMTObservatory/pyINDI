@@ -37,10 +37,10 @@ class INDIConn:
     read_width : int
         Amount to read from the stream per read
     """
-    def __init__(self):
+    def __init__(self,timeout=10):
         self.writer = None
         self.reader = None
-        self.timeout = 3
+        self.timeout = timeout
         self.read_width = 30000
 
     async def connect(self, host, port):
@@ -168,7 +168,7 @@ class INDIClient:
     ----------
     None
     """
-    def start(self, host="localhost", port=7624):
+    def start(self, host="localhost", port=7624, timeout=10):
         """Initializes the client
         
         Parameters
@@ -186,6 +186,7 @@ class INDIClient:
         self.host = host
         self.lastblob = None
         self.conn = None
+        self.timeout = timeout
 
     async def connect(self):
         """Attempt to connect to the indiserver in a loop
@@ -208,9 +209,12 @@ class INDIClient:
             await self.disconnect()
 
             try:
-                self.conn = INDIConn()
+                self.conn = INDIConn(timeout=self.timeout)
+                logging.info(
+                    f"Connecting to indiserver {self.host}:{self.port}"
+                )
                 await self.conn.connect(self.host, self.port)
-                logging.debug(
+                logging.info(
                     f"Connected to indiserver {self.host}:{self.port}"
                 )
                 self.task = asyncio.gather(

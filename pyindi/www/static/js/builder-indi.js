@@ -248,6 +248,25 @@
 		if (!document.getElementById(vectorSelector)) {
 			console.debug(`Creating new ${indi.metainfo}=${generateId.vector(indi)}`);
 			var html = this.vector(indi);
+			html.addEventListener("setindi", (event) => {
+				let args = []
+				let inputs = html.getElementsByTagName("input")
+				if(event.detail.type == "Switch") {
+					// how else to get at the indistate? indi.state is stale by now
+					let isBusy = html.getElementsByClassName("pyindi-led")[0].style.backgroundColor === "var(--indistate-busy)"
+					indi.values.forEach((prop, idx) => {
+						let onOff = inputs[idx].checked && !isBusy ? "On" : "Off"
+						args.push(prop.name, onOff)
+						localStorage.setItem(inputs[idx].id, inputs[idx].value)
+					});
+				} else {
+					indi.values.forEach((prop, idx) => {
+						args.push(prop.name, inputs[idx].value)
+						localStorage.setItem(inputs[idx].id, inputs[idx].value)
+					});
+				}
+				setindi(event.detail.type, generateId.indiXml(indi), ...args);
+			});
 
 			switch (indi.metainfo) {
 				case "nvp":
@@ -352,15 +371,14 @@
 			var wo = document.createElement("input");
 			wo.classList.add("pyindi-property", "pyindi-wo", "col");
 			wo.id = `${id}__input`;
+			wo.value = localStorage.getItem(wo.id) || ""
 
 			// If "Enter" is pressed on writeonly area, send new text to indi
 			wo.addEventListener("keyup", (event) => {
 				if (event.key === "Enter") {
 
 					event.preventDefault() // TODO Test if needed
-
-					let value = event.target.value;
-					setindi("Text", generateId.indiXml(indi), property.name, value);
+					builder.dispatch(appendTo, "Text")
 				}
 			});
 
@@ -407,6 +425,7 @@
 			var wo = document.createElement("input");
 			wo.classList.add("pyindi-property", "pyindi-wo", "col")
 			wo.id = `${id}__input`;
+			wo.value = localStorage.getItem(wo.id) || 0
 			wo.defaultValue = 0;
 
 			// Add min and max data attributes
@@ -445,7 +464,8 @@
 					else {
 						wo.classList.remove("invalid");
 						tip.classList.add("hide")
-						setindi("Number", generateId.indiXml(indi), property.name, value);
+						event.preventDefault()
+						builder.dispatch(appendTo, "Number")
 					}
 				}
 			});
@@ -493,12 +513,10 @@
 			input.checked = property.value === "On" ? true : false;
 
 			// Create event listeners for input button
-			input.addEventListener("change", (event) => {
-				let name = event.target.value
-				let value = event.target.checked ? "On" : "Off"
-				setindi("Switch", generateId.indiXml(indi), name, value);
+			input.addEventListener("click", (event) => {
+				builder.dispatch(appendTo, "Switch")
 			})
-
+			
 			// Append all
 			span.appendChild(input);
 			span.appendChild(label);
@@ -558,5 +576,10 @@
 		}
 
 		return appendTo;
+	},
+	dispatch(html, type) {
+		html.dispatchEvent(new CustomEvent('setindi', {
+			detail: { type: type}
+		}))
 	},
 };
