@@ -217,6 +217,37 @@ class ISState(INDIEnum):
         raise ValueError(f"ISState must be either Off or On not {string}")
 
 
+class DRIVER_INTERFACE(Enum):
+    """Driver interface enum.
+
+    Used by drivers to advertise to clients which interface(s) they implement.
+
+    See https://docs.indilib.org/drivers/basics/driver-interface.html for details.
+    """
+
+    GENERAL_INTERFACE       = 0       # Default interface for all INDI devices
+    TELESCOPE_INTERFACE     = 1 <<  0 # Telescope interface
+    CCD_INTERFACE           = 1 <<  1 # CCD interface
+    GUIDER_INTERFACE        = 1 <<  2 # Guider interface
+    FOCUSER_INTERFACE       = 1 <<  3 # Focuser interface
+    FILTER_INTERFACE        = 1 <<  4 # Filter interface
+    DOME_INTERFACE          = 1 <<  5 # Dome interface
+    GPS_INTERFACE           = 1 <<  6 # GPS interface
+    WEATHER_INTERFACE       = 1 <<  7 # Weather interface,
+    AO_INTERFACE            = 1 <<  8 # Adaptive Optics Interface
+    DUSTCAP_INTERFACE       = 1 <<  9 # Dust Cap Interface
+    LIGHTBOX_INTERFACE      = 1 << 10 # Light Box Interface
+    DETECTOR_INTERFACE      = 1 << 11 # Detector interface
+    ROTATOR_INTERFACE       = 1 << 12 # Rotator interface
+    SPECTROGRAPH_INTERFACE  = 1 << 13 # Spectrograph interface
+    CORRELATOR_INTERFACE    = 1 << 14 # Correlators (interferometers) interface
+    AUX_INTERFACE           = 1 << 15 # Auxiliary interface
+    OUTPUT_INTERFACE        = 1 << 16 # Digital Output (e.g. Relay) interface
+    INPUT_INTERFACE         = 1 << 17 # Digital/Analog Input (e.g. GPIO) interface
+    POWER_INTERFACE         = 1 << 18 # Auxiliary interface
+    SENSOR_INTERFACE        = SPECTROGRAPH_INTERFACE | DETECTOR_INTERFACE | CORRELATOR_INTERFACE
+
+
 class IVectorProperty(ABC):
     """
     INDI Vector asbstractions
