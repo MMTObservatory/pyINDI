@@ -104,7 +104,7 @@ class WinIO:
 class INDIEnumMember(int):
     """
     ## INDIEnumMember
-    This sublcasses the int class to match
+    This subclasses the int class to match
     the standard enum int type but adds
     a string in the assignment to allow
     for comparison with the raw xml
