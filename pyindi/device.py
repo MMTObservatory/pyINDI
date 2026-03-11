@@ -59,9 +59,6 @@ async def stdio(limit=asyncio.streams._DEFAULT_LIMIT):
     return reader, writer
 
 
-
-
-
 def printa(msg: Union[str, bytes]):
     """
     This was the old way of writing to stdout
